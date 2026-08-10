@@ -87,7 +87,7 @@ export default function LoginPage() {
     opacity: { duration: 1.2, delay: d },
     ease: 'easeOut',
   });
-
+// aku nak kerjain
 const boxes = [
   {
     d: 0.2,
