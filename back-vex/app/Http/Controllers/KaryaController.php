@@ -17,8 +17,11 @@ use App\Services\Steganography;
 
 class KaryaController extends Controller
 {
-    private const STORAGE_BASE_URL = 'https://vex.terpalb25.web.id/storage/';
-
+    // private const STORAGE_BASE_URL = 'https://vex.terpalb25.web.id/storage/';
+    private function storageBaseUrl(): string
+    {
+        return rtrim(config('app.url'), '/') . '/storage/';
+    }
     /**
      * Semua ukuran turunan gambar yang di-generate untuk tiap upload.
      * Key = nama folder/label, Value = rasio skala dari ukuran original.
@@ -136,16 +139,16 @@ class KaryaController extends Controller
     // =============================
     private function buildKaryaImageUrls(Karya $item): array
     {
-        $base = self::STORAGE_BASE_URL;
+        $base = $this->storageBaseUrl();
         $poster = $item->gambar_poster;
         $sampul = $item->gambar_sampul;
-
+    
         return [
-            'image' => $poster ? asset($base . $poster) : '',
-            'imageLarge' => $poster ? asset($base . $this->resolveSizePath($poster, 'large')) : '',
-            'imageSmall' => $poster ? asset($base . $this->resolveSizePath($poster, 'small')) : '',
-            'thumbnail' => $sampul ? asset($base . $sampul) : '',
-            'thumbnailMedium' => $sampul ? asset($base . $this->resolveSizePath($sampul, 'medium')) : '',
+            'image' => $poster ? $base . $poster : '',
+            'imageLarge' => $poster ? $base . $this->resolveSizePath($poster, 'large') : '',
+            'imageSmall' => $poster ? $base . $this->resolveSizePath($poster, 'small') : '',
+            'thumbnail' => $sampul ? $base . $sampul : '',
+            'thumbnailMedium' => $sampul ? $base . $this->resolveSizePath($sampul, 'medium') : '',
         ];
     }
 
@@ -184,16 +187,18 @@ class KaryaController extends Controller
     // =============================
     private function formatKaryaHighlight(Karya $item): array
     {
+        $base = $this->storageBaseUrl();
+    
         return [
             'id' => $item->id_karya,
             'title' => $item->judul,
-            'banner' => $item->gambar_sampul ? asset(self::STORAGE_BASE_URL . $item->gambar_sampul) : '',
+            'banner' => $item->gambar_sampul ? $base . $item->gambar_sampul : '',
             'bannerLarge' => $item->gambar_sampul
-                ? asset(self::STORAGE_BASE_URL . $this->resolveSizePath($item->gambar_sampul, 'large'))
+                ? $base . $this->resolveSizePath($item->gambar_sampul, 'large')
                 : '',
-            'poster' => $item->gambar_poster ? asset(self::STORAGE_BASE_URL . $item->gambar_poster) : '',
+            'poster' => $item->gambar_poster ? $base . $item->gambar_poster : '',
             'posterMedium' => $item->gambar_poster
-                ? asset(self::STORAGE_BASE_URL . $this->resolveSizePath($item->gambar_poster, 'medium'))
+                ? $base . $this->resolveSizePath($item->gambar_poster, 'medium')
                 : '',
         ];
     }

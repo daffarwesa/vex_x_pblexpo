@@ -1,11 +1,11 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'storage/*'],
+    'paths' => ['api/*', 'storage/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['https://vex.terpalb25.web.id'],   // ganti dengan domain production nanti
+    'allowed_origins' => ['http://localhost:3000'],
 
     'allowed_origins_patterns' => [],
 

@@ -11,14 +11,20 @@ use Intervention\Image\Drivers\Gd\Driver;
 
 class PameranController extends Controller
 {
-    private const STORAGE_BASE_URL = 'https://vex.terpalb25.web.id/storage/';
+    // =============================
+    // HELPER: Base URL storage (ikut APP_URL di .env, contoh: http://localhost:8000)
+    // =============================
+    private function storageBaseUrl(): string
+    {
+        return rtrim(config('app.url'), '/') . '/storage/';
+    }
 
     // =============================
     // HELPER: URL banner (dengan fallback ke original)
     // =============================
     private function buildBannerUrls(Pameran $item): array
     {
-        $base = self::STORAGE_BASE_URL;
+        $base = $this->storageBaseUrl();
 
         return [
             'bannerImage' => $base . $item->banner,

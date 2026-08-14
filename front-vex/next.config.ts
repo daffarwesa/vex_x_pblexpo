@@ -4,8 +4,9 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'vex.terpalb25.web.id',
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
         pathname: '/storage/**',
       },
     ],
@@ -15,11 +16,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/storage/:path*',
-        destination: 'https://vex.terpalb25.web.id/storage/:path*',
+        destination: 'http://localhost:8000/storage/:path*',
       },
       {
         source: '/api/:path*',
-        destination: 'https://vex.terpalb25.web.id/api/:path*',
+        destination: 'http://localhost:8000/api/:path*',
       },
     ];
   },

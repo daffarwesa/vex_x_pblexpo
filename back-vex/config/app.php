@@ -52,9 +52,9 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://vex.terpalb25.web.id'),
+    'url' => env('APP_URL', 'localhost:3000'),
 
-    'frontend_url' => env('FRONTEND_URL', 'https://vex.terpalb25.web.id'),
+    'frontend_url' => env('FRONTEND_URL', 'localhost:3000'),
 
     /*
     |--------------------------------------------------------------------------
