@@ -10,6 +10,10 @@ import SelectSemester from '@/components/shared/filter/SelectSemester';
 import { ProdiType } from '@/components/shared/filter/SelectProdi';
 import { TahunType } from '@/components/shared/filter/SelectTahun';
 import { SemesterType } from '@/components/shared/filter/SelectSemester';
+import { KategoriType } from '@/components/shared/filter/SelectKategori';
+import { PameranItem } from '@/types/karya';
+import SelectKategori from '@/components/shared/filter/SelectKategori';
+import SelectPameran from '@/components/shared/filter/SelectPameran';
 
 import { HiAdjustmentsHorizontal, HiXMark } from 'react-icons/hi2';
 
@@ -22,6 +26,14 @@ interface FilterSectionProps {
   setSelectedTahun: (v: TahunType | null) => void;
   selectedSemester?: SemesterType | null;
   setSelectedSemester?: (v: SemesterType | null) => void;
+  // Khusus filter karya baru
+  isKaryaFilter?: boolean;
+  selectedKategori?: KategoriType | null;
+  setSelectedKategori?: (v: KategoriType | null) => void;
+  pameranList?: PameranItem[];
+  selectedPameran?: PameranItem | null;
+  setSelectedPameran?: (v: PameranItem | null) => void;
+
   hideProdi?: boolean;
   onlyYear?: boolean;
   searchPlaceholder?: string;
@@ -36,6 +48,12 @@ export default function FilterSection({
   setSelectedTahun,
   selectedSemester,
   setSelectedSemester,
+  isKaryaFilter = false,
+  selectedKategori,
+  setSelectedKategori,
+  pameranList = [],
+  selectedPameran,
+  setSelectedPameran,
   hideProdi = false,
   onlyYear = false,
   searchPlaceholder = 'Cari Pameran...',
@@ -66,28 +84,47 @@ export default function FilterSection({
         {/* DESKTOP */}
         <div className="hidden md:flex flex-col lg:flex-row gap-4 lg:gap-6 items-stretch lg:items-center justify-between">
           {/* SEARCH */}
-          <div className="w-full lg:w-[50%]">
+          <div className="w-full lg:w-[40%]">
             <SearchBar text={searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
 
           {/* FILTERS */}
-          <div
-            className={`flex items-center justify-end ${
-              onlyYear ? 'w-full lg:w-auto' : 'w-full lg:w-[40%] grid gap-3 lg:gap-[30px] ' + (hideProdi ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-3')
-            }`}
-          >
-            {!onlyYear && !hideProdi && setSelectedProdi && (
-              <SelectProdi selected={selectedProdi ?? null} onChange={setSelectedProdi} />
-            )}
-
-            <div className={onlyYear ? "w-[160px]" : "w-full"}>
+          {isKaryaFilter ? (
+            <div className="w-full lg:w-[60%] grid grid-cols-1 sm:grid-cols-3 gap-3">
               <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
+              {setSelectedPameran && (
+                <SelectPameran
+                  pameranList={pameranList}
+                  selected={selectedPameran ?? null}
+                  onChange={setSelectedPameran}
+                />
+              )}
+              {setSelectedKategori && (
+                <SelectKategori
+                  selected={selectedKategori ?? null}
+                  onChange={setSelectedKategori}
+                />
+              )}
             </div>
+          ) : (
+            <div
+              className={`flex items-center justify-end ${
+                onlyYear ? 'w-full lg:w-auto' : 'w-full lg:w-[40%] grid gap-3 lg:gap-[30px] ' + (hideProdi ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-3')
+              }`}
+            >
+              {!onlyYear && !hideProdi && setSelectedProdi && (
+                <SelectProdi selected={selectedProdi ?? null} onChange={setSelectedProdi} />
+              )}
 
-            {!onlyYear && setSelectedSemester && (
-              <SelectSemester selected={selectedSemester ?? null} onChange={setSelectedSemester} />
-            )}
-          </div>
+              <div className={onlyYear ? "w-[160px]" : "w-full"}>
+                <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
+              </div>
+
+              {!onlyYear && setSelectedSemester && (
+                <SelectSemester selected={selectedSemester ?? null} onChange={setSelectedSemester} />
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -111,7 +148,7 @@ export default function FilterSection({
           {/* HEADER */}
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-lg font-bold">Filter Pameran</h2>
+              <h2 className="text-lg font-bold">{isKaryaFilter ? 'Filter Karya' : 'Filter Pameran'}</h2>
 
               <p className="text-sm text-gray-500">Pilih filter yang ingin digunakan</p>
             </div>
@@ -127,14 +164,35 @@ export default function FilterSection({
 
           {/* FILTER CONTENT */}
           <div className="flex flex-col gap-4">
-            {!onlyYear && !hideProdi && setSelectedProdi && (
-              <SelectProdi selected={selectedProdi ?? null} onChange={setSelectedProdi} />
-            )}
+            {isKaryaFilter ? (
+              <>
+                <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
+                {setSelectedPameran && (
+                  <SelectPameran
+                    pameranList={pameranList}
+                    selected={selectedPameran ?? null}
+                    onChange={setSelectedPameran}
+                  />
+                )}
+                {setSelectedKategori && (
+                  <SelectKategori
+                    selected={selectedKategori ?? null}
+                    onChange={setSelectedKategori}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                {!onlyYear && !hideProdi && setSelectedProdi && (
+                  <SelectProdi selected={selectedProdi ?? null} onChange={setSelectedProdi} />
+                )}
 
-            <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
+                <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
 
-            {!onlyYear && setSelectedSemester && (
-              <SelectSemester selected={selectedSemester ?? null} onChange={setSelectedSemester} />
+                {!onlyYear && setSelectedSemester && (
+                  <SelectSemester selected={selectedSemester ?? null} onChange={setSelectedSemester} />
+                )}
+              </>
             )}
           </div>
 

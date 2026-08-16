@@ -15,6 +15,7 @@ import {
   DeleteKarya,
   PilihTerbaik,
   BatalkanTerbaik,
+  SetJuaraKarya,
 } from "@/components/karya/apiKarya";
 import { KaryaItem } from "@/types/karya";
 import { showToast } from "@/components/shared/ui/ToastNotification";
@@ -582,6 +583,26 @@ export default function DetailKarya({ id }: Props) {
           <DetailAction
             // Admin
             onDelete={isAdmin ? () => setShowConfirm(true) : undefined}
+            onSetJuara={
+              isAdmin
+                ? async (j: number | null) => {
+                    try {
+                      setIsLoading(true);
+                      await SetJuaraKarya(id, j);
+                      setForm((prev) => (prev ? { ...prev, juara: j } : null));
+                      showToast(
+                        j ? `Karya berhasil dijadikan Juara ${j}!` : "Status juara dibatalkan.",
+                        "success"
+                      );
+                    } catch (err: any) {
+                      showToast("Gagal mengubah status juara karya.", "error");
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }
+                : undefined
+            }
+            juara={form.juara}
             // Ketua PBL
             onSave={isKetuaPbl && !isPameranLocked ? handleSave : undefined}
             // KPS

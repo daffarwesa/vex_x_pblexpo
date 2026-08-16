@@ -87,6 +87,20 @@ export async function BatalkanTerbaik(id_karya: number) {
 }
 
 // =============================
+// ADMIN: TENTUKAN JUARA 1, 2, 3
+// =============================
+export async function SetJuaraKarya(id_karya: number, juara: number | null) {
+  try {
+    const res = await url.post(`/api/admin/karya/${id_karya}/juara`, { juara });
+    return res.data;
+  } catch (err) {
+    // Fallback jika API backend belum menyediakan endpoint spesifik
+    const res = await url.patch(`/api/kps/karya/${id_karya}/terbaik`, { juara });
+    return res.data;
+  }
+}
+
+// =============================
 // HAPUS KARYA (ADMIN ONLY)
 // =============================
 export async function DeleteKarya(id: number) {

@@ -16,6 +16,7 @@ export interface KaryaItem {
   pameranId?: number;
   pameranTitle?: string;
   isTerbaik?: boolean;
+  juara?: number | null; // 1, 2, 3 atau null
   canEdit?: boolean;
   editMessage?: string | null;
 }

@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import FilterSection from "@/components/pameran/FilterSection";
-import KaryaGrid from "@/components/karya/KaryaGrid";
+import PosterCard from "@/components/karya/KaryaPosterCard";
 import { KaryaItem, PameranItem } from "@/types/karya";
-import { PRODI_OPTIONS } from "@/types/pameran";
-import { ProdiType } from "@/components/shared/filter/SelectProdi";
 import { TahunType } from "@/components/shared/filter/SelectTahun";
-import { SemesterType } from "@/components/shared/filter/SelectSemester";
+import { KategoriType } from "@/components/shared/filter/SelectKategori";
 import { useAuth } from "@/context/AuthContext";
 import { GetKarya, GetKaryaAdmin, GetKaryaKps } from "./apiKarya";
+import { HiChevronLeft, HiChevronRight } from "react-icons/hi2";
 
 interface Props {
   href: string;
@@ -25,15 +25,15 @@ export default function PageKarya({ href }: Props) {
   const [pameranList, setPameranList] = useState<PameranItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [selectedProdi, setSelectedProdi] = useState<ProdiType | null>(null);
-  const [selectedTahun, setSelectedTahun] = useState<TahunType | null>(null);
-  const [selectedSemester, setSelectedSemester] = useState<SemesterType | null>(
-    null,
-  );
+  // Filters: Search, Tahun, Pameran, Kategori
   const [search, setSearch] = useState("");
-  const [pages, setPages] = useState<Record<string, number>>({});
+  const [selectedTahun, setSelectedTahun] = useState<TahunType | null>(null);
+  const [selectedPameran, setSelectedPameran] = useState<PameranItem | null>(null);
+  const [selectedKategori, setSelectedKategori] = useState<KategoriType | null>(null);
 
-  const PER_PAGE = 4;
+  // Pagination 4x3 (12 items)
+  const [currentPage, setCurrentPage] = useState(1);
+  const PER_PAGE = 12;
 
   // =============================
   // FETCH
@@ -49,64 +49,44 @@ export default function PageKarya({ href }: Props) {
             ? await GetKaryaAdmin()
             : await GetKarya();
 
-        // ← Tambah mapper ini khusus KPS
-        const mapKaryaItem = (item: any): KaryaItem => {
-  const tanggalMulai = item.stan?.pameran?.tanggal_mulai ?? "";
-  const bulan = tanggalMulai ? new Date(tanggalMulai).getMonth() + 1 : 0;
-  const semester = bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
-
-  return {
-    id: item.id_karya,
-    title: item.judul,
-    description: item.deskripsi,
-    category: item.stan?.pameran?.kategori ?? "",
-    image: item.gambar_poster
-      ? `http://localhost:8000/storage/${item.gambar_poster}`
-      : "",
-    thumbnail: item.gambar_sampul
-      ? `http://localhost:8000/storage/${item.gambar_sampul}`
-      : "",
-    link: item.tautan ?? "",
-    year: tanggalMulai.slice(0, 4),
-    semester,
-    booth: String(item.id_stan ?? ""),
-    pameranId: item.id_pameran,
-    pameranTitle: item.stan?.pameran?.judul ?? `Pameran #${item.id_pameran}`,
-    isTerbaik: item.is_terbaik ?? false,
-  };
-};
         const raw = res.karya ?? [];
-        const data: KaryaItem[] = isKps
-          ? raw.map((item: any) => {
-              const tanggalMulai = item.stan?.pameran?.tanggal_mulai ?? "";
-              const bulan = tanggalMulai
-                ? new Date(tanggalMulai).getMonth() + 1
-                : 0;
-              const semester =
-                bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
+        const data: KaryaItem[] = raw.map((item: any) => {
+          const tanggalMulai =
+            item.stan?.pameran?.tanggal_mulai ?? item.pameran?.tanggal_mulai ?? "";
+          const bulan = tanggalMulai ? new Date(tanggalMulai).getMonth() + 1 : 0;
+          const semester =
+            bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
 
-              return {
-                id: item.id_karya,
-                title: item.judul,
-                description: item.deskripsi,
-                category: item.stan?.pameran?.kategori ?? "",
-                image: item.gambar_poster
-                  ? `http://localhost:8000/storage/${item.gambar_poster}`
-                  : "",
-                thumbnail: item.gambar_sampul
-                  ? `http://localhost:8000/storage/${item.gambar_sampul}`
-                  : "",
-                link: item.tautan ?? "",
-                year: tanggalMulai.slice(0, 4),
-                semester, // ← sekarang terisi "Ganjil" / "Genap"
-                booth: String(item.id_stan ?? ""),
-                pameranId: item.id_pameran,
-                pameranTitle:
-                  item.stan?.pameran?.judul ?? `Pameran #${item.id_pameran}`,
-                isTerbaik: item.is_terbaik ?? false,
-              };
-            })
-          : raw ;
+          return {
+            id: item.id_karya ?? item.id,
+            title: item.judul ?? item.title,
+            description: item.deskripsi ?? item.description,
+            category:
+              item.stan?.pameran?.kategori ??
+              item.pameran?.kategori ??
+              item.kategori ??
+              item.category ??
+              "",
+            image: item.gambar_poster
+              ? `http://localhost:8000/storage/${item.gambar_poster}`
+              : item.image ?? "",
+            thumbnail: item.gambar_sampul
+              ? `http://localhost:8000/storage/${item.gambar_sampul}`
+              : item.thumbnail ?? "",
+            link: item.tautan ?? item.link ?? "",
+            year: tanggalMulai ? tanggalMulai.slice(0, 4) : item.year ?? "",
+            semester,
+            booth: String(item.id_stan ?? item.booth ?? ""),
+            pameranId: item.id_pameran ?? item.pameranId,
+            pameranTitle:
+              item.stan?.pameran?.judul ??
+              item.pameran?.judul ??
+              item.pameranTitle ??
+              `Pameran #${item.id_pameran ?? item.pameranId}`,
+            isTerbaik: item.is_terbaik ?? item.isTerbaik ?? false,
+            juara: item.juara ?? (item.is_terbaik ? 1 : null),
+          };
+        });
 
         setKaryaList(data);
 
@@ -130,244 +110,147 @@ export default function PageKarya({ href }: Props) {
     fetchKarya();
   }, [authLoading, isAdmin, isKps]);
 
-  // =============================
-  // PAGINATION HELPER
-  // =============================
-  const changePage = (
-    key: string,
-    type: "next" | "prev",
-    totalPages: number,
-  ) => {
-    setPages((prev) => {
-      const current = prev[key] || 1;
-      const next =
-        type === "next"
-          ? Math.min(current + 1, totalPages)
-          : Math.max(current - 1, 1);
-      return { ...prev, [key]: next };
-    });
-  };
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedTahun, selectedPameran, selectedKategori]);
 
   // =============================
-  // DATA KPS — group by pameran
-  // =============================
-  const karyaByPameran = useMemo(() => {
-    if (!isKps) return [];
-
-    const keyword = search.toLowerCase();
-    const filtered = karyaList.filter((item) => {
-      const matchSearch =
-        (item.title ?? "").toLowerCase().includes(keyword) ||
-        (item.pameranTitle ?? "").toLowerCase().includes(keyword);
-      const matchTahun = !selectedTahun || item.year === selectedTahun.name;
-      const matchSemester =
-        !selectedSemester || item.semester === selectedSemester.name;
-      return matchSearch && matchTahun && matchSemester;
-    });
-
-    const map = new Map<number, { pameran: PameranItem; karya: KaryaItem[] }>();
-    filtered.forEach((item) => {
-      if (!item.pameranId) return;
-      if (!map.has(item.pameranId)) {
-        const found = pameranList.find((p) => p.id === item.pameranId);
-        map.set(item.pameranId, {
-          pameran: found ?? {
-            id: item.pameranId,
-            title: item.pameranTitle ?? `Pameran #${item.pameranId}`,
-          },
-          karya: [],
-        });
-      }
-      map.get(item.pameranId)!.karya.push(item);
-    });
-
-    return Array.from(map.values());
-  }, [isKps, karyaList, pameranList, search, selectedTahun, selectedSemester]);
-
-  // =============================
-  // DATA NON-KPS — group by category
+  // FILTER DATA (Flat tanpa grouping)
   // =============================
   const filteredData = useMemo(() => {
-    if (isKps) return [];
     return karyaList.filter((item) => {
-      const prodi = PRODI_OPTIONS.find((p) => p.kode === item.category);
-      const categoryName = prodi?.nama || item.category;
       const keyword = search.toLowerCase();
       const matchSearch =
-        item.title.toLowerCase().includes(keyword) ||
-        categoryName.toLowerCase().includes(keyword);
-      const matchProdi = !selectedProdi || categoryName === selectedProdi.name;
+        (item.title ?? "").toLowerCase().includes(keyword) ||
+        (item.category ?? "").toLowerCase().includes(keyword) ||
+        (item.pameranTitle ?? "").toLowerCase().includes(keyword);
+
       const matchTahun = !selectedTahun || item.year === selectedTahun.name;
-      const matchSemester =
-        !selectedSemester || item.semester === selectedSemester.name;
-      return matchSearch && matchProdi && matchTahun && matchSemester;
+      const matchPameran =
+        !selectedPameran || item.pameranId === selectedPameran.id;
+      const matchKategori =
+        !selectedKategori ||
+        item.category.toLowerCase() === selectedKategori.name.toLowerCase();
+
+      return matchSearch && matchTahun && matchPameran && matchKategori;
     });
-  }, [
-    isKps,
-    karyaList,
-    search,
-    selectedProdi,
-    selectedTahun,
-    selectedSemester,
-  ]);
-
-  const categories = [
-    ...new Set(
-      filteredData.map((i) => i.category).filter((c): c is string => !!c),
-    ),
-  ];
-
-  const kpsProdiNama =
-    PRODI_OPTIONS.find((p) => p.kode === user?.program_studi)?.nama ||
-    user?.program_studi ||
-    "Prodi Anda";
+  }, [karyaList, search, selectedTahun, selectedPameran, selectedKategori]);
 
   // =============================
-  // LOADING
+  // PAGINATION 4x3 (12/halaman)
   // =============================
-  // Jadi ini:
+  const totalPages = Math.ceil(filteredData.length / PER_PAGE) || 1;
+  const paginatedKarya = useMemo(() => {
+    const start = (currentPage - 1) * PER_PAGE;
+    return filteredData.slice(start, start + PER_PAGE);
+  }, [filteredData, currentPage]);
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-secondary-color font-poppins">
         {/* HERO SKELETON */}
         <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
           <div className="autoMid">
-            {/* Filter bar skeleton */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4 md:pt-[30px] pb-5">
               <div className="h-[42px] rounded-xl bg-white/20 animate-pulse flex-1" />
               <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
               <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
+              <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
             </div>
           </div>
         </section>
 
-        {/* CATEGORY + CARDS SKELETON */}
-        <main className="autoMid py-10 space-y-10">
-          {Array.from({ length: 2 }).map((_, catIdx) => (
-            <div key={catIdx}>
-              {/* Category title skeleton */}
-              <div className="h-[22px] w-[140px] rounded-lg bg-gray-200 animate-pulse mb-4" />
-
-              {/* Cards skeleton — ikuti grid KaryaGrid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[80px] rounded-xl bg-gray-200 animate-pulse"
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
+        {/* CARDS SKELETON (4x3 = 12) */}
+        <main className="autoMid py-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[280px] rounded-xl bg-gray-200 animate-pulse"
+              />
+            ))}
+          </div>
         </main>
       </div>
     );
   }
 
-  // =============================
-  // RENDER KPS
-  // =============================
-  if (isKps) {
-    return (
-      <div className="min-h-screen bg-secondary-color font-poppins">
-        <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
-          <div className="autoMid">
-            <FilterSection
-              search={search}
-              setSearch={setSearch}
-              selectedTahun={selectedTahun}
-              setSelectedTahun={setSelectedTahun}
-              selectedSemester={selectedSemester}
-              setSelectedSemester={setSelectedSemester}
-              hideProdi={true}
-              searchPlaceholder="Cari karya atau pameran..."
-            />
-          </div>
-        </section>
-
-        <main className="autoMid space-y-10 py-10">
-          {karyaByPameran.length === 0 ? (
-            <p className="py-20 text-center text-sm text-gray-400">
-              Belum ada karya yang tersedia.
-            </p>
-          ) : (
-            karyaByPameran.map(({ pameran, karya }) => {
-              const key = `pameran-${pameran.id}`;
-              const totalPages = Math.ceil(karya.length / PER_PAGE);
-              const currentPage = pages[key] || 1;
-              const start = (currentPage - 1) * PER_PAGE;
-              const currentData = karya.slice(start, start + PER_PAGE);
-
-              return (
-                <KaryaGrid
-                  key={pameran.id}
-                  category={pameran.title}
-                  data={currentData}
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  href={href}
-                  pameranList={pameranList}
-                  onPrev={() => changePage(key, "prev", totalPages)}
-                  onNext={() => changePage(key, "next", totalPages)}
-                />
-              );
-            })
-          )}
-        </main>
-      </div>
-    );
-  }
-
-  // =============================
-  // RENDER DEFAULT (Admin / Ketua PBL)
-  // =============================
   return (
-  <div className="min-h-screen bg-secondary-color font-poppins">
-    <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
-      <div className="autoMid">
-        <FilterSection
-          search={search}
-          setSearch={setSearch}
-          selectedProdi={selectedProdi}
-          setSelectedProdi={setSelectedProdi}
-          selectedTahun={selectedTahun}
-          setSelectedTahun={setSelectedTahun}
-          selectedSemester={selectedSemester}
-          setSelectedSemester={setSelectedSemester}
-          hideProdi={!isAdmin}
-        />
-      </div>
-    </section>
+    <div className="min-h-screen bg-secondary-color font-poppins">
+      {/* FILTER SECTION */}
+      <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
+        <div className="autoMid">
+          <FilterSection
+            search={search}
+            setSearch={setSearch}
+            isKaryaFilter={true}
+            selectedTahun={selectedTahun}
+            setSelectedTahun={setSelectedTahun}
+            pameranList={pameranList}
+            selectedPameran={selectedPameran}
+            setSelectedPameran={setSelectedPameran}
+            selectedKategori={selectedKategori}
+            setSelectedKategori={setSelectedKategori}
+            searchPlaceholder="Cari judul, pameran, atau kategori..."
+          />
+        </div>
+      </section>
 
-      <main className="autoMid space-y-10 py-10">
-        {categories.length === 0 ? (
+      {/* LIST KARYA (FLAT 4x3 GRID) */}
+      <main className="autoMid py-10">
+        {filteredData.length === 0 ? (
           <p className="py-20 text-center text-sm text-gray-400">
-            Belum ada karya yang tersedia.
+            Belum ada karya yang sesuai dengan filter.
           </p>
         ) : (
-          categories.map((cat) => {
-            const data = filteredData.filter((item) => item.category === cat);
-            const totalPages = Math.ceil(data.length / PER_PAGE);
-            const currentPage = pages[cat] || 1;
-            const start = (currentPage - 1) * PER_PAGE;
-            const currentData = data.slice(start, start + PER_PAGE);
-            const prodi = PRODI_OPTIONS.find((p) => p.kode === cat);
-            const categoryName = prodi?.nama || cat;
+          <>
+            {/* Grid 4 Kolom x 3 Baris */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+              {paginatedKarya.map((karya) => (
+                <Link key={karya.id} href={`${href}${karya.id}`}>
+                  <PosterCard karya={karya} pameranList={pameranList} />
+                </Link>
+              ))}
+            </div>
 
-            return (
-              <KaryaGrid
-                key={cat}
-                category={categoryName}
-                data={currentData}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                href={href}
-                pameranList={pameranList}
-                onPrev={() => changePage(cat, "prev", totalPages)}
-                onNext={() => changePage(cat, "next", totalPages)}
-              />
-            );
-          })
+            {/* Kontrol Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-12 select-none">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition"
+                >
+                  <HiChevronLeft size={18} />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-10 h-10 rounded-xl font-semibold text-sm transition shadow-sm ${
+                      currentPage === page
+                        ? "bg-main-blue text-white"
+                        : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition"
+                >
+                  <HiChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

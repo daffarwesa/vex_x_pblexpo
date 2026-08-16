@@ -159,11 +159,7 @@ const boxes = [
           'bg-white border border-gray-100',
         )}
       >
-        <div className="flex flex-col items-center mb-8">
-          <Logo />
-        </div>
-
-        <form onSubmit={handleLogin} className="w-full space-y-5 select-none">
+        <form onSubmit={handleLogin} className="w-full space-y-5 select-none mt-2">
           {success && <div className="bg-green-100 text-green-600 text-sm p-3 rounded-lg mb-4">{success}</div>}
           {error && <div className="bg-red-100 text-red-600 text-sm p-3 rounded-lg mb-4">{error}</div>}
 
