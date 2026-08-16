@@ -22,7 +22,7 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
   const [errors, setErrors] = useState<FormErrors>({});
 
   const [form, setForm] = useState<PameranForm>({
-    prodi: '',
+    prodi: 'UMUM',
     title: '',
     capacity: 24,
     publishDate: '',
@@ -57,7 +57,7 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
         const p = res.pameran;
 
         setForm({
-          prodi: p.kode_prodi || '',
+          prodi: p.category || 'UMUM',
           title: p.title || '',
           capacity: p.stats?.kapasitas ?? 24,
           publishDate: toInputDate(p.stats?.startDate),
@@ -100,7 +100,6 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!form.prodi) newErrors.prodi = 'Program studi wajib dipilih';
     if (!form.title) newErrors.title = 'Judul pameran wajib diisi';
     if (!form.publishDate) newErrors.publishDate = 'Tanggal mulai wajib diisi';
     if (!form.endDate) newErrors.endDate = 'Tanggal berakhir wajib diisi';
@@ -128,9 +127,9 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
       setLoading(true);
 
       const formData = new FormData();
-      formData.append('kategori', form.prodi);
+      formData.append('kategori', form.prodi || 'UMUM');
       formData.append('judul', form.title);
-      formData.append('kapasitas', String(form.capacity));
+      formData.append('kapasitas', String(form.capacity || 24));
       formData.append('tanggal_mulai', form.publishDate);
       formData.append('tanggal_akhir', form.endDate);
       formData.append('tanggal_mulai_persiapan', form.prepareStart);

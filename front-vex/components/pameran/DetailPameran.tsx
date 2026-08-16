@@ -232,14 +232,12 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
               <Stat title="Total Karya" value={stats.karya} />
               <Stat title="Tanggal Buka" value={stats.startDate} />
               <Stat title="Tanggal Tutup" value={stats.endDate} />
-              <Stat title="Program Studi" value={stats.studyLevel} />
             </div>
             <div className="md:hidden space-y-3">
               <Row title="Total Suka" value={stats.likes} />
               <Row title="Total Karya" value={stats.karya} />
               <Row title="Tanggal Buka" value={stats.startDate} />
               <Row title="Tanggal Tutup" value={stats.endDate} />
-              <Row title="Program Studi" value={stats.studyLevel} />
             </div>
           </div>
         </div>

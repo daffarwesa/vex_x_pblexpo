@@ -102,31 +102,31 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 3 - Pilih Stan */}
-      <section id="stan" className="bg-secondary-color w-full scroll-mt-24">
+      {/* SECTION 3 - Preview Pameran */}
+      <section id="preview-pameran" className="bg-secondary-color w-full scroll-mt-24">
         <div className="autoMid py-[60px] min-h-[740px] flex flex-col gap-10 px-4 sm:px-6 lg:px-0">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-end w-full pb-6 lg:pb-10">
             <div className="order-2 lg:order-1 flex items-end">
               <p className="font-poppins font-light text-[16px] sm:text-[18px] lg:text-lg w-full max-w-[500px]">
-                Kami menyediakan 3 aset bawaan yang dapat anda pilih untuk menampilkan karya-karya anda.
+                Jelajahi pratinjau suasana pameran interaktif untuk menampilkan karya-karya terbaik.
               </p>
             </div>
 
             <div className="order-1 lg:order-2 text-main-blue flex flex-col lg:items-end text-left lg:text-right">
               <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">
-                PILIH DARI BERBAGAI
+                PREVIEW
               </p>
-              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">STAN</p>
+              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">PAMERAN</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-[50px] w-full">
-            <Card link="/image/img-stan-a.svg" title="STAN_1" className="w-full aspect-[4/3] object-cover rounded-xl" />
-            <Card link="/image/img-stan-b.svg" title="STAN_2" className="w-full aspect-[4/3] object-cover rounded-xl" />
+            <Card link="/image/img-stan-a.svg" title="PREVIEW_1" className="w-full aspect-[4/3] object-cover rounded-xl" />
+            <Card link="/image/img-stan-b.svg" title="PREVIEW_2" className="w-full aspect-[4/3] object-cover rounded-xl" />
             <div className="sm:col-span-2 lg:col-span-1">
               <Card
                 link="/image/img-stan-c.svg"
-                title="STAN_3"
+                title="PREVIEW_3"
                 className="w-full aspect-[4/3] object-cover rounded-xl"
               />
             </div>
@@ -157,7 +157,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 5 - Karya Terbaik */}
+      {/* SECTION 5 - Juara 1 */}
       <section className="bg-secondary-color w-full">
         <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] grid grid-cols-1 lg:grid-cols-8 gap-10 px-4 sm:px-6 lg:px-0 items-start">
           <div className="order-1 lg:order-2 lg:col-span-5 relative w-full shadow-xl rounded-xl overflow-hidden">
@@ -169,14 +169,14 @@ export default function HomePage() {
 
           <div className="order-2 lg:order-1 lg:col-span-3 flex flex-col gap-8">
             <div className="text-main-blue">
-              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">KARYA</p>
-              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">TERBAIK</p>
+              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">JUARA</p>
+              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">1</p>
             </div>
 
             <div className="grid gap-5 max-w-[500px]">
               {[
-                'Dinilai langsung oleh kepala program studi berdasarkan kualitas, kreativitas, inovasi, dan nilai terbaik dari setiap karya.',
-                'Setiap program studi memilih satu karya terbaik sebagai perwakilan yang akan ditampilkan di landing page hingga pameran berikutnya.',
+                'Karya pemenang Juara 1 yang dinilai dan dipilih berdasarkan kualitas, kreativitas, inovasi, dan nilai terbaik.',
+                'Karya terbaik akan ditampilkan di landing page utama sebagai perwakilan pameran hingga periode berikutnya.',
               ].map((text, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <FaStar className="text-[22px] sm:text-lg shrink-0 mt-1" />
@@ -188,7 +188,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 6 - Karya Favorit */}
+      {/* SECTION 6 - Best Kategori */}
       <section className="bg-secondary-color w-full">
         <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] grid grid-cols-1 lg:grid-cols-8 gap-10 px-4 sm:px-6 lg:px-0 items-start">
           <div className="order-1 lg:col-span-5 relative rounded-xl shadow-xl overflow-hidden w-full">
@@ -200,14 +200,14 @@ export default function HomePage() {
 
           <div className="order-2 lg:col-span-3 flex flex-col gap-8">
             <div className="text-main-blue flex flex-col items-start lg:items-end text-left lg:text-right">
-              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">KARYA</p>
-              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">FAVORIT</p>
+              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">BEST</p>
+              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">KATEGORI</p>
             </div>
 
             <div className="grid gap-5">
               {[
-                'Ditentukan berdasarkan jumlah likes terbanyak dari seluruh pengunjung sebagai karya terfavorit global dari keseluruhan pameran.',
-                'Karya dengan likes tertinggi akan menjadi yang paling populer dan berhak memperoleh medali karya terfavorit utama.',
+                'Karya pilihan terbaik dari setiap kategori yang paling banyak diminati dan diapresiasi oleh pengunjung pameran.',
+                'Karya dengan penilaian dan antusiasme tertinggi berhak mendapatkan penghargaan Best Kategori.',
               ].map((text, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <FaStar className="text-[22px] sm:text-lg shrink-0 mt-1" />

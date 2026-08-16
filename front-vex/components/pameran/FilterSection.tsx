@@ -20,9 +20,10 @@ interface FilterSectionProps {
   setSelectedProdi?: (v: ProdiType | null) => void;
   selectedTahun: TahunType | null;
   setSelectedTahun: (v: TahunType | null) => void;
-  selectedSemester: SemesterType | null;
-  setSelectedSemester: (v: SemesterType | null) => void;
+  selectedSemester?: SemesterType | null;
+  setSelectedSemester?: (v: SemesterType | null) => void;
   hideProdi?: boolean;
+  onlyYear?: boolean;
   searchPlaceholder?: string;
 }
 
@@ -36,6 +37,7 @@ export default function FilterSection({
   selectedSemester,
   setSelectedSemester,
   hideProdi = false,
+  onlyYear = false,
   searchPlaceholder = 'Cari Pameran...',
 }: FilterSectionProps) {
   const [openFilter, setOpenFilter] = useState(false);
@@ -70,17 +72,21 @@ export default function FilterSection({
 
           {/* FILTERS */}
           <div
-            className={`w-full lg:w-[40%] grid gap-3 lg:gap-[30px] ${
-              hideProdi ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-3'
+            className={`flex items-center justify-end ${
+              onlyYear ? 'w-full lg:w-auto' : 'w-full lg:w-[40%] grid gap-3 lg:gap-[30px] ' + (hideProdi ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-3')
             }`}
           >
-            {!hideProdi && setSelectedProdi && (
+            {!onlyYear && !hideProdi && setSelectedProdi && (
               <SelectProdi selected={selectedProdi ?? null} onChange={setSelectedProdi} />
             )}
 
-            <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
+            <div className={onlyYear ? "w-[160px]" : "w-full"}>
+              <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
+            </div>
 
-            <SelectSemester selected={selectedSemester} onChange={setSelectedSemester} />
+            {!onlyYear && setSelectedSemester && (
+              <SelectSemester selected={selectedSemester ?? null} onChange={setSelectedSemester} />
+            )}
           </div>
         </div>
       </section>
@@ -121,13 +127,15 @@ export default function FilterSection({
 
           {/* FILTER CONTENT */}
           <div className="flex flex-col gap-4">
-            {!hideProdi && setSelectedProdi && (
+            {!onlyYear && !hideProdi && setSelectedProdi && (
               <SelectProdi selected={selectedProdi ?? null} onChange={setSelectedProdi} />
             )}
 
             <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
 
-            <SelectSemester selected={selectedSemester} onChange={setSelectedSemester} />
+            {!onlyYear && setSelectedSemester && (
+              <SelectSemester selected={selectedSemester ?? null} onChange={setSelectedSemester} />
+            )}
           </div>
 
           {/* BUTTON */}

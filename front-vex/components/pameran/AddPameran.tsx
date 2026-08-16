@@ -15,7 +15,7 @@ export default function AddPameran() {
   const [preview, setPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
   const [form, setForm] = useState<PameranForm>({
-    prodi: "",
+    prodi: "UMUM",
     title: "",
     capacity: 24,
     publishDate: "",
@@ -48,7 +48,7 @@ export default function AddPameran() {
 
   const resetForm = () => {
     setForm({
-      prodi: "",
+      prodi: "UMUM",
       title: "",
       capacity: 24,
       publishDate: "",
@@ -66,7 +66,6 @@ export default function AddPameran() {
     const newErrors: FormErrors = {};
 
     if (!form.image) newErrors.image = "Thumbnail wajib diupload";
-    if (!form.prodi) newErrors.prodi = "Program studi wajib dipilih";
     if (!form.title) newErrors.title = "Judul pameran wajib diisi";
     if (!form.publishDate) newErrors.publishDate = "Tanggal mulai wajib diisi";
     if (!form.endDate) newErrors.endDate = "Tanggal berakhir wajib diisi";
@@ -88,9 +87,9 @@ export default function AddPameran() {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("category", form.prodi);
+      formData.append("category", form.prodi || "UMUM");
       formData.append("title", form.title);
-      formData.append("capacity", String(form.capacity));
+      formData.append("capacity", String(form.capacity || 24));
       formData.append("start_date", form.publishDate);
       formData.append("end_date", form.endDate);
       formData.append("prepare_start", form.prepareStart);
