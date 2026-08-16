@@ -1,0 +1,120 @@
+services:
+  # ==========================================
+  # Frontend Service (Next.js 16 + React 19)
+  # ==========================================
+  frontend:
+    build:
+      context: ./front-vex
+      dockerfile: ../docker/node/Dockerfile
+    container_name: vex_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    volumes:
+      - ./front-vex:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - vex_network
+
+  # ==========================================
+  # Backend Service (Laravel 13 - PHP 8.3 FPM)
+  # ==========================================
+  backend:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    container_name: vex_backend
+    restart: unless-stopped
+    environment:
+      - DB_HOST=database
+      - DB_PORT=3306
+      - DB_DATABASE=pbl-vex
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./back-vex:/var/www/html
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - vex_network
+
+  # ==========================================
+  # Nginx Webserver (Proxy for Laravel API & Storage)
+  # ==========================================
+  nginx:
+    image: nginx:alpine
+    container_name: vex_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./back-vex:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - vex_network
+
+  # ==========================================
+  # MySQL Database Service
+  # ==========================================
+  database:
+    image: mysql:8.0
+    container_name: vex_database
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: pbl-vex
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - vex_network
+
+  # ==========================================
+  # Redis Cache & Store Service
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: vex_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - vex_network
+
+volumes:
+  db_data:
+    driver: local
+  redis_data:
+    driver: local
+  frontend_node_modules:
+    driver: local
+
+networks:
+  vex_network:
+    driver: bridge
