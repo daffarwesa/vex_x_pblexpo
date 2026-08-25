@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('nama_sponsor');
             $table->string('poster')->nullable();
             $table->year('tahun')->nullable();
-            $table->string('tipe')->nullable();
+            $table->enum('tipe', ['Kecil', 'Besar'])->default('Kecil');
         });
     }
 

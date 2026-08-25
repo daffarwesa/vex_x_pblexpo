@@ -197,7 +197,7 @@ CREATE TABLE `sponsor` (
   `nama_sponsor` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `poster` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `tahun` year DEFAULT NULL,
-  `tipe` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tipe` enum('Kecil','Besar') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Kecil',
   PRIMARY KEY (`id_sponsor`),
   KEY `sponsor_id_pameran_foreign` (`id_pameran`),
   CONSTRAINT `sponsor_id_pameran_foreign` FOREIGN KEY (`id_pameran`) REFERENCES `pameran` (`id_pameran`) ON DELETE CASCADE
