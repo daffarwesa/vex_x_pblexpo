@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreign('id_pameran')->references('id_pameran')->on('pameran')->cascadeOnDelete();
             $table->string('nama_sponsor');
             $table->string('poster')->nullable();
-            $table->string('logo')->nullable();
+            $table->string('logo')->nullable(); //ga ada
             $table->string('tipe')->nullable();
         });
     }
