@@ -12,36 +12,41 @@ class Karya extends Model
 
     protected $fillable = [
         'id_pengguna',
+        'id_kategori',
         'id_stan',
         'id_pameran',
         'judul',
         'deskripsi',
         'tautan',
         'gambar_poster',
+        'gambar_poster_large',
+        'gambar_poster_medium',
+        'gambar_poster_small',
         'gambar_sampul',
+        'gambar_sampul_large',
+        'gambar_sampul_medium',
+        'gambar_sampul_small',
         'lantai',
-        'is_terbaik',
+        'is_juara',
+        'is_best',
     ];
 
     protected $casts = [
-        'is_terbaik' => 'boolean',
         'lantai' => 'integer',
+        'is_juara' => 'boolean',
+        'is_best' => 'boolean',
     ];
 
-    // Relasi ke pengguna (Ketua PBL)
     public function pengguna()
     {
         return $this->belongsTo(Pengguna::class, 'id_pengguna', 'id');
     }
 
-    /**
-     * Relasi ke stan.
-     * Nama relasi diubah dari 'model' → 'stan' agar konsisten
-     * dengan Controller yang memanggil ->with(['stan', 'pameran'])
-     * dan $item->stan->...
-     *
-     * FK: id_stan → stan.id_stan (bukan model_stan)
-     */
+    public function kategori()
+    {
+        return $this->belongsTo(Kategori::class, 'id_kategori', 'id_kategori');
+    }
+
     public function stan()
     {
         return $this->belongsTo(Stan::class, 'id_stan', 'id_stan');
@@ -52,19 +57,22 @@ class Karya extends Model
         return $this->belongsTo(Pameran::class, 'id_pameran', 'id_pameran');
     }
 
-    // Relasi ke komentar
+    // Log siapa & kapan menilai — BUKAN sumber is_best/is_juara (itu kolom langsung di karya)
+    public function penilaian()
+    {
+        return $this->hasMany(Penilaian::class, 'id_karya', 'id_karya');
+    }
+
     public function komentar()
     {
         return $this->hasMany(Komentar::class, 'id_karya', 'id_karya');
     }
 
-    // Relasi ke suka
     public function suka()
     {
         return $this->hasMany(Suka::class, 'id_karya', 'id_karya');
     }
 
-    // Hitung total suka
     public function totalSuka()
     {
         return $this->suka()->count();

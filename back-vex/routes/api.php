@@ -9,7 +9,6 @@ use App\Http\Controllers\GameAssetController;
 use App\Http\Controllers\KaryaController;
 use App\Http\Controllers\KomentarController;
 use App\Http\Controllers\SukaController;
-use App\Http\Controllers\KpsController;
 
 // =============================
 // PUBLIC ROUTES
@@ -33,7 +32,6 @@ Route::prefix('auth')->group(function () {
 Route::get('/pameran', [PameranController::class, 'index']);
 Route::get('/pameran/{identifier}', [PameranController::class, 'show']);
 Route::get('/karya/{id_karya}/komentar', [KomentarController::class, 'index']);
-Route::get('/karya-terbaik', [KpsController::class, 'karyaTerbaik']); // ✅ public
 Route::get('/public/karya/terbaik', [KaryaController::class, 'karyaTerbaikAktif']);
 Route::get('/public/karya/favorit', [KaryaController::class, 'karyaFavoritAktif']);
 
@@ -86,6 +84,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Manajemen Karya (Admin)
         Route::get('/karya', [KaryaController::class, 'indexAdmin']);
         Route::delete('/karya/{id}', [KaryaController::class, 'destroy']);
+
+        Route::post('/karya/{id}/toggle-best', [KaryaController::class, 'toggleBest']);
+        Route::post('/karya/{id}/toggle-juara', [KaryaController::class, 'toggleJuara']);
     
     });
 
@@ -96,11 +97,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', function () {
             return response()->json(['status' => 'success', 'page' => 'KPS Dashboard']);
         });
-
-        // ✅ Manajemen karya terbaik
-        Route::get('/karya', [KpsController::class, 'daftarKarya']);
-        Route::patch('/karya/{id_karya}/terbaik', [KpsController::class, 'pilihTerbaik']);
-        Route::patch('/karya/{id_karya}/batalkan', [KpsController::class, 'batalkanTerbaik']);
     });
 
     // =============================

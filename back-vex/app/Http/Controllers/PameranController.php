@@ -66,18 +66,13 @@ class PameranController extends Controller
     // =============================
     public function index()
     {
-        $pameran = Pameran::with('prodi')
-            ->withCount(['karya', 'suka'])
-            ->get();
+        $pameran = Pameran::withCount(['karya', 'suka'])->get();
 
         $transformed = $pameran->map(fn($item) => [
             'id' => $item->id_pameran,
             'slug' => $item->slug,
             'title' => $item->judul,
-            'subtitle' => $item->prodi?->nama_prodi ?? $item->kategori,
-            'category' => $item->prodi?->nama_prodi ?? $item->kategori,
-            'kode_prodi' => $item->kategori,
-            'date' => $item->tanggal_mulai,
+            'openDate' => $item->tanggal_buka,
             ...$this->buildBannerUrls($item),
             'likes' => $item->suka_count,
             'karya' => $item->karya_count,
@@ -90,21 +85,13 @@ class PameranController extends Controller
             'stats' => [
                 'likes' => $item->suka_count,
                 'karya' => $item->karya_count,
+                'kapasitas' => $item->kapasitas,
                 'prepareStartDate' => $item->tanggal_mulai_persiapan,
                 'prepareEndDate' => $item->tanggal_akhir_persiapan,
-                'startDate' => $item->tanggal_mulai,
-                'endDate' => $item->tanggal_akhir,
-                'studyLevel' => $item->prodi?->nama_prodi ?? $item->kategori,
+                'openDate' => $item->tanggal_buka,
             ],
             'institution' => 'Politeknik Negeri Batam',
         ]);
-
-        if (!$pameran) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Pameran tidak ditemukan.',
-            ], 404);
-        }
 
         return response()->json([
             'status' => 'success',
@@ -113,13 +100,14 @@ class PameranController extends Controller
     }
 
     // =============================
-// DETAIL PAMERAN (bisa lewat slug ATAU id)
-// =============================
+    // DETAIL PAMERAN (bisa lewat slug ATAU id)
+    // =============================
     public function show($identifier)
     {
-        $pameran = Pameran::with(['model3d', 'prodi'])
+        $pameran = Pameran::with('model3d')
             ->withCount(['karya', 'suka'])
             ->where('slug', $identifier)
+            ->orWhere('id_pameran', $identifier)
             ->first();
 
         if (!$pameran) {
@@ -133,10 +121,7 @@ class PameranController extends Controller
             'id' => $pameran->id_pameran,
             'slug' => $pameran->slug,
             'title' => $pameran->judul,
-            'subtitle' => $pameran->prodi?->nama_prodi ?? $pameran->kategori,
-            'kode_prodi' => $pameran->kategori,
-            'category' => $pameran->prodi?->nama_prodi ?? $pameran->kategori,
-            'date' => $pameran->tanggal_mulai,
+            'openDate' => $pameran->tanggal_buka,
             ...$this->buildBannerUrls($pameran),
             'likes' => $pameran->suka_count,
             'karya' => $pameran->karya_count,
@@ -152,9 +137,7 @@ class PameranController extends Controller
                 'kapasitas' => $pameran->kapasitas,
                 'prepareStartDate' => $pameran->tanggal_mulai_persiapan,
                 'prepareEndDate' => $pameran->tanggal_akhir_persiapan,
-                'startDate' => $pameran->tanggal_mulai,
-                'endDate' => $pameran->tanggal_akhir,
-                'studyLevel' => $pameran->prodi?->nama_prodi ?? $pameran->kategori,
+                'openDate' => $pameran->tanggal_buka,
             ],
             'institution' => 'Politeknik Negeri Batam',
         ];
@@ -171,15 +154,13 @@ class PameranController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'category' => 'required|exists:prodi,kode_prodi',
             'banner' => 'required|image|mimes:png,jpg,jpeg|max:5000',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'capacity' => 'nullable|integer',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
             'prepare_start' => 'required|date',
             'prepare_end' => 'required|date|after:prepare_start',
+            'open_date' => 'required|date|after_or_equal:prepare_end',
         ]);
 
         $modelPameran = ModelPameran::where('jenis', 'Pameran')->first();
@@ -195,15 +176,13 @@ class PameranController extends Controller
 
         $pameran = Pameran::create([
             'model_pameran' => $modelPameran->id_model,
-            'kategori' => $request->category,
             'banner' => $bannerPath,
             'judul' => $request->title,
             'deskripsi' => $request->description,
             'kapasitas' => $request->capacity ?? 24,
-            'tanggal_mulai' => $request->start_date,
-            'tanggal_akhir' => $request->end_date,
             'tanggal_mulai_persiapan' => $request->prepare_start,
             'tanggal_akhir_persiapan' => $request->prepare_end,
+            'tanggal_buka' => $request->open_date,
         ]);
 
         $folder = "pameran/{$pameran->id_pameran}";
@@ -236,15 +215,13 @@ class PameranController extends Controller
         }
 
         $request->validate([
-            'kategori' => 'sometimes|exists:prodi,kode_prodi',
             'banner' => 'sometimes|image|mimes:png,jpg,jpeg|max:5000',
             'judul' => 'sometimes|string|max:255',
             'deskripsi' => 'sometimes|string',
             'kapasitas' => 'sometimes|integer',
-            'tanggal_mulai' => 'sometimes|date',
-            'tanggal_akhir' => 'sometimes|date',
             'tanggal_mulai_persiapan' => 'sometimes|date',
             'tanggal_akhir_persiapan' => 'sometimes|date',
+            'tanggal_buka' => 'sometimes|date',
         ]);
 
         if ($request->hasFile('banner')) {
@@ -272,18 +249,14 @@ class PameranController extends Controller
             $pameran->judul = $request->judul;
         if ($request->filled('deskripsi'))
             $pameran->deskripsi = $request->deskripsi;
-        if ($request->filled('kategori'))
-            $pameran->kategori = $request->kategori;
         if ($request->filled('kapasitas'))
             $pameran->kapasitas = $request->kapasitas;
-        if ($request->filled('tanggal_mulai'))
-            $pameran->tanggal_mulai = $request->tanggal_mulai;
-        if ($request->filled('tanggal_akhir'))
-            $pameran->tanggal_akhir = $request->tanggal_akhir;
         if ($request->filled('tanggal_mulai_persiapan'))
             $pameran->tanggal_mulai_persiapan = $request->tanggal_mulai_persiapan;
         if ($request->filled('tanggal_akhir_persiapan'))
             $pameran->tanggal_akhir_persiapan = $request->tanggal_akhir_persiapan;
+        if ($request->filled('tanggal_buka'))
+            $pameran->tanggal_buka = $request->tanggal_buka;
 
         $pameran->save();
 

@@ -13,31 +13,29 @@ class Pameran extends Model
 
     protected $fillable = [
         'model_pameran',
-        'kategori',
         'banner',
+        'banner_large',
+        'banner_medium',
+        'banner_small',
         'judul',
         'slug',
         'deskripsi',
         'kapasitas',
-        'tanggal_mulai',
-        'tanggal_akhir',
         'tanggal_mulai_persiapan',
         'tanggal_akhir_persiapan',
+        'tanggal_buka',
     ];
 
     protected static function boot()
     {
         parent::boot();
-
         static::creating(function ($pameran) {
             if (empty($pameran->slug)) {
                 $base = Str::slug($pameran->judul);
                 $slug = $base . '-' . Str::lower(Str::random(5));
-
                 while (static::where('slug', $slug)->exists()) {
                     $slug = $base . '-' . Str::lower(Str::random(5));
                 }
-
                 $pameran->slug = $slug;
             }
         });
@@ -47,12 +45,6 @@ class Pameran extends Model
     public function model3d()
     {
         return $this->belongsTo(ModelPameran::class, 'model_pameran', 'id_model');
-    }
-
-    // Relasi ke tabel prodi
-    public function prodi()
-    {
-        return $this->belongsTo(Prodi::class, 'kategori', 'kode_prodi');
     }
 
     public function karya()

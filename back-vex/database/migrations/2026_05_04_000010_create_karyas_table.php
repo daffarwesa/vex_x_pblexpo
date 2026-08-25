@@ -11,9 +11,11 @@ return new class extends Migration {
             $table->id('id_karya');
 
             $table->unsignedBigInteger('id_pengguna');
+            $table->unsignedBigInteger('id_kategori');
             $table->unsignedBigInteger('id_stan');
             $table->unsignedBigInteger('id_pameran');
             $table->foreign('id_pengguna')->references('id')->on('pengguna')->cascadeOnDelete();
+            $table->foreign('id_kategori')->references('id_kategori')->on('kategori')->cascadeOnDelete();
             $table->foreign('id_stan')->references('id_stan')->on('stan')->cascadeOnDelete();
             $table->foreign('id_pameran')->references('id_pameran')->on('pameran')->cascadeOnDelete();
             $table->string('judul');
@@ -22,7 +24,6 @@ return new class extends Migration {
             $table->string('gambar_poster');
             $table->string('gambar_sampul');
             $table->unsignedBigInteger('lantai')->nullable();
-            $table->boolean('is_terbaik')->default(false);
         });
     }
 
