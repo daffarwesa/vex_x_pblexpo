@@ -80,7 +80,7 @@ class PameranController extends Controller
             'subtitle' => $item->kategori?->nama_kategori ?? $item->kategori_kode,
             'category' => $item->kategori?->nama_kategori ?? $item->kategori_kode,
             'kode_kategori' => $item->kategori_kode,
-            'date' => $item->tanggal_mulai,
+            'date' => $item->tanggal_buka,
             ...$this->buildBannerUrls($item),
             'likes' => $item->suka_count,
             'karya' => $item->karya_count,
@@ -93,10 +93,10 @@ class PameranController extends Controller
             'stats' => [
                 'likes' => $item->suka_count,
                 'karya' => $item->karya_count,
-                
                 'prepareStartDate' => $item->tanggal_mulai_persiapan,
                 'prepareEndDate' => $item->tanggal_akhir_persiapan,
-                'startDate' => $item->tanggal_mulai,
+                'startDate' => $item->tanggal_buka,
+                'endDate' => null,
                 'studyLevel' => $item->kategori?->nama_kategori ?? $item->kategori_kode,
             ],
             'institution' => 'Politeknik Negeri Batam',
@@ -133,7 +133,7 @@ class PameranController extends Controller
             'subtitle' => $pameran->kategori?->nama_kategori ?? $pameran->kategori_kode,
             'kode_kategori' => $pameran->kategori_kode,
             'category' => $pameran->kategori?->nama_kategori ?? $pameran->kategori_kode,
-            'date' => $pameran->tanggal_mulai,
+            'date' => $pameran->tanggal_buka,
             ...$this->buildBannerUrls($pameran),
             'likes' => $pameran->suka_count,
             'karya' => $pameran->karya_count,
@@ -146,10 +146,10 @@ class PameranController extends Controller
             'stats' => [
                 'likes' => $pameran->suka_count,
                 'karya' => $pameran->karya_count,
-            
                 'prepareStartDate' => $pameran->tanggal_mulai_persiapan,
                 'prepareEndDate' => $pameran->tanggal_akhir_persiapan,
-                'startDate' => $pameran->tanggal_mulai,
+                'startDate' => $pameran->tanggal_buka,
+                'endDate' => null,
                 'studyLevel' => $pameran->kategori?->nama_kategori ?? $pameran->kategori_kode,
             ],
             'institution' => 'Politeknik Negeri Batam',
@@ -171,7 +171,6 @@ class PameranController extends Controller
             'banner' => 'required|image|mimes:png,jpg,jpeg|max:5000',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-           
             'prepare_start' => 'required|date',
             'prepare_end' => 'required|date|after:prepare_start',
             'open_date' => 'required|date|after_or_equal:prepare_end',
@@ -194,7 +193,6 @@ class PameranController extends Controller
             'banner' => $bannerPath,
             'judul' => $request->title,
             'deskripsi' => $request->description,
-          
             'tanggal_mulai_persiapan' => $request->prepare_start,
             'tanggal_akhir_persiapan' => $request->prepare_end,
             'tanggal_buka' => $request->open_date,

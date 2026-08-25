@@ -69,4 +69,9 @@ class Pameran extends Model
             'id_karya'
         );
     }
+
+    public function sponsor()
+    {
+        return $this->hasMany(Sponsor::class, 'id_pameran', 'id_pameran');
+    }
 }

@@ -76,7 +76,6 @@ class Pengguna extends Authenticatable
         return $this->status === self::STATUS_AKTIF;
     }
 
-
     public function kategori()
     {
         return $this->belongsTo(Kategori::class, 'kategori_kode', 'kode_kategori');

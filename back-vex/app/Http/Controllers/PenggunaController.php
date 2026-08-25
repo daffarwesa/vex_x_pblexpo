@@ -95,10 +95,9 @@ class PenggunaController extends Controller
                 'nama' => $request->nama,
                 'email' => $request->email,
                 'password' => Hash::make($request->email),
-                'role' => Pengguna::ROLE_PENCIPTA,
-                'status' => 'aktif',
+                'role' => Pengguna::ROLE_CREATOR,
+                'status' => Pengguna::STATUS_AKTIF,
                 'kategori_kode' => $request->kategori_kode,
-                
             ]);
 
             return response()->json([

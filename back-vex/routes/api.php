@@ -108,11 +108,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/karya/{id}', [KaryaController::class, 'update']);
         Route::post('/karya/{id}/update', [KaryaController::class, 'update']);
         Route::get('/model-stan', [KaryaController::class, 'getModelStan']);
-
-        // Manajemen karya terbaik (formerly KPS)
-        Route::get('/karya/semua', [KpsController::class, 'daftarKarya']);
-        Route::patch('/karya/{id_karya}/terbaik', [KpsController::class, 'pilihTerbaik']);
-        Route::patch('/karya/{id_karya}/batalkan', [KpsController::class, 'batalkanTerbaik']);
     });
 
     // =============================

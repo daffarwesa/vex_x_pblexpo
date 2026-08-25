@@ -137,7 +137,6 @@ class GameAssetController extends Controller
             ->leftJoin('stan', 'karya.id_stan', '=', 'stan.id_stan')
             ->leftJoin('model', 'stan.model_stan', '=', 'model.id_model')
             ->leftJoin('pengguna', 'karya.id_pengguna', '=', 'pengguna.id')
-            ->leftJoin('kelas', 'pengguna.kelas', '=', 'kelas.id_kelas')
             ->where('karya.id_pameran', $idPameran)
             ->select(
                 'karya.id_karya',
@@ -148,11 +147,10 @@ class GameAssetController extends Controller
                 'karya.tautan',
                 'karya.gambar_poster',
                 'karya.gambar_sampul',
-                'karya.lantai',
-                'karya.is_terbaik',
+                'karya.is_best',
+                'pengguna.nama as nama_pengguna',
                 'model.nama_model as nama_stan',
-                DB::raw('model.`3d_model` as booth_model'),
-                'kelas.nama_kelas as zona'
+                DB::raw('model.`3d_model` as booth_model')
             )
             ->orderBy('karya.id_karya')
             ->get();
@@ -189,7 +187,7 @@ class GameAssetController extends Controller
             return [
                 'id_karya' => $karya->id_karya,
                 'id_stan' => $karya->nama_stan ?? ('Stan ' . $karya->id_stan),
-                'kelas' => strtolower(substr($karya->zona ?? '', 0, 1)),
+                'nama_pengguna' => $karya->nama_pengguna ?? 'Anonim',
                 'booth_name' => $karya->judul,
                 'judul' => $karya->judul,
                 'deskripsi' => $karya->deskripsi,
@@ -199,8 +197,7 @@ class GameAssetController extends Controller
                 'model_path' => $boothModel
                     ? "http://localhost:8000/experience/booth-model/" . basename($boothModel)
                     : null,
-                'lantai' => $karya->lantai,
-                'is_terbaik' => (bool) $karya->is_terbaik,
+                'is_terbaik' => (bool) $karya->is_best,
                 'is_terbanyak' => $idTerbanyak !== null && $karya->id_karya === $idTerbanyak,
                 'total_suka' => $totalSuka,
                 'komentar' => $komentar,

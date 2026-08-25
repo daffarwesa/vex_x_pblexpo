@@ -81,11 +81,13 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
     )
     .slice(0, 5);
 
-  // Category: admin → semua, user → hanya yang sedang berlangsung
+  // Category: admin → semua, user → hanya yang sudah/sedang berlangsung
   const openData = filteredData.filter((item) => {
     if (isAdmin) return true;
     const start = new Date(item.stats?.startDate);
-    const end = new Date(item.stats?.endDate);
+    // endDate null → tidak ada batas tutup, cukup cek sudah dibuka
+    if (!item.stats?.endDate) return today >= start;
+    const end = new Date(item.stats.endDate);
     end.setHours(23, 59, 59, 999);
     return today >= start && today <= end;
   });

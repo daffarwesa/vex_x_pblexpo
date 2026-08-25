@@ -81,7 +81,7 @@ export type PameranStats = {
   prepareStartDate: string;
   prepareEndDate: string;
   startDate: string;
-  endDate: string;
+  endDate: string | null;
   studyLevel: string;
 };
 
@@ -106,9 +106,7 @@ export type Pameran = {
 export interface PameranForm {
   kategori: string; // kategori pameran (kode dari KATEGORI_OPTIONS)
   title: string;
-  capacity: number;
   publishDate: string;
-  endDate: string;
   prepareStart: string;
   prepareEnd: string;
   description: string;

@@ -22,7 +22,7 @@ class PenggunaSeeder extends Seeder
             'email'         => 'user@pbl.com',
             'password'      => Hash::make('password123'),
             'role'          => Pengguna::ROLE_PENGUNJUNG,
-            'kelas'         => null,
+            // 'kelas'         => null,
             'kategori_kode' => null,
         ]);
 
@@ -32,7 +32,7 @@ class PenggunaSeeder extends Seeder
             'email'         => 'admin@pbl.com',
             'password'      => Hash::make('password123'),
             'role'          => Pengguna::ROLE_ADMIN,
-            'kelas'         => null,
+            // 'kelas'         => null,
             'kategori_kode' => null,
         ]);
 
