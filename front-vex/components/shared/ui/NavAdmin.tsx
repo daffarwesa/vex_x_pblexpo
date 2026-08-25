@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FaUser, FaBook, FaImage, FaPlus, FaTimes } from 'react-icons/fa';
+import { FaUser, FaBook, FaImage, FaPlus, FaTimes, FaDollarSign } from 'react-icons/fa';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip } from './Components';
@@ -32,6 +32,12 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
       title: 'Karya',
       icon: <FaImage size={17} />,
       link: '/admin/karya',
+    },
+    {
+      id: 4,
+      title: 'Sponsor',
+      icon: <FaDollarSign size={17} />,
+      link: '/admin/sponsor',
     },
   ];
 
