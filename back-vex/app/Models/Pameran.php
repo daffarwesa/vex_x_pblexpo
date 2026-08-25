@@ -48,15 +48,12 @@ class Pameran extends Model
         return $this->belongsTo(ModelPameran::class, 'model_pameran', 'id_model');
     }
 
-<<<<<<< HEAD
-=======
     // Relasi ke tabel kategori
     public function kategori()
     {
         return $this->belongsTo(Kategori::class, 'kategori_kode', 'kode_kategori');
     }
 
->>>>>>> creator-category
     public function karya()
     {
         return $this->hasMany(Karya::class, 'id_pameran', 'id_pameran');
