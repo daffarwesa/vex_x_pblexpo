@@ -3,11 +3,11 @@
 import { useState } from 'react';
 
 import SearchBar from '@/components/shared/filter/SearchBar';
-import SelectProdi from '@/components/shared/filter/SelectProdi';
+import SelectKategori from '@/components/shared/filter/SelectKategori';
 import SelectTahun from '@/components/shared/filter/SelectTahun';
 import SelectSemester from '@/components/shared/filter/SelectSemester';
 
-import { ProdiType } from '@/components/shared/filter/SelectProdi';
+import { KategoriType } from '@/components/shared/filter/SelectKategori';
 import { TahunType } from '@/components/shared/filter/SelectTahun';
 import { SemesterType } from '@/components/shared/filter/SelectSemester';
 
@@ -16,26 +16,26 @@ import { HiAdjustmentsHorizontal, HiXMark } from 'react-icons/hi2';
 interface FilterSectionProps {
   search: string;
   setSearch: (v: string) => void;
-  selectedProdi?: ProdiType | null;
-  setSelectedProdi?: (v: ProdiType | null) => void;
+  selectedKategori?: KategoriType | null;
+  setSelectedKategori?: (v: KategoriType | null) => void;
   selectedTahun: TahunType | null;
   setSelectedTahun: (v: TahunType | null) => void;
   selectedSemester: SemesterType | null;
   setSelectedSemester: (v: SemesterType | null) => void;
-  hideProdi?: boolean;
+  hideKategori?: boolean;
   searchPlaceholder?: string;
 }
 
 export default function FilterSection({
   search,
   setSearch,
-  selectedProdi,
-  setSelectedProdi,
+  selectedKategori,
+  setSelectedKategori,
   selectedTahun,
   setSelectedTahun,
   selectedSemester,
   setSelectedSemester,
-  hideProdi = false,
+  hideKategori = false,
   searchPlaceholder = 'Cari Pameran...',
 }: FilterSectionProps) {
   const [openFilter, setOpenFilter] = useState(false);
@@ -71,11 +71,11 @@ export default function FilterSection({
           {/* FILTERS */}
           <div
             className={`w-full lg:w-[40%] grid gap-3 lg:gap-[30px] ${
-              hideProdi ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'
+              hideKategori ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'
             }`}
           >
-            {!hideProdi && setSelectedProdi && (
-              <SelectProdi selected={selectedProdi ?? null} onChange={setSelectedProdi} />
+            {!hideKategori && setSelectedKategori && (
+              <SelectKategori selected={selectedKategori ?? null} onChange={setSelectedKategori} />
             )}
 
             <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
@@ -121,8 +121,8 @@ export default function FilterSection({
 
           {/* FILTER CONTENT */}
           <div className="flex flex-col gap-4">
-            {!hideProdi && setSelectedProdi && (
-              <SelectProdi selected={selectedProdi ?? null} onChange={setSelectedProdi} />
+            {!hideKategori && setSelectedKategori && (
+              <SelectKategori selected={selectedKategori ?? null} onChange={setSelectedKategori} />
             )}
 
             <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />

@@ -1,3 +1,13 @@
+export type TerbaikRank = 1 | 2 | 3;
+
+export const PREDIKAT_LIST = [
+  "Best Visualization",
+  "Best Creativity & Innovation",
+  "Best Functionality",
+] as const;
+
+export type PredikatKarya = (typeof PREDIKAT_LIST)[number];
+
 export interface KaryaItem {
   id: number;
   title: string;
@@ -15,7 +25,10 @@ export interface KaryaItem {
   modelStan?: string;
   pameranId?: number;
   pameranTitle?: string;
+  /** @deprecated diganti oleh terbaikRank & predikat */
   isTerbaik?: boolean;
+  terbaikRank?: TerbaikRank | null;
+  predikat?: PredikatKarya | null;
   canEdit?: boolean;
   editMessage?: string | null;
 }

@@ -5,7 +5,7 @@ import FilterSection from "@/components/pameran/FilterSection";
 import KaryaGrid from "@/components/karya/KaryaGrid";
 import { KaryaItem, PameranItem } from "@/types/karya";
 import { KATEGORI_OPTIONS } from "@/types/pameran";
-import { ProdiType } from "@/components/shared/filter/SelectProdi";
+import { ProdiType } from "@/components/shared/filter/SelectKategori";
 import { TahunType } from "@/components/shared/filter/SelectTahun";
 import { SemesterType } from "@/components/shared/filter/SelectSemester";
 import { useAuth } from "@/context/AuthContext";
