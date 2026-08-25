@@ -91,18 +91,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // =============================
-    // KPS
+    // PENCIPTA (dulu "Ketua PBL")
     // =============================
-    Route::middleware('role:KPS')->prefix('kps')->group(function () {
-        Route::get('/dashboard', function () {
-            return response()->json(['status' => 'success', 'page' => 'KPS Dashboard']);
-        });
-    });
-
-    // =============================
-    // KETUA PBL
-    // =============================
-    Route::middleware('role:Ketua PBL')->prefix('ketua-pbl')->group(function () {
+    Route::middleware('role:Pencipta')->prefix('ketua-pbl')->group(function () {
         Route::get('/dashboard', function () {
             return response()->json(['status' => 'success', 'page' => 'Ketua PBL Dashboard']);
         });
