@@ -102,14 +102,13 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
         <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
           <div className="autoMid">
             {/* Filter bar skeleton */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 pt-7 mb-6">
               <div className="h-[42px] rounded-xl bg-white/20 animate-pulse flex-1" />
               <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
               <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
             </div>
 
             {/* "Segera Hadir" title skeleton */}
-            <div className="h-[28px] md:h-[36px] w-[180px] rounded-lg bg-white/20 animate-pulse mb-5 md:mb-6" />
 
 
           </div>

@@ -136,9 +136,9 @@ export default function Admin() {
       />
 
       {/* TOP BAR */}
-      <div className="bg-main-blue rounded-b-[20px] shadow-lg">
-        <div className="autoMid py-[20px] flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-          <div className="w-full md:w-[70%]">
+      <div className="bg-main-blue rounded-b-[40px] shadow-lg">
+        <div className="autoMid py-[20px] flex flex-col md:flex-row gap-3 md:items-center md:justify-between pt-4 md:pt-[30px] pb-5">
+          <div className="w-full md:w-[70%] pt-4 md:pt-[30px] pb-5">
             <SearchBar
               text="Cari nama..."
               value={searchTerm}

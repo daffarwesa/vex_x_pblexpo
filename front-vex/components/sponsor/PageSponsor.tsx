@@ -125,21 +125,30 @@ export default function PageSponsor({ href }: Props) {
   // RENDER
   // =============================
   return (
-    <div className="min-h-screen bg-secondary-color font-poppins">
-      <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
-        <div className="autoMid">
-          <div className="flex flex-col sm:flex-row gap-3 pt-4 md:pt-[30px] pb-5">
-            <div className="flex-1">
-              <SearchBar
+    <div className="min-h-screen bg-secondary-color font-poppins">      
+      <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] w-full pt-4 md:pt-[30px] pb-5">
+
+ <div className="autoMid hidden md:flex flex-col pt-4 md:pt-[30px] pb-5 lg:flex-row gap-4 lg:gap-6 items-stretch lg:items-center justify-between">
+          {/* SEARCH */}
+          <div className="w-full lg:w-[50%]">
+           <SearchBar
                 text="Cari sponsor..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-            </div>
-            <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
-            <SelectTipeSponsor selected={selectedTipe} onChange={setSelectedTipe} />
+          </div>
+
+          {/* FILTERS */}
+          <div
+            className={`w-full lg:w-[40%] grid gap-3 lg:gap-[30px] grid-cols-1 sm:grid-cols-2`}
+          >
+          <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
+              <SelectTipeSponsor selected={selectedTipe} onChange={setSelectedTipe} />
+
+            {/* <SelectSemester selected={selectedSemester} onChange={setSelectedSemester} /> */}
           </div>
         </div>
+
       </section>
 
       <main className="autoMid space-y-10 py-10">

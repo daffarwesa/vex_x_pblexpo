@@ -1,10 +1,10 @@
-import axiosInstance from "@/lib/axios"; 
+import url from "@/lib/axios"; 
 
 // =============================
 // LIST
 // =============================
 export async function GetSponsor() {
-  const res = await axiosInstance.get("/sponsor");
+  const res = await url.get("/sponsor");
   return res.data;
 }
 
@@ -12,7 +12,7 @@ export async function GetSponsor() {
 // CREATE
 // =============================
 export async function PostSponsor(formData: FormData) {
-  const res = await axiosInstance.post("/sponsor", formData, {
+  const res = await url.post("/sponsor", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
@@ -24,7 +24,7 @@ export async function PostSponsor(formData: FormData) {
 export async function UpdateSponsor(id: number, formData: FormData) {
   // Laravel butuh _method override untuk multipart PUT
   formData.append("_method", "PUT");
-  const res = await axiosInstance.post(`/sponsor/${id}`, formData, {
+  const res = await url.post(`/sponsor/${id}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
@@ -34,6 +34,6 @@ export async function UpdateSponsor(id: number, formData: FormData) {
 // DELETE (opsional — bonus, hapus kalau tidak dibutuhkan)
 // =============================
 export async function DeleteSponsor(id: number) {
-  const res = await axiosInstance.delete(`/sponsor/${id}`);
+  const res = await url.delete(`/sponsor/${id}`);
   return res.data;
 }
