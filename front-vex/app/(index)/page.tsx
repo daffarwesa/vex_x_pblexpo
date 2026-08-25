@@ -116,7 +116,7 @@ export default function HomePage() {
               <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">
                 PILIH DARI BERBAGAI
               </p>
-              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">STAN</p>
+              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">PREVIEW PAMERAN</p>
             </div>
           </div>
 
@@ -169,8 +169,8 @@ export default function HomePage() {
 
           <div className="order-2 lg:order-1 lg:col-span-3 flex flex-col gap-8">
             <div className="text-main-blue">
-              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">KARYA</p>
-              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">TERBAIK</p>
+              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">JUARA</p>
+              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">1</p>
             </div>
 
             <div className="grid gap-5 max-w-[500px]">
@@ -200,8 +200,8 @@ export default function HomePage() {
 
           <div className="order-2 lg:col-span-3 flex flex-col gap-8">
             <div className="text-main-blue flex flex-col items-start lg:items-end text-left lg:text-right">
-              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">KARYA</p>
-              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">FAVORIT</p>
+              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">BEST</p>
+              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">KATEGORI</p>
             </div>
 
             <div className="grid gap-5">

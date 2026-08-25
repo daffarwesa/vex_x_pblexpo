@@ -13,7 +13,6 @@ export default function IndexLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   return (
     <div>
       <Navbar />

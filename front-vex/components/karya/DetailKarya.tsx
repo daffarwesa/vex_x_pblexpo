@@ -10,7 +10,7 @@ import DetailAction from "@/components/karya/DetailAction";
 import {
   GetKarya,
   GetKaryaAdmin,
-  GetKaryaKps,
+  GetKaryaSemua,
   UpdateKarya,
   DeleteKarya,
   PilihTerbaik,
@@ -83,11 +83,10 @@ export default function DetailKarya({ id }: Props) {
   const { user, loading: authLoading } = useAuth();
 
   const isAdmin = user?.role === "Admin";
-  const isKps = user?.role === "KPS";
-  const isKetuaPbl = user?.role === "Ketua PBL";
+  const isCreator = user?.role === "Creator";
 
-  // Read-only untuk Admin dan KPS
-  const isReadOnly = isAdmin || isKps;
+  // Read-only untuk Admin
+  const isReadOnly = isAdmin;
 
   const [form, setForm] = useState<KaryaItem | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState("");
@@ -99,8 +98,8 @@ export default function DetailKarya({ id }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // HANYA berlaku untuk Ketua PBL
-  const isPameranLocked = isKetuaPbl && form?.canEdit === false;
+  // Berlaku untuk Creator jika periode edit pameran sudah ditutup
+  const isPameranLocked = isCreator && form?.canEdit === false;
 
   const [currentPameran, setCurrentPameran] = useState<{
     id: number;
@@ -110,10 +109,10 @@ export default function DetailKarya({ id }: Props) {
   // ── Guard ──
   useEffect(() => {
     if (authLoading) return;
-    if (!isAdmin && !isKps && !isKetuaPbl) {
+    if (!isAdmin && !isCreator) {
       router.replace("/");
     }
-  }, [authLoading, isAdmin, isKps, isKetuaPbl, router]);
+  }, [authLoading, isAdmin, isCreator, router]);
 
   // ── Load data karya ──
   useEffect(() => {
@@ -121,49 +120,44 @@ export default function DetailKarya({ id }: Props) {
 
     const load = async () => {
       try {
-        const res = isKps
-          ? await GetKaryaKps()
+        const storageBase = process.env.NEXT_PUBLIC_STORAGE_URL ?? 'http://localhost:8000/storage';
+        const res = isCreator && !isAdmin
+          ? await GetKaryaSemua()
           : isAdmin
             ? await GetKaryaAdmin()
             : await GetKarya();
 
         const raw = res.karya ?? [];
 
-        // Mapper khusus KPS (field backend berbeda)
-        const list: KaryaItem[] = isKps
-          ? raw.map((item: any) => {
-              const tanggalMulai = item.stan?.pameran?.tanggal_mulai ?? "";
-              const bulan = tanggalMulai
-                ? new Date(tanggalMulai).getMonth() + 1
-                : 0;
-              const semester =
-                bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
+        const list: KaryaItem[] = raw.map((item: any) => {
+          if (item.title && item.image !== undefined) {
+            return item;
+          }
+          const tanggalMulai = item.stan?.pameran?.tanggal_mulai ?? item.pameran?.tanggal_mulai ?? "";
+          const bulan = tanggalMulai ? new Date(tanggalMulai).getMonth() + 1 : 0;
+          const semester = bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
 
-              return {
-                id: item.id_karya,
-                title: item.judul,
-                description: item.deskripsi,
-                category: item.stan?.pameran?.kategori ?? "",
-                image: item.gambar_poster
-                  ? `https://vex.terpalb25.web.id/storage/${item.gambar_poster}`
-                  : "",
-                thumbnail: item.gambar_sampul
-                  ? `https://vex.terpalb25.web.id/storage/${item.gambar_sampul}`
-                  : "",
-                link: item.tautan ?? "",
-                year: tanggalMulai.slice(0, 4),
-                semester,
-                booth: String(item.id_stan ?? ""),
-                modelStan: item.stan?.model_stan
-                  ? String(item.stan.model_stan)
-                  : "", // ← FIX: tambah modelStan untuk KPS juga
-                pameranId: item.id_pameran,
-                pameranTitle:
-                  item.stan?.pameran?.judul ?? `Pameran #${item.id_pameran}`,
-                isTerbaik: item.is_terbaik ?? false,
-              };
-            })
-          : raw;
+          return {
+            id: item.id_karya,
+            title: item.judul,
+            description: item.deskripsi,
+            category: item.stan?.pameran?.kategori ?? item.pameran?.kategori ?? item.category ?? "",
+            image: item.gambar_poster ? `${storageBase}/${item.gambar_poster}` : item.image ?? "",
+            thumbnail: item.gambar_sampul ? `${storageBase}/${item.gambar_sampul}` : item.thumbnail ?? "",
+            link: item.tautan ?? item.link ?? "",
+            year: tanggalMulai.slice(0, 4) || item.year || "",
+            semester: semester || item.semester || "",
+            booth: String(item.id_stan ?? item.booth ?? ""),
+            modelStan: item.stan?.model_stan ? String(item.stan.model_stan) : item.modelStan ?? "",
+            pameranId: item.id_pameran ?? item.pameranId,
+            pameranTitle:
+              item.stan?.pameran?.judul ??
+              item.pameran?.judul ??
+              item.pameranTitle ??
+              `Pameran #${item.id_pameran}`,
+            isTerbaik: item.is_terbaik ?? item.isTerbaik ?? false,
+          };
+        });
 
         const found = list.find((item) => item.id === id);
 
@@ -186,7 +180,7 @@ export default function DetailKarya({ id }: Props) {
     };
 
     load();
-  }, [id, authLoading, isKps, isAdmin]);
+  }, [id, authLoading, isCreator, isAdmin]);
 
   // ── Handlers ──
 
@@ -320,9 +314,9 @@ export default function DetailKarya({ id }: Props) {
     }
   };
 
-  // Hanya KPS
+  // Creator toggle karya terbaik
   const handlePilihTerbaik = async () => {
-    if (!form || !isKps) return;
+    if (!form || !isCreator) return;
     setIsLoading(true);
     try {
       const result = await PilihTerbaik(form.id);
@@ -339,9 +333,9 @@ export default function DetailKarya({ id }: Props) {
     }
   };
 
-  // Hanya KPS
+  // Creator batalkan karya terbaik
   const handleBatalkanTerbaik = async () => {
-    if (!form || !isKps) return;
+    if (!form || !isCreator) return;
     setIsLoading(true);
     try {
       const result = await BatalkanTerbaik(form.id);
@@ -582,11 +576,11 @@ export default function DetailKarya({ id }: Props) {
           <DetailAction
             // Admin
             onDelete={isAdmin ? () => setShowConfirm(true) : undefined}
-            // Ketua PBL
-            onSave={isKetuaPbl && !isPameranLocked ? handleSave : undefined}
-            // KPS
-            onPilihTerbaik={isKps ? handlePilihTerbaik : undefined}
-            onBatalkanTerbaik={isKps ? handleBatalkanTerbaik : undefined}
+            // Creator: Simpan jika tidak locked
+            onSave={isCreator && !isPameranLocked ? handleSave : undefined}
+            // Creator: Pilih/Batalkan terbaik
+            onPilihTerbaik={isCreator ? handlePilihTerbaik : undefined}
+            onBatalkanTerbaik={isCreator ? handleBatalkanTerbaik : undefined}
             isTerbaik={form.isTerbaik}
             loading={isLoading}
           />

@@ -16,52 +16,9 @@ export async function GET() {
   try {
     const response = await url.get("/api/pameran");
     // mengambil api dari backend
-    const transformed = response.data.pameran.map((item: any) => ({
-      id: item.id_pameran,
-
-      title: item.judul,
-
-      subtitle: item.prodi?.nama_prodi ?? item.kategori,
-
-      category: item.prodi?.nama_prodi ?? item.kategori,
-
-      date: item.tanggal_mulai,
-
-      bannerImage: `https://vex.terpalb25.web.id/storage/${item.banner}`,
-
-      likes: 0,
-
-      karya: 0,
-
-      description: [
-        {
-          title: "Deskripsi",
-          content: item.deskripsi,
-        },
-      ],
-
-      stats: {
-        likes: 0,
-
-        karya: 0,
-
-        prepareStartDate: item.tanggal_mulai_persiapan,
-
-        prepareEndDate: item.tanggal_akhir_persiapan,
-
-        startDate: item.tanggal_mulai,
-
-        endDate: item.tanggal_akhir,
-
-        studyLevel: item.prodi?.nama_prodi ?? item.kategori,
-      },
-
-      institution: "Politeknik Negeri Batam",
-    }));
-
     return NextResponse.json({
       status: "success",
-      pameran: transformed,
+      pameran: response.data.pameran,
     });
   } catch (error: any) {
     console.error("PAMERAN ERROR:", error.message);
@@ -98,7 +55,7 @@ export async function POST(req: Request) {
 
     const backendForm = new FormData();
 
-    backendForm.append("kategori", formData.get("prodi") as string);
+    backendForm.append("kategori_kode", formData.get("kategori_kode") as string);
 
     backendForm.append("semester", "6");
 
@@ -156,7 +113,7 @@ export async function PUT(req: Request) {
     const formData = await req.formData();
     const id = formData.get("id") as string;
     const title = formData.get("title") as string;
-    const prodi = formData.get("prodi") as string;
+    const kategori = formData.get("kategori_kode") as string;
     const publishDate = formData.get("publishDate") as string;
     const endDate = formData.get("endDate") as string;
     const prepareStart = formData.get("prepareStart") as string;
@@ -195,8 +152,8 @@ export async function PUT(req: Request) {
       ...data[index],
 
       title,
-      subtitle: prodi,
-      category: prodi,
+      subtitle: kategori,
+      category: kategori,
       date: formatLongDate(publishDate),
       bannerImage,
       description: [
@@ -212,7 +169,7 @@ export async function PUT(req: Request) {
         prepareEndDate: toSlashDate(prepareEnd),
         startDate: toSlashDate(publishDate),
         endDate: toSlashDate(endDate),
-        studyLevel: prodi,
+        studyLevel: kategori,
       },
     };
 

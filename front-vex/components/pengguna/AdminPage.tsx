@@ -10,7 +10,7 @@ import UserCard from "./UserCard";
 import UserDetail from "./UserDetail";
 import SectionHeader from "./SectionHeader";
 import FormTambahUser from "./FormTambahUser";
-import { PRODI_OPTIONS, KELAS_OPTIONS } from "@/types/pameran";
+import { KATEGORI_OPTIONS, KELAS_OPTIONS } from "@/types/pameran";
 import { useUsers } from "@/hooks/userHook/useUser";
 import { UserType } from "@/types/pengguna";
 import { showToast } from "@/components/shared/ui/ToastNotification";
@@ -53,18 +53,17 @@ export default function Admin() {
   ) => {
     const { name, value } = e.target;
 
-    // PRODI
-    if (name === "program_studi") {
-      const selectedProdi = PRODI_OPTIONS.find((p) => p.kode === value);
+    // KATEGORI
+    if (name === "kategori_kode") {
+      const selectedKategori = KATEGORI_OPTIONS.find((p) => p.kode === value);
 
       setFormData((prev) =>
         prev
           ? {
             ...prev,
-            program_studi: value,
-            prodi: {
-              kode_prodi: value,
-              nama_prodi: selectedProdi?.nama || "",
+            kategori_kode: {
+              kode_kategori: value,
+              nama_kategori: selectedKategori?.nama || "",
             },
           }
           : null,
@@ -202,33 +201,10 @@ export default function Admin() {
               </div>
             ) : (
               <>
-                {/* KPS */}
+                {/* Creator */}
                 <section  className="min-h-[280px]">
                   <SectionHeader
-                    title="Kepala Program Studi"
-                    currentPage={pageKps}
-                    totalPages={totalPagesKps}
-                    onNext={nextPageKps}
-                    onPrev={prevPageKps}
-                  />
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                    {paginatedKps.map((user) => (
-                      <UserCard
-                        key={user.id}
-                        user={user}
-                        isActive={selectedUser?.id === user.id}
-                        onClick={() => setSelectedUser(user)}
-                        onToggleStatus={handleToggleStatus}
-                      />
-                    ))}
-                  </div>
-                </section>
-
-                {/* Mahasiswa */}
-                <section  className="min-h-[280px]">
-                  <SectionHeader
-                    title="Mahasiswa"
+                    title="Creator"
                     currentPage={pageMhs}
                     totalPages={totalPages}
                     onNext={nextPage}

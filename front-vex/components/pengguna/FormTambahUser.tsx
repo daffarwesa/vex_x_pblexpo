@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FaTimes, FaUser } from "react-icons/fa";
 import { UserType } from "@/types/pengguna";
 import { Button, ButtonPutih } from "@/components/shared/ui/Button";
-import { PRODI_OPTIONS, KELAS_OPTIONS } from "@/types/pameran";
+import { KATEGORI_OPTIONS, KELAS_OPTIONS } from "@/types/pameran";
 
 type Props = {
   onClose: () => void;
@@ -16,7 +16,7 @@ type FormState = Omit<UserType, "id">;
 const initialForm: FormState = {
   nama: "",
   email: "",
-  prodi: "",
+  kategori_kode: "",
   kelas: "",
   role: "",
   status: "Aktif",
@@ -38,7 +38,7 @@ export default function FormTambahUser({ onClose, onSave }: Props) {
   };
 
   const handleSubmit = () => {
-    if (!form.nama || !form.email || !form.prodi) return;
+    if (!form.nama || !form.email || !form.kategori_kode) return;
     onSave(form);
     onClose();
   };
@@ -62,18 +62,18 @@ export default function FormTambahUser({ onClose, onSave }: Props) {
         <div className="mt-8 space-y-4">
           <p className="text-center font-semibold text-lg">Pilih Jenis Akun</p>
 
-          <Button
+          {/* <Button
             onClick={() => pilihRole("KPS")}
             className="w-full bg-main-blue cursor-pointer text-white py-3 rounded-lg font-bold hover:bg-white border-2 border-main-blue hover:text-main-blue hover:opacity-90"
           >
             Kepala Program Studi
-          </Button>
+          </Button> */}
 
           <ButtonPutih
-            onClick={() => pilihRole("Ketua PBL")}
+            onClick={() => pilihRole("Creator")}
             className="w-full bg-white border-2 cursor-pointer border-main-blue font-bold text-main-blue py-3 rounded-lg hover:opacity-90"
           >
-            Ketua PBL
+            Creator
           </ButtonPutih>
         </div>
       )}
@@ -86,7 +86,7 @@ export default function FormTambahUser({ onClose, onSave }: Props) {
           {[
             { label: "Nama", name: "nama", value: form.nama },
             { label: "Email", name: "email", value: form.email },
-            // { label: 'Program Studi', name: 'prodi', value: form.prodi },
+            // { label: 'Kategori', name: 'kategori_kode', value: form.kategori_kode },
           ].map(({ label, name, value }) => (
             <div key={name}>
               <p className="text-sm font-semibold mb-1 text-gray-600">
@@ -106,33 +106,33 @@ export default function FormTambahUser({ onClose, onSave }: Props) {
               Program Studi
             </p>
             <select
-              name="prodi"
+              name="kategori_kode"
               value={
-                typeof form.prodi === "object"
-                  ? form.prodi.kode_prodi
-                  : form.prodi
+                typeof form.kategori_kode === "object"
+                  ? form.kategori_kode.kode_kategori
+                  : form.kategori_kode
               }
               onChange={handleChange}
               className="w-full bg-gray-200 p-2 px-4 rounded-lg"
             >
               <option value="" disabled>
-                -- Pilih Prodi --
+                -- Pilih Kategori --
               </option>
-              {PRODI_OPTIONS.map((prodi) => (
+              {KATEGORI_OPTIONS.map((kategori) => (
                 <option
-                  key={prodi.kode}
-                  value={prodi.kode}
+                  key={kategori.kode}
+                  value={kategori.kode}
                 >
-                  {prodi.nama}
+                  {kategori.nama}
                 </option>
               ))}
             </select>
           </div>
-          {/* Kelas — hanya untuk Ketua PBL */}
-          {form.role === "Ketua PBL" && (
-            <div>
+          {/* Kelas — hanya untuk Creator */}
+          {form.role === "Creator" && (
+            <div  className="">
               <p className="text-sm font-semibold mb-1 text-gray-600">Kelas</p>
-              <select
+              <select 
                 name="kelas"
                 value={
                   typeof form.kelas === "object"

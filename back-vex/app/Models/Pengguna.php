@@ -19,10 +19,8 @@ class Pengguna extends Authenticatable
     protected $table = 'pengguna';
     
     // konstanta role
-    const ROLE_ADMIN = 'Admin';
-
-    const ROLE_PENCIPTA = 'Pencipta';
-
+    const ROLE_ADMIN     = 'Admin';
+    const ROLE_CREATOR   = 'Creator';
     const ROLE_PENGUNJUNG = 'Pengunjung';
 
     const STATUS_AKTIF ='Aktif';
@@ -34,6 +32,8 @@ class Pengguna extends Authenticatable
         'nama',
         'email',
         'password',
+        'kelas',
+        'kategori_kode',
         'role',
         'status',
         'new_email',  //tambah untuk ganti email
@@ -62,9 +62,9 @@ class Pengguna extends Authenticatable
         return $this->role === self::ROLE_ADMIN;
     }
 
-    public function isPencipta(): bool
+    public function isCreator(): bool
     {
-        return $this->role === self::ROLE_PENCIPTA;
+        return $this->role === self::ROLE_CREATOR;
     }
 
     public function isPengunjung(): bool
@@ -77,5 +77,13 @@ class Pengguna extends Authenticatable
         return $this->status === self::STATUS_AKTIF;
     }
 
-    
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class, 'kelas', 'id_kelas');
+    }
+
+    public function kategori()
+    {
+        return $this->belongsTo(Kategori::class, 'kategori_kode', 'kode_kategori');
+    }
 }

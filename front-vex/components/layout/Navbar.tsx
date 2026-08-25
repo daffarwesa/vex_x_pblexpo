@@ -68,17 +68,11 @@ const resolvedMenu: NavItem[] = loading
       { title: 'PAMERAN', subtitle: '3D BOOTH', link: '/admin/pameran' },
       { title: 'DASHBOARD', subtitle: 'ADMIN', link: '/admin/pengguna' },
     ]
-  : user?.role === 'Ketua PBL'
+  : user?.role === 'Creator'
   ? [
       { title: 'BERANDA', subtitle: 'UTAMA', link: '/' },
       { title: 'PAMERAN', subtitle: '3D BOOTH', link: '/pameran' },
-      { title: 'DASHBOARD', subtitle: 'KETUA PBL', link: '/ketua-pbl/karya' },
-    ]
-  : user?.role === 'KPS'
-  ? [
-      { title: 'BERANDA', subtitle: 'UTAMA', link: '/' },
-      { title: 'PAMERAN', subtitle: '3D BOOTH', link: '/pameran' },
-      { title: 'DASHBOARD', subtitle: 'KPS', link: '/kps/karya' },
+      { title: 'DASHBOARD', subtitle: 'CREATOR', link: '/creator/karya' },
     ]
   : menuItems ?? defaultMenu;
   // ===== AUTH DESKTOP =====

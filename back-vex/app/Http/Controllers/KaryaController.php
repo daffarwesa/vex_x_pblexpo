@@ -18,9 +18,16 @@ use App\Services\Steganography;
 
 class KaryaController extends Controller
 {
-    private const STORAGE_BASE_URL = 'https://vex.terpalb25.web.id/storage/';
+    private const STORAGE_BASE_URL = '';
 
-    // label => rasio scale dari original
+    private function storageUrl(): string
+    {
+        return rtrim(config('app.url'), '/') . '/storage/';
+    }
+    /**
+     * Semua ukuran turunan gambar yang di-generate untuk tiap upload.
+     * Key = nama folder/label, Value = rasio skala dari ukuran original.
+     */
     private const IMAGE_SIZES = [
         'original' => 1.0,
         'large'    => 0.75,
@@ -108,17 +115,16 @@ class KaryaController extends Controller
     // =============================
     private function buildKaryaImageUrls(Karya $item): array
     {
-        $base = self::STORAGE_BASE_URL;
+        $base = $this->storageUrl();
+        $poster = $item->gambar_poster;
+        $sampul = $item->gambar_sampul;
 
         return [
-            'image' => $item->gambar_poster ? asset($base . $item->gambar_poster) : '',
-            'imageLarge' => $item->gambar_poster_large ? asset($base . $item->gambar_poster_large) : '',
-            'imageMedium' => $item->gambar_poster_medium ? asset($base . $item->gambar_poster_medium) : '',
-            'imageSmall' => $item->gambar_poster_small ? asset($base . $item->gambar_poster_small) : '',
-            'thumbnail' => $item->gambar_sampul ? asset($base . $item->gambar_sampul) : '',
-            'thumbnailLarge' => $item->gambar_sampul_large ? asset($base . $item->gambar_sampul_large) : '',
-            'thumbnailMedium' => $item->gambar_sampul_medium ? asset($base . $item->gambar_sampul_medium) : '',
-            'thumbnailSmall' => $item->gambar_sampul_small ? asset($base . $item->gambar_sampul_small) : '',
+            'image'          => $poster ? $base . $poster : '',
+            'imageLarge'     => $poster ? $base . $this->resolveSizePath($poster, 'large') : '',
+            'imageSmall'     => $poster ? $base . $this->resolveSizePath($poster, 'small') : '',
+            'thumbnail'      => $sampul ? $base . $sampul : '',
+            'thumbnailMedium' => $sampul ? $base . $this->resolveSizePath($sampul, 'medium') : '',
         ];
     }
 
@@ -132,7 +138,7 @@ class KaryaController extends Controller
         return [
             'id' => $item->id_karya,
             'title' => $item->judul,
-            'category' => $item->kategori?->nama_kategori ?? '',
+            'category' => $item->pameran?->kategori_kode ?? '',
             ...$this->buildKaryaImageUrls($item),
             'link' => $item->tautan,
             'description' => $item->deskripsi,
@@ -156,8 +162,7 @@ class KaryaController extends Controller
     // =============================
     private function formatKaryaHighlight(Karya $item): array
     {
-        $base = self::STORAGE_BASE_URL;
-
+        $base = $this->storageUrl();
         return [
             'id' => $item->id_karya,
             'title' => $item->judul,
@@ -460,9 +465,21 @@ class KaryaController extends Controller
     // =============================
     public function pameranTersedia(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $kategoriKode = $user->kategori?->kode_kategori ?? null;
+
+        if (!$kategoriKode) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Kategori Creator tidak ditemukan.',
+            ], 404);
+        }
+
         $today = now()->toDateString();
 
-        $pameran = Pameran::where('tanggal_mulai_persiapan', '<=', $today)
+        $pameran = Pameran::with('kategori')
+            ->where('kategori_kode', $kategoriKode)
+            ->where('tanggal_mulai_persiapan', '<=', $today)
             ->where('tanggal_akhir_persiapan', '>=', $today)
             ->get()
             ->map(fn(Pameran $item) => [

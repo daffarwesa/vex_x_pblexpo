@@ -2,15 +2,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
-  // ambil 
   const role = request.cookies.get('role')?.value;
   const pathname = request.nextUrl.pathname;
 
   const isAdminPage = pathname.startsWith('/admin');
-  const isKetuaPblPage = pathname.startsWith('/ketua-pbl');
-  const isKPSPage = pathname.startsWith('/kps');
+  const isCreatorPage = pathname.startsWith('/creator');
 
-  if (!isAdminPage && !isKetuaPblPage && !isKPSPage) {
+  if (!isAdminPage && !isCreatorPage) {
     return NextResponse.next();
   }
 
@@ -22,10 +20,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  if (isKetuaPblPage && role !== 'Ketua PBL' ) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-  if (isKPSPage && role !== 'KPS') {
+  if (isCreatorPage && role !== 'Creator') {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -33,5 +28,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/ketua-pbl/:path*','/kps/:path*'],
+  matcher: ['/admin/:path*', '/creator/:path*'],
 };

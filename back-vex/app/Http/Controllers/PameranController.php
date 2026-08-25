@@ -11,20 +11,23 @@ use Intervention\Image\Drivers\Gd\Driver;
 
 class PameranController extends Controller
 {
-    private const STORAGE_BASE_URL = 'https://vex.terpalb25.web.id/storage/';
+    private function storageUrl(): string
+    {
+        return rtrim(config('app.url'), '/') . '/storage/';
+    }
 
     // =============================
     // HELPER: URL banner (dengan fallback ke original)
     // =============================
     private function buildBannerUrls(Pameran $item): array
     {
-        $base = self::STORAGE_BASE_URL;
+        $base = $this->storageUrl();
 
         return [
-            'bannerImage' => $base . $item->banner,
-            'bannerLarge' => $item->banner_large ? $base . $item->banner_large : $base . $item->banner,
+            'bannerImage'  => $base . $item->banner,
+            'bannerLarge'  => $item->banner_large  ? $base . $item->banner_large  : $base . $item->banner,
             'bannerMedium' => $item->banner_medium ? $base . $item->banner_medium : $base . $item->banner,
-            'bannerSmall' => $item->banner_small ? $base . $item->banner_small : $base . $item->banner,
+            'bannerSmall'  => $item->banner_small  ? $base . $item->banner_small  : $base . $item->banner,
         ];
     }
 
@@ -66,13 +69,18 @@ class PameranController extends Controller
     // =============================
     public function index()
     {
-        $pameran = Pameran::withCount(['karya', 'suka'])->get();
+        $pameran = Pameran::with('kategori')
+            ->withCount(['karya', 'suka'])
+            ->get();
 
         $transformed = $pameran->map(fn($item) => [
             'id' => $item->id_pameran,
             'slug' => $item->slug,
             'title' => $item->judul,
-            'openDate' => $item->tanggal_buka,
+            'subtitle' => $item->kategori?->nama_kategori ?? $item->kategori_kode,
+            'category' => $item->kategori?->nama_kategori ?? $item->kategori_kode,
+            'kode_kategori' => $item->kategori_kode,
+            'date' => $item->tanggal_mulai,
             ...$this->buildBannerUrls($item),
             'likes' => $item->suka_count,
             'karya' => $item->karya_count,
@@ -88,7 +96,9 @@ class PameranController extends Controller
                 'kapasitas' => $item->kapasitas,
                 'prepareStartDate' => $item->tanggal_mulai_persiapan,
                 'prepareEndDate' => $item->tanggal_akhir_persiapan,
-                'openDate' => $item->tanggal_buka,
+                'startDate' => $item->tanggal_mulai,
+                'endDate' => $item->tanggal_akhir,
+                'studyLevel' => $item->kategori?->nama_kategori ?? $item->kategori_kode,
             ],
             'institution' => 'Politeknik Negeri Batam',
         ]);
@@ -104,7 +114,7 @@ class PameranController extends Controller
     // =============================
     public function show($identifier)
     {
-        $pameran = Pameran::with('model3d')
+        $pameran = Pameran::with(['model3d', 'kategori'])
             ->withCount(['karya', 'suka'])
             ->where('slug', $identifier)
             ->orWhere('id_pameran', $identifier)
@@ -121,7 +131,10 @@ class PameranController extends Controller
             'id' => $pameran->id_pameran,
             'slug' => $pameran->slug,
             'title' => $pameran->judul,
-            'openDate' => $pameran->tanggal_buka,
+            'subtitle' => $pameran->kategori?->nama_kategori ?? $pameran->kategori_kode,
+            'kode_kategori' => $pameran->kategori_kode,
+            'category' => $pameran->kategori?->nama_kategori ?? $pameran->kategori_kode,
+            'date' => $pameran->tanggal_mulai,
             ...$this->buildBannerUrls($pameran),
             'likes' => $pameran->suka_count,
             'karya' => $pameran->karya_count,
@@ -137,7 +150,9 @@ class PameranController extends Controller
                 'kapasitas' => $pameran->kapasitas,
                 'prepareStartDate' => $pameran->tanggal_mulai_persiapan,
                 'prepareEndDate' => $pameran->tanggal_akhir_persiapan,
-                'openDate' => $pameran->tanggal_buka,
+                'startDate' => $pameran->tanggal_mulai,
+                'endDate' => $pameran->tanggal_akhir,
+                'studyLevel' => $pameran->kategori?->nama_kategori ?? $pameran->kategori_kode,
             ],
             'institution' => 'Politeknik Negeri Batam',
         ];
@@ -154,6 +169,7 @@ class PameranController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'kategori_kode' => 'required|exists:kategori,kode_kategori',
             'banner' => 'required|image|mimes:png,jpg,jpeg|max:5000',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -176,6 +192,7 @@ class PameranController extends Controller
 
         $pameran = Pameran::create([
             'model_pameran' => $modelPameran->id_model,
+            'kategori_kode' => $request->kategori_kode,
             'banner' => $bannerPath,
             'judul' => $request->title,
             'deskripsi' => $request->description,
@@ -215,6 +232,7 @@ class PameranController extends Controller
         }
 
         $request->validate([
+            'kategori_kode' => 'sometimes|exists:kategori,kode_kategori',
             'banner' => 'sometimes|image|mimes:png,jpg,jpeg|max:5000',
             'judul' => 'sometimes|string|max:255',
             'deskripsi' => 'sometimes|string',
@@ -249,6 +267,8 @@ class PameranController extends Controller
             $pameran->judul = $request->judul;
         if ($request->filled('deskripsi'))
             $pameran->deskripsi = $request->deskripsi;
+        if ($request->filled('kategori_kode'))
+            $pameran->kategori_kode = $request->kategori_kode;
         if ($request->filled('kapasitas'))
             $pameran->kapasitas = $request->kapasitas;
         if ($request->filled('tanggal_mulai_persiapan'))

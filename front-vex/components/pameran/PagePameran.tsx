@@ -7,7 +7,7 @@ import { GetPameran } from "./apiPameran";
 import { useAuth } from "@/context/AuthContext";
 
 import ProjectCard from "@/components/shared/ui/ProjectCard";
-import { ProdiType } from "@/components/shared/filter/SelectProdi";
+import { KategoriType } from "@/components/shared/filter/SelectKategori";
 import { TahunType } from "@/components/shared/filter/SelectTahun";
 import { SemesterType } from "@/components/shared/filter/SelectSemester";
 
@@ -24,7 +24,7 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
   const isAdmin = user?.role === "Admin";
 
   const [emblaRef] = useEmblaCarousel({ align: "start" });
-  const [selectedProdi, setSelectedProdi] = useState<ProdiType | null>(null);
+  const [selectedKategori, setSelectedKategori] = useState<KategoriType | null>(null);
   const [selectedTahun, setSelectedTahun] = useState<TahunType | null>(null);
   const [selectedSemester, setSelectedSemester] = useState<SemesterType | null>(
     null,
@@ -52,13 +52,13 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
       const matchSearch =
         item.title.toLowerCase().includes(search.toLowerCase()) ||
         item.category.toLowerCase().includes(search.toLowerCase());
-      const matchProdi = !selectedProdi || item.category === selectedProdi.name;
+      const matchKategori = !selectedKategori || item.category === selectedKategori.name;
       const matchTahun =
         !selectedTahun ||
         new Date(item.date).getFullYear().toString() === selectedTahun.name;
-      return matchSearch && matchProdi && matchTahun;
+      return matchSearch && matchKategori && matchTahun;
     });
-  }, [data, search, selectedProdi, selectedTahun]);
+  }, [data, search, selectedKategori, selectedTahun]);
 
   const today = new Date();
   today.setHours(23, 59, 59, 999);
@@ -93,56 +93,48 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
   const categories = [...new Set(openData.map((i) => i.category))];
 
   // Jadi ini:
-if (loading) {
-  return (
-    <div className="min-h-screen bg-secondary-color font-poppins">
-      {/* HERO SKELETON */}
-      <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
-        <div className="autoMid">
-          {/* Filter bar skeleton */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
-            <div className="h-[42px] rounded-xl bg-white/20 animate-pulse flex-1" />
-            <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
-            <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
-          </div>
-
-          {/* "Segera Hadir" title skeleton */}
-          <div className="h-[28px] md:h-[36px] w-[180px] rounded-lg bg-white/20 animate-pulse mb-5 md:mb-6" />
-
-          {/* Carousel skeleton */}
-          <div className="flex gap-4 overflow-hidden">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="min-w-[200px] sm:min-w-[240px] h-[120px] rounded-xl bg-white/20 animate-pulse"
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CATEGORY SKELETON */}
-      <main className="autoMid py-10 space-y-10">
-        {Array.from({ length: 2 }).map((_, catIdx) => (
-          <div key={catIdx}>
-            {/* Category title skeleton */}
-            <div className="h-[22px] w-[120px] rounded-lg bg-gray-200 animate-pulse mb-4" />
-
-            {/* Cards skeleton */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-[80px] rounded-xl bg-gray-200 animate-pulse"
-                />
-              ))}
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-secondary-color font-poppins">
+        {/* HERO SKELETON */}
+        <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
+          <div className="autoMid">
+            {/* Filter bar skeleton */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <div className="h-[42px] rounded-xl bg-white/20 animate-pulse flex-1" />
+              <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
+              <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
             </div>
+
+            {/* "Segera Hadir" title skeleton */}
+            <div className="h-[28px] md:h-[36px] w-[180px] rounded-lg bg-white/20 animate-pulse mb-5 md:mb-6" />
+
+
           </div>
-        ))}
-      </main>
-    </div>
-  );
-}
+        </section>
+
+        {/* CATEGORY SKELETON */}
+        <main className="autoMid py-10 space-y-10">
+          {Array.from({ length: 2 }).map((_, catIdx) => (
+            <div key={catIdx}>
+              {/* Category title skeleton */}
+              <div className="h-[22px] w-[120px] rounded-lg bg-gray-200 animate-pulse mb-4" />
+
+              {/* Cards skeleton */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-[80px] rounded-xl bg-gray-200 animate-pulse"
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-secondary-color font-poppins">
@@ -152,14 +144,14 @@ if (loading) {
           <FilterSection
             search={search}
             setSearch={setSearch}
-            selectedProdi={selectedProdi}
-            setSelectedProdi={setSelectedProdi}
+            selectedKategori={selectedKategori}
+            setSelectedKategori={setSelectedKategori}
             selectedTahun={selectedTahun}
             setSelectedTahun={setSelectedTahun}
             selectedSemester={selectedSemester}
             setSelectedSemester={setSelectedSemester}
           />
-          <div className="relative">
+          {/* <div className="relative">
             <h2 className="mb-5 mt-3 md:mb-6 text-2xl sm:text-3xl md:text-[40px] text-white font-semibold border-b-2 md:border-b-3 pb-2">
               SEGERA HADIR
             </h2>
@@ -176,7 +168,7 @@ if (loading) {
                 emblaRef={emblaRef}
               />
             )}
-          </div>
+          </div> */}
         </div>
       </section>
 

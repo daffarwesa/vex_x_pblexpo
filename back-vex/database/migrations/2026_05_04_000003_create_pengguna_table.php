@@ -19,10 +19,10 @@ return new class extends Migration
             $table->string('password');
 
             $table->unsignedBigInteger('kelas')->nullable();
-            $table->string('program_studi')->nullable();
+            $table->string('kategori_kode')->nullable();
 
             $table->foreign('kelas')->references('id_kelas')->on('kelas')->cascadeOnDelete();
-            $table->foreign('program_studi')->references('kode_prodi')->on('prodi')->cascadeOnDelete();
+            $table->foreign('kategori_kode')->references('kode_kategori')->on('kategori')->cascadeOnDelete();
             $table->enum('role', ['Admin', 'KPS', 'Ketua PBL', 'Pengunjung'])->default('Pengunjung');
             $table->enum('status', ['Aktif', 'Tidak Aktif'])->default('Aktif');
 

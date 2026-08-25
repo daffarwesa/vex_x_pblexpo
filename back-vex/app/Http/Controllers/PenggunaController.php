@@ -77,10 +77,10 @@ class PenggunaController extends Controller
     public function registerThroughAdmin(Request $request)
     {
         $request->validate([
-            'nama' => 'required|string|max:255',
+            'nama'  => 'required|string|max:255',
             'email' => 'required|email',
-            'role' => 'required|in:Pencipta',
-            
+            'role'  => 'required|in:Creator',
+            'kategori_kode' => 'required|exists:kategori,kode_kategori',
         ]);
 
         if (Pengguna::where('email', $request->email)->exists()) {
@@ -97,7 +97,8 @@ class PenggunaController extends Controller
                 'password' => Hash::make($request->email),
                 'role' => Pengguna::ROLE_PENCIPTA,
                 'status' => 'aktif',
-                
+                'kategori_kode' => $request->kategori_kode,
+                'kelas' => $request->kelas
             ]);
 
             return response()->json([
@@ -120,7 +121,8 @@ class PenggunaController extends Controller
     public function getByRole($role)
     {
         $pengguna = Pengguna::with([
-            
+            'kelas',
+            'kategori'
         ])
             ->where('role', $role)
             ->get();
@@ -139,7 +141,7 @@ class PenggunaController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'email' => 'required|email',
-            'role' => 'required',
+            'role' => 'required|in:Creator',
             'status' => 'required',
         ]);
 
@@ -157,7 +159,8 @@ class PenggunaController extends Controller
             'email' => $request->email,
             'role' => $request->role,
             'status' => $request->status,
-           
+            'kategori_kode' => $request->kategori_kode,
+            'kelas' => $request->kelas,
         ]);
 
         return response()->json([
@@ -263,10 +266,10 @@ class PenggunaController extends Controller
                 ], 404);
             }
 
-            if ($user->role === Pengguna::ROLE_PENCIPTA) {
+            if ($user->role === Pengguna::ROLE_CREATOR) {
                 if (!$user->isAktif()) {
                     return response()->json([
-                        'status' => 'error',
+                        'status'  => 'error',
                         'message' => 'Akun Anda telah dinonaktifkan. Hubungi Admin.'
                     ], 403);
                 }
@@ -276,18 +279,18 @@ class PenggunaController extends Controller
 
             // set role User
             $abilities = match ($user->role) {
-                Pengguna::ROLE_ADMIN => ['admin'],
-                Pengguna::ROLE_PENCIPTA => ['pencipta'],
-                default => ['pengunjung'],
+                Pengguna::ROLE_ADMIN   => ['admin'],
+                Pengguna::ROLE_CREATOR => ['creator'],
+                default                => ['pengunjung'],
             };
 
             $token = $user->createToken('token', $abilities)->plainTextToken;
 
             // path User saat login
             $redirectTo = match ($user->role) {
-                Pengguna::ROLE_ADMIN => '/admin/pengguna',
-                Pengguna::ROLE_PENCIPTA => '/pencipta/karya',
-                default => '/',
+                Pengguna::ROLE_ADMIN   => '/admin/pengguna',
+                Pengguna::ROLE_CREATOR => '/creator/karya',
+                default                => '/',
             };
 
             return response()->json([
@@ -301,7 +304,8 @@ class PenggunaController extends Controller
                     'nama' => $user->nama,
                     'email' => $user->email,
                     'role' => $user->role,
-                   
+                    'kelas' => $user->kelas,
+                    'kategori_kode' => $user->kategori_kode,
                 ],
             ]);
             

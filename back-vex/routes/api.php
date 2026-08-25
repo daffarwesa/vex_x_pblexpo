@@ -91,22 +91,28 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // =============================
-    // PENCIPTA (dulu "Ketua PBL")
+    // CREATOR (formerly Visitor / Ketua PBL + KPS)
     // =============================
-    Route::middleware('role:Pencipta')->prefix('ketua-pbl')->group(function () {
+    Route::middleware('role:Creator')->prefix('creator')->group(function () {
         Route::get('/dashboard', function () {
-            return response()->json(['status' => 'success', 'page' => 'Ketua PBL Dashboard']);
+            return response()->json(['status' => 'success', 'page' => 'Creator Dashboard']);
         });
-        // Pameran tersedia untuk karya (tahap persiapan, sesuai prodi)
+
+        // Pameran tersedia untuk karya (tahap persiapan, sesuai kategori)
         Route::get('/pameran-tersedia', [KaryaController::class, 'pameranTersedia']);
         Route::get('/stan/{id_pameran}', [KaryaController::class, 'stanTersedia']);
+
         // Manajemen Karya
         Route::get('/karya', [KaryaController::class, 'index']);
         Route::post('/karya', [KaryaController::class, 'store']);
         Route::put('/karya/{id}', [KaryaController::class, 'update']);
         Route::post('/karya/{id}/update', [KaryaController::class, 'update']);
         Route::get('/model-stan', [KaryaController::class, 'getModelStan']);
-        
+
+        // Manajemen karya terbaik (formerly KPS)
+        Route::get('/karya/semua', [KpsController::class, 'daftarKarya']);
+        Route::patch('/karya/{id_karya}/terbaik', [KpsController::class, 'pilihTerbaik']);
+        Route::patch('/karya/{id_karya}/batalkan', [KpsController::class, 'batalkanTerbaik']);
     });
 
     // =============================

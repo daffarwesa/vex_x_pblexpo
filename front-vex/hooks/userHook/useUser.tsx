@@ -5,7 +5,6 @@ import { GetRole, CreateUser, UpdateUser } from '@/components/pengguna/apiPenggu
 import { useAuth } from '@/context/AuthContext'; // sesuaikan path
 
 const ITEMS_PER_PAGE = 9;
-const itemsPerPageKps = 9;
 
 export function useUsers() {
   const { user, loading: authLoading } = useAuth(); // ← tambah ini
@@ -20,8 +19,8 @@ export function useUsers() {
   const loadUsers = async () => {
     try {
       setIsLoading(true);
-      const [kpsRes, mhsRes] = await Promise.all([GetRole('KPS'), GetRole('Ketua PBL')]);
-      setUsers([...kpsRes.data, ...mhsRes.data]);
+      const creatorRes = await GetRole('Creator');
+      setUsers(creatorRes.data ?? []);
     } catch (error) {
       console.error(error);
       setUsers([]);
@@ -54,13 +53,14 @@ const filterData = (data: UserType[]) =>
     return matchName && matchStatus;
   });
 
+  // Semua user yang dimuat adalah Creator — KPS sudah tidak ada sebagai role terpisah
   const filteredKps = useMemo(
-    () => filterData(users.filter((u) => u.role === 'KPS')),
-    [users, searchTerm, selectedStatus],
+    () => [] as typeof users, // KPS tidak ada lagi
+    [users],
   );
 
   const filteredMhs = useMemo(
-    () => filterData(users.filter((u) => u.role !== 'KPS')),
+    () => filterData(users.filter((u) => u.role === 'Creator')),
     [users, searchTerm, selectedStatus],
   );
 
@@ -71,11 +71,11 @@ const filterData = (data: UserType[]) =>
 
   const totalPages = Math.max(1, Math.ceil(filteredMhs.length / ITEMS_PER_PAGE));
 
-  const totalPagesKps = Math.ceil(filteredKps.length / itemsPerPageKps);
+  const totalPagesKps = Math.ceil(filteredKps.length / ITEMS_PER_PAGE);
 
   const paginatedMhs = filteredMhs.slice((pageMhs - 1) * ITEMS_PER_PAGE, pageMhs * ITEMS_PER_PAGE);
 
-  const paginatedKps = filteredKps.slice((pageKps - 1) * itemsPerPageKps, pageKps * itemsPerPageKps);
+  const paginatedKps = filteredKps.slice((pageKps - 1) * ITEMS_PER_PAGE, pageKps * ITEMS_PER_PAGE);
 
   const nextPage = () => setPageMhs((p) => Math.min(p + 1, totalPages));
   const prevPage = () => setPageMhs((p) => Math.max(p - 1, 1));
@@ -100,7 +100,7 @@ const filterData = (data: UserType[]) =>
         email: newUser.email,
         role: newUser.role,
 
-        prodi: typeof newUser.prodi === 'object' ? newUser.prodi.kode_prodi : newUser.prodi,
+        kategori_kode: typeof newUser.kategori_kode === 'object' ? newUser.kategori_kode.kode_kategori : newUser.kategori_kode,
 
         kelas: typeof newUser.kelas === 'object' ? String(newUser.kelas.id_kelas) : newUser.kelas,
       });

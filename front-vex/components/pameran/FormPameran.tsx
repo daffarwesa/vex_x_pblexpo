@@ -1,5 +1,5 @@
 import { FaCloudUploadAlt } from "react-icons/fa";
-import { PameranForm as PameranFormType, PRODI_OPTIONS } from "@/types/pameran";
+import { PameranForm as PameranFormType, KATEGORI_OPTIONS } from "@/types/pameran";
 import { Button } from "@/components/shared/ui/Button";
 import {
   InputField,
@@ -74,15 +74,15 @@ export default function FormPameran({
       {/* RIGHT - FIELDS */}
       <div className="w-full lg:w-[60%] mt-10 flex flex-col gap-4">
 
-        {/* PRODI */}
+        {/* KATEGORI */}
         <SelectField
-          name="prodi"
-          label="Program Studi"
+          name="kategori"
+          label="Kategori"
           required
-          value={form.prodi}
-          options={PRODI_OPTIONS.map((p) => ({ value: p.kode, label: p.nama }))}
-          placeholder="-- Pilih Prodi --"
-          error={errors.prodi}
+          value={form.kategori}
+          options={KATEGORI_OPTIONS.map((p) => ({ value: p.kode, label: p.nama }))}
+          placeholder="-- Pilih Kategori --"
+          error={errors.kategori}
           onChange={onChange}
         />
 
@@ -99,7 +99,7 @@ export default function FormPameran({
         />
 
         {/* CAPACITY */}
-        <div>
+        {/* <div>
           <Label text="Kapasitas Pameran" required />
           <div className="flex items-center mt-1.5">
             <button
@@ -139,7 +139,7 @@ export default function FormPameran({
           {errors.capacity && (
             <p className="mt-1 text-xs text-red-500">{errors.capacity}</p>
           )}
-        </div>
+        </div> */}
 
         {/* TANGGAL PAMERAN */}
         <div>

@@ -1,8 +1,8 @@
 // types/pengguna.ts
 
-export type ProdiType = {
-  kode_prodi: string;
-  nama_prodi?: string;
+export type KategoriType = {
+  kode_kategori: string;
+  nama_kategori?: string;
 };
 
 export type KelasType = {
@@ -16,13 +16,13 @@ export type UserType = {
   role: string;
   status: string;
   email: string;
-  prodi: ProdiType | string;
+  kategori_kode: KategoriType | string;
   kelas: KelasType | string;
 };
 
-// Helper untuk ekstrak nilai prodi/kelas
-export function getProdiKode(prodi: ProdiType | string): string {
-  return typeof prodi === 'string' ? prodi : prodi.kode_prodi;
+// Helper untuk ekstrak nilai kategori/kelas
+export function getKategoriKode(kategori: KategoriType | string): string {
+  return typeof kategori === 'string' ? kategori : kategori.kode_kategori;
 }
 
 export function getKelasId(kelas: KelasType | string): string {
