@@ -21,7 +21,6 @@ class Pameran extends Model
         'judul',
         'slug',
         'deskripsi',
-        'kapasitas',
         'tanggal_mulai_persiapan',
         'tanggal_akhir_persiapan',
         'tanggal_buka',

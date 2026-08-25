@@ -93,11 +93,10 @@ class PameranController extends Controller
             'stats' => [
                 'likes' => $item->suka_count,
                 'karya' => $item->karya_count,
-                'kapasitas' => $item->kapasitas,
+                
                 'prepareStartDate' => $item->tanggal_mulai_persiapan,
                 'prepareEndDate' => $item->tanggal_akhir_persiapan,
                 'startDate' => $item->tanggal_mulai,
-                'endDate' => $item->tanggal_akhir,
                 'studyLevel' => $item->kategori?->nama_kategori ?? $item->kategori_kode,
             ],
             'institution' => 'Politeknik Negeri Batam',
@@ -147,11 +146,10 @@ class PameranController extends Controller
             'stats' => [
                 'likes' => $pameran->suka_count,
                 'karya' => $pameran->karya_count,
-                'kapasitas' => $pameran->kapasitas,
+            
                 'prepareStartDate' => $pameran->tanggal_mulai_persiapan,
                 'prepareEndDate' => $pameran->tanggal_akhir_persiapan,
                 'startDate' => $pameran->tanggal_mulai,
-                'endDate' => $pameran->tanggal_akhir,
                 'studyLevel' => $pameran->kategori?->nama_kategori ?? $pameran->kategori_kode,
             ],
             'institution' => 'Politeknik Negeri Batam',
@@ -173,7 +171,7 @@ class PameranController extends Controller
             'banner' => 'required|image|mimes:png,jpg,jpeg|max:5000',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'capacity' => 'nullable|integer',
+           
             'prepare_start' => 'required|date',
             'prepare_end' => 'required|date|after:prepare_start',
             'open_date' => 'required|date|after_or_equal:prepare_end',
@@ -196,7 +194,7 @@ class PameranController extends Controller
             'banner' => $bannerPath,
             'judul' => $request->title,
             'deskripsi' => $request->description,
-            'kapasitas' => $request->capacity ?? 24,
+          
             'tanggal_mulai_persiapan' => $request->prepare_start,
             'tanggal_akhir_persiapan' => $request->prepare_end,
             'tanggal_buka' => $request->open_date,
@@ -236,7 +234,6 @@ class PameranController extends Controller
             'banner' => 'sometimes|image|mimes:png,jpg,jpeg|max:5000',
             'judul' => 'sometimes|string|max:255',
             'deskripsi' => 'sometimes|string',
-            'kapasitas' => 'sometimes|integer',
             'tanggal_mulai_persiapan' => 'sometimes|date',
             'tanggal_akhir_persiapan' => 'sometimes|date',
             'tanggal_buka' => 'sometimes|date',
@@ -269,8 +266,6 @@ class PameranController extends Controller
             $pameran->deskripsi = $request->deskripsi;
         if ($request->filled('kategori_kode'))
             $pameran->kategori_kode = $request->kategori_kode;
-        if ($request->filled('kapasitas'))
-            $pameran->kapasitas = $request->kapasitas;
         if ($request->filled('tanggal_mulai_persiapan'))
             $pameran->tanggal_mulai_persiapan = $request->tanggal_mulai_persiapan;
         if ($request->filled('tanggal_akhir_persiapan'))

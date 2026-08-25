@@ -149,7 +149,6 @@ class KaryaController extends Controller
             'year' => $item->pameran?->tanggal_buka
                 ? date('Y', strtotime($item->pameran->tanggal_buka))
                 : '',
-            'semester' => '',
             'isBest' => (bool) $item->is_best,
             'isJuara' => (bool) $item->is_juara,
             'canEdit' => $editStatus['can_edit'],
@@ -265,7 +264,7 @@ class KaryaController extends Controller
                 'tautan' => $request->tautan,
                 'gambar_poster' => '/',
                 'gambar_sampul' => '/',
-                'lantai' => 1,
+           
             ]);
         });
 

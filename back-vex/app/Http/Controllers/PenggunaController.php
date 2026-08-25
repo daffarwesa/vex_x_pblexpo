@@ -98,7 +98,7 @@ class PenggunaController extends Controller
                 'role' => Pengguna::ROLE_PENCIPTA,
                 'status' => 'aktif',
                 'kategori_kode' => $request->kategori_kode,
-                'kelas' => $request->kelas
+                
             ]);
 
             return response()->json([
@@ -121,7 +121,6 @@ class PenggunaController extends Controller
     public function getByRole($role)
     {
         $pengguna = Pengguna::with([
-            'kelas',
             'kategori'
         ])
             ->where('role', $role)
@@ -160,7 +159,6 @@ class PenggunaController extends Controller
             'role' => $request->role,
             'status' => $request->status,
             'kategori_kode' => $request->kategori_kode,
-            'kelas' => $request->kelas,
         ]);
 
         return response()->json([
@@ -304,7 +302,6 @@ class PenggunaController extends Controller
                     'nama' => $user->nama,
                     'email' => $user->email,
                     'role' => $user->role,
-                    'kelas' => $user->kelas,
                     'kategori_kode' => $user->kategori_kode,
                 ],
             ]);
