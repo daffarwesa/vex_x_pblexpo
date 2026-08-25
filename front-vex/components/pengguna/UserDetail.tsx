@@ -6,7 +6,7 @@ import { FiInfo } from 'react-icons/fi';
 import { HiPencilAlt } from 'react-icons/hi';
 import { UserType, getProdiKode, getKelasId, getKelasNama } from '@/types/pengguna';
 import { Button } from '@/components/shared/ui/Button';
-import { PRODI_OPTIONS, KELAS_OPTIONS } from '@/types/pameran';
+import { KATEGORI_OPTIONS, KELAS_OPTIONS } from '@/types/pameran';
 
 type Props = {
   selectedUser: UserType | null;
@@ -69,17 +69,17 @@ export default function UserDetail({
             />
 
             {/* Program Studi — ambil kode dari ProdiType | string */}
-            <SelectField
+            {/* <SelectField
               label="Program Studi"
               name="prodi"
               value={formData?.prodi ? getProdiKode(formData.prodi) : ''}
               isEdit={isEdit}
               onChange={onFormChange}
-              options={PRODI_OPTIONS}
-            />
+              options={KATEGORI_OPTIONS}
+            /> */}
 
             {/* Kelas — hanya untuk non-KPS */}
-            {selectedUser.role !== 'KPS' && (
+            {/* {selectedUser.role !== 'KPS' && (
               <DetailField
                 label="Kelas"
                 name="kelas"
@@ -93,7 +93,7 @@ export default function UserDetail({
                 isEdit={isEdit}
                 onChange={onFormChange}
               />
-            )}
+            )} */}
 
             {/* Role + Status / Tombol Simpan */}
             <div className="flex gap-2 flex-col sm:flex-row cursor-default select-none">

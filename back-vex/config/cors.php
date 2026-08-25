@@ -1,11 +1,11 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'storage/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'storage/*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000'],
+    'allowed_origins' => ['*'],   // ganti dengan domain production nanti
 
     'allowed_origins_patterns' => [],
 

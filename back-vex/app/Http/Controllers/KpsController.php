@@ -10,25 +10,25 @@ use Illuminate\Http\Request;
 class KpsController extends Controller
 {
     // =============================
-    // LIHAT SEMUA KARYA PER PRODI
-    // (KPS hanya lihat karya dari prodinya)
+    // LIHAT SEMUA KARYA PER KATEGORI
+    // (Visitor hanya lihat karya dari kategorinya)
     // =============================
     public function daftarKarya(Request $request)
     {
-        $kps = $request->user();
+        $visitor = $request->user();
 
-        // Ambil karya berdasarkan prodi KPS
+        // Ambil karya berdasarkan kategori Visitor
         $karya = Karya::with(['stan.pameran', 'pengguna:id,nama'])
             ->withCount('suka')
-            ->whereHas('stan.pameran', function ($query) use ($kps) {
-                $query->where('kategori', $kps->program_studi);
+            ->whereHas('stan.pameran', function ($query) use ($visitor) {
+                $query->where('kategori', $visitor->program_studi);
             })
             ->get();
 
         return response()->json([
             'status' => 'success',
-            'total' => $karya->count(),
-            'karya' => $karya,
+            'total'  => $karya->count(),
+            'karya'  => $karya,
         ]);
     }
 
@@ -37,35 +37,35 @@ class KpsController extends Controller
     // =============================
     public function pilihTerbaik(Request $request, $id_karya)
     {
-        $kps = $request->user();
+        $visitor = $request->user();
         $karya = Karya::with('stan.pameran')->find($id_karya);
 
         if (!$karya) {
             return response()->json([
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => 'Karya tidak ditemukan.',
             ], 404);
         }
 
-        // Pastikan karya dari prodi KPS
-        if ($karya->stan->pameran->kategori !== $kps->program_studi) {
+        // Pastikan karya dari kategori Visitor
+        if ($karya->stan->pameran->kategori !== $visitor->program_studi) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Anda tidak berhak memilih karya dari prodi lain.',
+                'status'  => 'error',
+                'message' => 'Anda tidak berhak memilih karya dari kategori lain.',
             ], 403);
         }
 
-        // Cek apakah sudah ada karya terbaik di prodi ini
-        $karya_terbaik = Karya::whereHas('stan.pameran', function ($query) use ($kps) {
-            $query->where('kategori', $kps->program_studi);
+        // Cek apakah sudah ada karya terbaik di kategori ini
+        $karya_terbaik = Karya::whereHas('stan.pameran', function ($query) use ($visitor) {
+            $query->where('kategori', $visitor->program_studi);
         })
             ->where('is_terbaik', true)
             ->first();
 
         if ($karya_terbaik) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Sudah ada karya terbaik untuk prodi ini.',
+                'status'       => 'error',
+                'message'      => 'Sudah ada karya terbaik untuk kategori ini.',
                 'karya_terbaik' => $karya_terbaik,
             ], 422);
         }
@@ -74,9 +74,9 @@ class KpsController extends Controller
         $karya->update(['is_terbaik' => true]);
 
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Karya berhasil dipilih sebagai karya terbaik.',
-            'karya' => $karya,
+            'karya'   => $karya,
         ]);
     }
 
@@ -85,28 +85,28 @@ class KpsController extends Controller
     // =============================
     public function batalkanTerbaik(Request $request, $id_karya)
     {
-        $kps = $request->user();
+        $visitor = $request->user();
         $karya = Karya::with('stan.pameran')->find($id_karya);
 
         if (!$karya) {
             return response()->json([
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => 'Karya tidak ditemukan.',
             ], 404);
         }
 
-        // Pastikan karya dari prodi KPS
-        if ($karya->stan->pameran->kategori !== $kps->program_studi) {
+        // Pastikan karya dari kategori Visitor
+        if ($karya->stan->pameran->kategori !== $visitor->program_studi) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Anda tidak berhak membatalkan karya dari prodi lain.',
+                'status'  => 'error',
+                'message' => 'Anda tidak berhak membatalkan karya dari kategori lain.',
             ], 403);
         }
 
         // Cek apakah karya ini memang terbaik
         if (!$karya->is_terbaik) {
             return response()->json([
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => 'Karya ini bukan karya terbaik.',
             ], 422);
         }
@@ -115,14 +115,14 @@ class KpsController extends Controller
         $karya->update(['is_terbaik' => false]);
 
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Karya terbaik berhasil dibatalkan.',
-            'karya' => $karya,
+            'karya'   => $karya,
         ]);
     }
 
     // =============================
-    // LIHAT KARYA TERBAIK PER PRODI
+    // LIHAT KARYA TERBAIK PER KATEGORI
     // (untuk halaman utama)
     // =============================
     public function karyaTerbaik()
@@ -134,8 +134,8 @@ class KpsController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'total' => $karya->count(),
-            'karya' => $karya,
+            'total'  => $karya->count(),
+            'karya'  => $karya,
         ]);
     }
 }

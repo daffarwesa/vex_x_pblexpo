@@ -77,9 +77,9 @@ class PenggunaController extends Controller
     public function registerThroughAdmin(Request $request)
     {
         $request->validate([
-            'nama' => 'required|string|max:255',
+            'nama'  => 'required|string|max:255',
             'email' => 'required|email',
-            'role' => 'required|in:Ketua PBL,KPS',
+            'role'  => 'required|in:Visitor',
             'prodi' => 'required',
         ]);
 
@@ -266,10 +266,10 @@ class PenggunaController extends Controller
                 ], 404);
             }
 
-            if (in_array($user->role, [Pengguna::ROLE_KPS, Pengguna::ROLE_KETUA_PBL])) {
+            if ($user->role === Pengguna::ROLE_VISITOR) {
                 if (!$user->isAktif()) {
                     return response()->json([
-                        'status' => 'error',
+                        'status'  => 'error',
                         'message' => 'Akun Anda telah dinonaktifkan. Hubungi Admin.'
                     ], 403);
                 }
@@ -279,20 +279,18 @@ class PenggunaController extends Controller
 
             // set role User
             $abilities = match ($user->role) {
-                Pengguna::ROLE_ADMIN => ['admin'],
-                Pengguna::ROLE_KPS => ['kps'],
-                Pengguna::ROLE_KETUA_PBL => ['ketua-pbl'],
-                default => ['pengunjung'],
+                Pengguna::ROLE_ADMIN   => ['admin'],
+                Pengguna::ROLE_VISITOR => ['visitor'],
+                default                => ['pengunjung'],
             };
 
             $token = $user->createToken('token', $abilities)->plainTextToken;
 
             // path User saat login
             $redirectTo = match ($user->role) {
-                Pengguna::ROLE_ADMIN => '/admin/pengguna',
-                Pengguna::ROLE_KPS => '/kps/karya',
-                Pengguna::ROLE_KETUA_PBL => '/ketua-pbl/karya',
-                default => '/',
+                Pengguna::ROLE_ADMIN   => '/admin/pengguna',
+                Pengguna::ROLE_VISITOR => '/visitor/karya',
+                default                => '/',
             };
 
             return response()->json([

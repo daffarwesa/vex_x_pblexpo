@@ -19,9 +19,8 @@ class Pengguna extends Authenticatable
     protected $table = 'pengguna';
     
     // konstanta role
-    const ROLE_ADMIN = 'Admin';
-    const ROLE_KPS = 'KPS';
-    const ROLE_KETUA_PBL = 'Ketua PBL';
+    const ROLE_ADMIN     = 'Admin';
+    const ROLE_VISITOR   = 'Visitor';
     const ROLE_PENGUNJUNG = 'Pengunjung';
 
     const STATUS_AKTIF ='Aktif';
@@ -63,14 +62,9 @@ class Pengguna extends Authenticatable
         return $this->role === self::ROLE_ADMIN;
     }
 
-    public function isKps():  bool
+    public function isVisitor(): bool
     {
-        return $this->role === self::ROLE_KPS;
-    }
-
-    public function isKetuaPbl(): bool
-    {
-        return $this->role === self::ROLE_KETUA_PBL;
+        return $this->role === self::ROLE_VISITOR;
     }
 
     public function isPengunjung(): bool

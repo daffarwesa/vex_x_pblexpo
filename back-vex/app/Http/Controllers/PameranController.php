@@ -11,10 +11,7 @@ use Intervention\Image\Drivers\Gd\Driver;
 
 class PameranController extends Controller
 {
-    // =============================
-    // HELPER: Base URL storage (ikut APP_URL di .env, contoh: http://localhost:8000)
-    // =============================
-    private function storageBaseUrl(): string
+    private function storageUrl(): string
     {
         return rtrim(config('app.url'), '/') . '/storage/';
     }
@@ -24,13 +21,13 @@ class PameranController extends Controller
     // =============================
     private function buildBannerUrls(Pameran $item): array
     {
-        $base = $this->storageBaseUrl();
+        $base = $this->storageUrl();
 
         return [
-            'bannerImage' => $base . $item->banner,
-            'bannerLarge' => $item->banner_large ? $base . $item->banner_large : $base . $item->banner,
+            'bannerImage'  => $base . $item->banner,
+            'bannerLarge'  => $item->banner_large  ? $base . $item->banner_large  : $base . $item->banner,
             'bannerMedium' => $item->banner_medium ? $base . $item->banner_medium : $base . $item->banner,
-            'bannerSmall' => $item->banner_small ? $base . $item->banner_small : $base . $item->banner,
+            'bannerSmall'  => $item->banner_small  ? $base . $item->banner_small  : $base . $item->banner,
         ];
     }
 

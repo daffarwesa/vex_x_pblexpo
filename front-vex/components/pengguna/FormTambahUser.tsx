@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FaTimes, FaUser } from "react-icons/fa";
 import { UserType } from "@/types/pengguna";
 import { Button, ButtonPutih } from "@/components/shared/ui/Button";
-import { PRODI_OPTIONS, KELAS_OPTIONS } from "@/types/pameran";
+import { KATEGORI_OPTIONS, KELAS_OPTIONS } from "@/types/pameran";
 
 type Props = {
   onClose: () => void;
@@ -62,18 +62,18 @@ export default function FormTambahUser({ onClose, onSave }: Props) {
         <div className="mt-8 space-y-4">
           <p className="text-center font-semibold text-lg">Pilih Jenis Akun</p>
 
-          <Button
+          {/* <Button
             onClick={() => pilihRole("KPS")}
             className="w-full bg-main-blue cursor-pointer text-white py-3 rounded-lg font-bold hover:bg-white border-2 border-main-blue hover:text-main-blue hover:opacity-90"
           >
             Kepala Program Studi
-          </Button>
+          </Button> */}
 
           <ButtonPutih
-            onClick={() => pilihRole("Ketua PBL")}
+            onClick={() => pilihRole("Visitor")}
             className="w-full bg-white border-2 cursor-pointer border-main-blue font-bold text-main-blue py-3 rounded-lg hover:opacity-90"
           >
-            Ketua PBL
+            Visitor
           </ButtonPutih>
         </div>
       )}
@@ -116,9 +116,9 @@ export default function FormTambahUser({ onClose, onSave }: Props) {
               className="w-full bg-gray-200 p-2 px-4 rounded-lg"
             >
               <option value="" disabled>
-                -- Pilih Prodi --
+                -- Pilih Kategori --
               </option>
-              {PRODI_OPTIONS.map((prodi) => (
+              {KATEGORI_OPTIONS.map((prodi) => (
                 <option
                   key={prodi.kode}
                   value={prodi.kode}
@@ -128,11 +128,11 @@ export default function FormTambahUser({ onClose, onSave }: Props) {
               ))}
             </select>
           </div>
-          {/* Kelas — hanya untuk Ketua PBL */}
-          {form.role === "Ketua PBL" && (
-            <div>
+          {/* Kelas — hanya untuk Visitor */}
+          {form.role === "Visitor" && (
+            <div  className="">
               <p className="text-sm font-semibold mb-1 text-gray-600">Kelas</p>
-              <select
+              <select 
                 name="kelas"
                 value={
                   typeof form.kelas === "object"

@@ -1,31 +1,51 @@
-export const PRODI_OPTIONS = [
+export const KATEGORI_OPTIONS = [
   {
-    kode: "AN",
-    nama: "Animasi",
+    kode: "IOT",
+    nama: "Internet of Things (IoT)",
   },
   {
-    kode: "IF",
-    nama: "Teknik Informatika",
+    kode: "WEB",
+    nama: "Aplikasi Berbasis Web dan Mobile",
   },
   {
-    kode: "TRPL",
-    nama: "Teknologi Rekayasa Perangkat Lunak",
+    kode: "ANV",
+    nama: "Animasi dan Videografi",
   },
   {
-    kode: "RKS",
-    nama: "Rekayasa Keamanan Siber",
+    kode: "JCS",
+    nama: "Jaringan dan Cybersecurity",
   },
   {
-    kode: "TP",
-    nama: "Teknologi Permainan",
+    kode: "OTO",
+    nama: "Sistem Otomasi",
   },
   {
-    kode: "TRM",
-    nama: "Teknologi Rekayasa Multimedia",
+    kode: "RAI",
+    nama: "Robotics and Artificial Intelligence",
   },
   {
-    kode: "GM",
-    nama: "Teknologi Geomatika",
+    kode: "TTG",
+    nama: "Teknologi Tepat Guna",
+  },
+  {
+    kode: "PRF",
+    nama: "Proses Fabrikasi / Manufacturing",
+  },
+  {
+    kode: "PDF",
+    nama: "Produk Fabrikasi / Manufacturing",
+  },
+  {
+    kode: "KDS",
+    nama: "Konsep Desain",
+  },
+  {
+    kode: "LJU",
+    nama: "Layanan dan Jasa Usaha",
+  },
+  {
+    kode: "KTI",
+    nama: "Karya Tulis Ilmiah",
   },
 ];
 
@@ -48,7 +68,7 @@ export const KELAS_OPTIONS = [
   },
 ]
 
-export type ProdiOption = (typeof PRODI_OPTIONS)[number];
+export type ProdiOption = (typeof KATEGORI_OPTIONS)[number];
 
 export type PameranDescription = {
   title: string;
@@ -84,7 +104,7 @@ export type Pameran = {
 };
 
 export interface PameranForm {
-  prodi: string; // mengambil data string dari database
+  kategori: string; // kategori pameran (kode dari KATEGORI_OPTIONS)
   title: string;
   capacity: number;
   publishDate: string;

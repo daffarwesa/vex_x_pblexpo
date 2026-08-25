@@ -10,7 +10,7 @@ import UserCard from "./UserCard";
 import UserDetail from "./UserDetail";
 import SectionHeader from "./SectionHeader";
 import FormTambahUser from "./FormTambahUser";
-import { PRODI_OPTIONS, KELAS_OPTIONS } from "@/types/pameran";
+import { KATEGORI_OPTIONS, KELAS_OPTIONS } from "@/types/pameran";
 import { useUsers } from "@/hooks/userHook/useUser";
 import { UserType } from "@/types/pengguna";
 import { showToast } from "@/components/shared/ui/ToastNotification";
@@ -55,7 +55,7 @@ export default function Admin() {
 
     // PRODI
     if (name === "program_studi") {
-      const selectedProdi = PRODI_OPTIONS.find((p) => p.kode === value);
+      const selectedProdi = KATEGORI_OPTIONS.find((p) => p.kode === value);
 
       setFormData((prev) =>
         prev
@@ -202,33 +202,10 @@ export default function Admin() {
               </div>
             ) : (
               <>
-                {/* KPS */}
+                {/* Visitor */}
                 <section  className="min-h-[280px]">
                   <SectionHeader
-                    title="Kepala Program Studi"
-                    currentPage={pageKps}
-                    totalPages={totalPagesKps}
-                    onNext={nextPageKps}
-                    onPrev={prevPageKps}
-                  />
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                    {paginatedKps.map((user) => (
-                      <UserCard
-                        key={user.id}
-                        user={user}
-                        isActive={selectedUser?.id === user.id}
-                        onClick={() => setSelectedUser(user)}
-                        onToggleStatus={handleToggleStatus}
-                      />
-                    ))}
-                  </div>
-                </section>
-
-                {/* Mahasiswa */}
-                <section  className="min-h-[280px]">
-                  <SectionHeader
-                    title="Mahasiswa"
+                    title="Visitor"
                     currentPage={pageMhs}
                     totalPages={totalPages}
                     onNext={nextPage}

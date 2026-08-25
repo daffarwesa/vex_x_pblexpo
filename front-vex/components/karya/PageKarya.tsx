@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import FilterSection from "@/components/pameran/FilterSection";
 import KaryaGrid from "@/components/karya/KaryaGrid";
 import { KaryaItem, PameranItem } from "@/types/karya";
-import { PRODI_OPTIONS } from "@/types/pameran";
+import { KATEGORI_OPTIONS } from "@/types/pameran";
 import { ProdiType } from "@/components/shared/filter/SelectProdi";
 import { TahunType } from "@/components/shared/filter/SelectTahun";
 import { SemesterType } from "@/components/shared/filter/SelectSemester";
 import { useAuth } from "@/context/AuthContext";
-import { GetKarya, GetKaryaAdmin, GetKaryaKps } from "./apiKarya";
+import { GetKarya, GetKaryaAdmin, GetKaryaSemua } from "./apiKarya";
 
 interface Props {
   href: string;
@@ -18,8 +18,8 @@ interface Props {
 export default function PageKarya({ href }: Props) {
   const { user, loading: authLoading } = useAuth();
 
-  const isAdmin = user?.role === "Admin";
-  const isKps = user?.role === "KPS";
+  const isAdmin   = user?.role === "Admin";
+  const isVisitor = user?.role === "Visitor";
 
   const [karyaList, setKaryaList] = useState<KaryaItem[]>([]);
   const [pameranList, setPameranList] = useState<PameranItem[]>([]);
@@ -43,70 +43,47 @@ export default function PageKarya({ href }: Props) {
 
     const fetchKarya = async () => {
       try {
-        const res = isKps
-          ? await GetKaryaKps()
+        const storageBase = process.env.NEXT_PUBLIC_STORAGE_URL ?? 'http://localhost:8000/storage';
+
+        const res = isVisitor && !isAdmin
+          ? await GetKaryaSemua()
           : isAdmin
             ? await GetKaryaAdmin()
             : await GetKarya();
 
-        // ← Tambah mapper ini khusus KPS
-        const mapKaryaItem = (item: any): KaryaItem => {
-  const tanggalMulai = item.stan?.pameran?.tanggal_mulai ?? "";
-  const bulan = tanggalMulai ? new Date(tanggalMulai).getMonth() + 1 : 0;
-  const semester = bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
-
-  return {
-    id: item.id_karya,
-    title: item.judul,
-    description: item.deskripsi,
-    category: item.stan?.pameran?.kategori ?? "",
-    image: item.gambar_poster
-      ? `http://localhost:8000/storage/${item.gambar_poster}`
-      : "",
-    thumbnail: item.gambar_sampul
-      ? `http://localhost:8000/storage/${item.gambar_sampul}`
-      : "",
-    link: item.tautan ?? "",
-    year: tanggalMulai.slice(0, 4),
-    semester,
-    booth: String(item.id_stan ?? ""),
-    pameranId: item.id_pameran,
-    pameranTitle: item.stan?.pameran?.judul ?? `Pameran #${item.id_pameran}`,
-    isTerbaik: item.is_terbaik ?? false,
-  };
-};
         const raw = res.karya ?? [];
-        const data: KaryaItem[] = isKps
-          ? raw.map((item: any) => {
-              const tanggalMulai = item.stan?.pameran?.tanggal_mulai ?? "";
-              const bulan = tanggalMulai
-                ? new Date(tanggalMulai).getMonth() + 1
-                : 0;
-              const semester =
-                bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
 
-              return {
-                id: item.id_karya,
-                title: item.judul,
-                description: item.deskripsi,
-                category: item.stan?.pameran?.kategori ?? "",
-                image: item.gambar_poster
-                  ? `http://localhost:8000/storage/${item.gambar_poster}`
-                  : "",
-                thumbnail: item.gambar_sampul
-                  ? `http://localhost:8000/storage/${item.gambar_sampul}`
-                  : "",
-                link: item.tautan ?? "",
-                year: tanggalMulai.slice(0, 4),
-                semester, // ← sekarang terisi "Ganjil" / "Genap"
-                booth: String(item.id_stan ?? ""),
-                pameranId: item.id_pameran,
-                pameranTitle:
-                  item.stan?.pameran?.judul ?? `Pameran #${item.id_pameran}`,
-                isTerbaik: item.is_terbaik ?? false,
-              };
-            })
-          : raw ;
+        const mapRawKarya = (item: any): KaryaItem => {
+          const tanggalMulai = item.stan?.pameran?.tanggal_mulai ?? item.pameran?.tanggal_mulai ?? "";
+          const bulan = tanggalMulai ? new Date(tanggalMulai).getMonth() + 1 : 0;
+          const semester = bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
+
+          return {
+            id: item.id_karya,
+            title: item.judul,
+            description: item.deskripsi,
+            category: item.stan?.pameran?.kategori ?? item.pameran?.kategori ?? item.category ?? "",
+            image: item.gambar_poster
+              ? `${storageBase}/${item.gambar_poster}`
+              : item.image ?? "",
+            thumbnail: item.gambar_sampul
+              ? `${storageBase}/${item.gambar_sampul}`
+              : item.thumbnail ?? "",
+            link: item.tautan ?? item.link ?? "",
+            year: tanggalMulai.slice(0, 4) || item.year || "",
+            semester: semester || item.semester || "",
+            booth: String(item.id_stan ?? item.booth ?? ""),
+            pameranId: item.id_pameran ?? item.pameranId,
+            pameranTitle:
+              item.stan?.pameran?.judul ??
+              item.pameran?.judul ??
+              item.pameranTitle ??
+              `Pameran #${item.id_pameran}`,
+            isTerbaik: item.is_terbaik ?? item.isTerbaik ?? false,
+          };
+        };
+
+        const data: KaryaItem[] = raw.map(mapRawKarya);
 
         setKaryaList(data);
 
@@ -128,7 +105,7 @@ export default function PageKarya({ href }: Props) {
     };
 
     fetchKarya();
-  }, [authLoading, isAdmin, isKps]);
+  }, [authLoading, isAdmin, isVisitor]);
 
   // =============================
   // PAGINATION HELPER
@@ -152,7 +129,7 @@ export default function PageKarya({ href }: Props) {
   // DATA KPS — group by pameran
   // =============================
   const karyaByPameran = useMemo(() => {
-    if (!isKps) return [];
+    if (!isVisitor || isAdmin) return [];
 
     const keyword = search.toLowerCase();
     const filtered = karyaList.filter((item) => {
@@ -182,15 +159,15 @@ export default function PageKarya({ href }: Props) {
     });
 
     return Array.from(map.values());
-  }, [isKps, karyaList, pameranList, search, selectedTahun, selectedSemester]);
+  }, [isVisitor, isAdmin, karyaList, pameranList, search, selectedTahun, selectedSemester]);
 
   // =============================
   // DATA NON-KPS — group by category
   // =============================
   const filteredData = useMemo(() => {
-    if (isKps) return [];
+    if (isVisitor && !isAdmin) return [];
     return karyaList.filter((item) => {
-      const prodi = PRODI_OPTIONS.find((p) => p.kode === item.category);
+      const prodi = KATEGORI_OPTIONS.find((p) => p.kode === item.category);
       const categoryName = prodi?.nama || item.category;
       const keyword = search.toLowerCase();
       const matchSearch =
@@ -203,7 +180,8 @@ export default function PageKarya({ href }: Props) {
       return matchSearch && matchProdi && matchTahun && matchSemester;
     });
   }, [
-    isKps,
+    isVisitor,
+    isAdmin,
     karyaList,
     search,
     selectedProdi,
@@ -217,10 +195,7 @@ export default function PageKarya({ href }: Props) {
     ),
   ];
 
-  const kpsProdiNama =
-    PRODI_OPTIONS.find((p) => p.kode === user?.program_studi)?.nama ||
-    user?.program_studi ||
-    "Prodi Anda";
+  // kpsProdiNama removed — unused variable
 
   // =============================
   // LOADING
@@ -267,7 +242,7 @@ export default function PageKarya({ href }: Props) {
   // =============================
   // RENDER KPS
   // =============================
-  if (isKps) {
+  if (isVisitor && !isAdmin) {
     return (
       <div className="min-h-screen bg-secondary-color font-poppins">
         <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
@@ -319,7 +294,7 @@ export default function PageKarya({ href }: Props) {
   }
 
   // =============================
-  // RENDER DEFAULT (Admin / Ketua PBL)
+  // RENDER DEFAULT (Admin / Visitor)
   // =============================
   return (
   <div className="min-h-screen bg-secondary-color font-poppins">
@@ -334,7 +309,7 @@ export default function PageKarya({ href }: Props) {
           setSelectedTahun={setSelectedTahun}
           selectedSemester={selectedSemester}
           setSelectedSemester={setSelectedSemester}
-          hideProdi={!isAdmin}
+        hideProdi={!isAdmin}
         />
       </div>
     </section>
@@ -351,7 +326,7 @@ export default function PageKarya({ href }: Props) {
             const currentPage = pages[cat] || 1;
             const start = (currentPage - 1) * PER_PAGE;
             const currentData = data.slice(start, start + PER_PAGE);
-            const prodi = PRODI_OPTIONS.find((p) => p.kode === cat);
+            const prodi = KATEGORI_OPTIONS.find((p) => p.kode === cat);
             const categoryName = prodi?.nama || cat;
 
             return (

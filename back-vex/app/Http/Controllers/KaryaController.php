@@ -17,11 +17,13 @@ use App\Services\Steganography;
 
 class KaryaController extends Controller
 {
-    // private const STORAGE_BASE_URL = 'https://vex.terpalb25.web.id/storage/';
-    private function storageBaseUrl(): string
+    private const STORAGE_BASE_URL = '';
+
+    private function storageUrl(): string
     {
         return rtrim(config('app.url'), '/') . '/storage/';
     }
+
     /**
      * Semua ukuran turunan gambar yang di-generate untuk tiap upload.
      * Key = nama folder/label, Value = rasio skala dari ukuran original.
@@ -139,15 +141,15 @@ class KaryaController extends Controller
     // =============================
     private function buildKaryaImageUrls(Karya $item): array
     {
-        $base = $this->storageBaseUrl();
+        $base = $this->storageUrl();
         $poster = $item->gambar_poster;
         $sampul = $item->gambar_sampul;
-    
+
         return [
-            'image' => $poster ? $base . $poster : '',
-            'imageLarge' => $poster ? $base . $this->resolveSizePath($poster, 'large') : '',
-            'imageSmall' => $poster ? $base . $this->resolveSizePath($poster, 'small') : '',
-            'thumbnail' => $sampul ? $base . $sampul : '',
+            'image'          => $poster ? $base . $poster : '',
+            'imageLarge'     => $poster ? $base . $this->resolveSizePath($poster, 'large') : '',
+            'imageSmall'     => $poster ? $base . $this->resolveSizePath($poster, 'small') : '',
+            'thumbnail'      => $sampul ? $base . $sampul : '',
             'thumbnailMedium' => $sampul ? $base . $this->resolveSizePath($sampul, 'medium') : '',
         ];
     }
@@ -187,16 +189,15 @@ class KaryaController extends Controller
     // =============================
     private function formatKaryaHighlight(Karya $item): array
     {
-        $base = $this->storageBaseUrl();
-    
+        $base = $this->storageUrl();
         return [
-            'id' => $item->id_karya,
-            'title' => $item->judul,
-            'banner' => $item->gambar_sampul ? $base . $item->gambar_sampul : '',
+            'id'          => $item->id_karya,
+            'title'       => $item->judul,
+            'banner'      => $item->gambar_sampul ? $base . $item->gambar_sampul : '',
             'bannerLarge' => $item->gambar_sampul
                 ? $base . $this->resolveSizePath($item->gambar_sampul, 'large')
                 : '',
-            'poster' => $item->gambar_poster ? $base . $item->gambar_poster : '',
+            'poster'      => $item->gambar_poster ? $base . $item->gambar_poster : '',
             'posterMedium' => $item->gambar_poster
                 ? $base . $this->resolveSizePath($item->gambar_poster, 'medium')
                 : '',
@@ -204,7 +205,7 @@ class KaryaController extends Controller
     }
 
     // =============================
-    // DAFTAR KARYA MILIK KETUA PBL
+    // DAFTAR KARYA MILIK VISITOR
     // =============================
     public function index(Request $request): JsonResponse
     {
@@ -493,8 +494,8 @@ class KaryaController extends Controller
 
         if (!$prodi) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Prodi ketua PBL tidak ditemukan.',
+                'status'  => 'error',
+                'message' => 'Kategori Visitor tidak ditemukan.',
             ], 404);
         }
 

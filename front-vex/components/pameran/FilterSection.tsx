@@ -71,7 +71,7 @@ export default function FilterSection({
           {/* FILTERS */}
           <div
             className={`w-full lg:w-[40%] grid gap-3 lg:gap-[30px] ${
-              hideProdi ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-3'
+              hideProdi ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'
             }`}
           >
             {!hideProdi && setSelectedProdi && (
@@ -80,7 +80,7 @@ export default function FilterSection({
 
             <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
 
-            <SelectSemester selected={selectedSemester} onChange={setSelectedSemester} />
+            {/* <SelectSemester selected={selectedSemester} onChange={setSelectedSemester} /> */}
           </div>
         </div>
       </section>
@@ -127,7 +127,7 @@ export default function FilterSection({
 
             <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
 
-            <SelectSemester selected={selectedSemester} onChange={setSelectedSemester} />
+            {/* <SelectSemester selected={selectedSemester} onChange={setSelectedSemester} /> */}
           </div>
 
           {/* BUTTON */}

@@ -30,7 +30,7 @@ export default function SelectProdi({ selected, onChange }: SelectProdiProps) {
 
         setProdiList(unique.map((name, index) => ({ id: index + 1, name })));
       } catch (err) {
-        console.error('Gagal memuat prodi:', err);
+        console.error('Gagal memuat kategori:', err);
       }
     }
 
@@ -44,7 +44,7 @@ export default function SelectProdi({ selected, onChange }: SelectProdiProps) {
           {/* BUTTON */}
           <ListboxButton className="relative w-full cursor-pointer rounded-full bg-white py-2 pl-[15px] pr-[30px] text-left text-sm font-poppins shadow-xl/20 ring-1 ring-gray-200 focus:outline-none focus:ring-2 focus:ring-main-blue/60">
             <span className={`block truncate ${selected ? 'text-gray-800 font-medium' : 'text-gray-400'}`}>
-              {selected ? selected.name : 'Program Studi'}
+              {selected ? selected.name : 'Kategori'}
             </span>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-[10px]">
               {selected ? (
