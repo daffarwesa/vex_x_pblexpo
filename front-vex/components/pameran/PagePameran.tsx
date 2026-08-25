@@ -12,12 +12,13 @@ import { TahunType } from "@/components/shared/filter/SelectTahun";
 import { SemesterType } from "@/components/shared/filter/SelectSemester";
 
 import FilterSection from "@/components/pameran/FilterSection";
-import CarouselSection from "@/components/pameran/CarouselSection";
-import CategorySection from "@/components/pameran/CategorySection";
+// import CarouselSection from "@/components/pameran/CarouselSection";
 
 interface PameranProps {
   href?: string;
 }
+
+const ITEMS_PER_PAGE = 12; // 4 kolom x 3 baris
 
 export default function PagePameran({ href = "/pameran/" }: PameranProps) {
   const { user } = useAuth();
@@ -32,6 +33,7 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     async function loadPameran() {
@@ -81,7 +83,7 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
     )
     .slice(0, 5);
 
-  // Category: admin → semua, user → hanya yang sudah/sedang berlangsung
+  // Tidak ada lagi pemisahan per kategori — semua pameran yang relevan digabung jadi satu list
   const openData = filteredData.filter((item) => {
     if (isAdmin) return true;
     const start = new Date(item.stats?.startDate);
@@ -92,9 +94,24 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
     return today >= start && today <= end;
   });
 
-  const categories = [...new Set(openData.map((i) => i.category))];
+  // Reset ke halaman 1 setiap kali filter/search berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedKategori, selectedTahun]);
 
-  // Jadi ini:
+  const totalPages = Math.max(1, Math.ceil(openData.length / ITEMS_PER_PAGE));
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return openData.slice(start, start + ITEMS_PER_PAGE);
+  }, [openData, currentPage]);
+
+  const goToPage = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-secondary-color font-poppins">
@@ -114,24 +131,16 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
           </div>
         </section>
 
-        {/* CATEGORY SKELETON */}
-        <main className="autoMid py-10 space-y-10">
-          {Array.from({ length: 2 }).map((_, catIdx) => (
-            <div key={catIdx}>
-              {/* Category title skeleton */}
-              <div className="h-[22px] w-[120px] rounded-lg bg-gray-200 animate-pulse mb-4" />
-
-              {/* Cards skeleton */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[80px] rounded-xl bg-gray-200 animate-pulse"
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
+        {/* GRID SKELETON */}
+        <main className="autoMid py-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[80px] rounded-xl bg-gray-200 animate-pulse"
+              />
+            ))}
+          </div>
         </main>
       </div>
     );
@@ -173,30 +182,64 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
         </div>
       </section>
 
-      {/* CATEGORY */}
-      <main className="autoMid py-10 space-y-10">
-        {categories.length === 0 ? (
+      {/* GRID + PAGINATION */}
+      <main className="autoMid py-10">
+        {openData.length === 0 ? (
           <p className="text-gray-400 text-sm text-center py-10">
             {isAdmin
               ? "Belum ada pameran."
               : "Tidak ada pameran yang sedang berlangsung."}
           </p>
         ) : (
-          categories.map((cat) => (
-            <CategorySection key={cat} title={cat}>
-              {openData
-                .filter((item) => item.category === cat)
-                .map((project) => (
-                  <Link
-                    key={project.id}
-                    href={`${href}${project.slug}`}
-                    className="group block"
-                  >
-                    <ProjectCard project={project} />
-                  </Link>
-                ))}
-            </CategorySection>
-          ))
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+              {paginatedData.map((project) => (
+                <Link
+                  key={project.id}
+                  href={`${href}${project.slug}`}
+                  className="group block"
+                >
+                  <ProjectCard project={project} />
+                </Link>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed bg-white hover:bg-gray-100 border"
+                >
+                  Prev
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium border ${
+                        page === currentPage
+                          ? "bg-main-blue text-white border-main-blue"
+                          : "bg-white hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
+
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed bg-white hover:bg-gray-100 border"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

@@ -13,12 +13,15 @@ import {
   GetKaryaSemua,
   UpdateKarya,
   DeleteKarya,
-  PilihTerbaik,
-  BatalkanTerbaik,
+  SetTerbaikRank,
+  BatalkanTerbaikRank,
+  SetPredikatKarya,
+  BatalkanPredikatKarya,
 } from "@/components/karya/apiKarya";
-import { KaryaItem } from "@/types/karya";
+import { KaryaItem, TerbaikRank, PredikatKarya } from "@/types/karya";
 import { showToast } from "@/components/shared/ui/ToastNotification";
 import { useAuth } from "@/context/AuthContext";
+import { is } from "@react-three/fiber/dist/declarations/src/core/utils";
 
 // =============================
 // HELPERS
@@ -85,7 +88,8 @@ export default function DetailKarya({ id }: Props) {
   const isAdmin = user?.role === "Admin";
   const isCreator = user?.role === "Creator";
 
-  // Read-only untuk Admin
+  // Read-only untuk Admin (Admin tidak mengedit konten karya,
+  // hanya menghapus & menilai/menentukan karya terbaik)
   const isReadOnly = isAdmin;
 
   const [form, setForm] = useState<KaryaItem | null>(null);
@@ -105,6 +109,12 @@ export default function DetailKarya({ id }: Props) {
     id: number;
     title: string;
   } | null>(null);
+
+  // Slot rank/predikat yang sudah dipakai karya LAIN di pameran yang sama
+  const [siblingAwards, setSiblingAwards] = useState<{
+    takenRanks: TerbaikRank[];
+    takenPredikat: PredikatKarya[];
+  }>({ takenRanks: [], takenPredikat: [] });
 
   // ── Guard ──
   useEffect(() => {
@@ -155,7 +165,8 @@ export default function DetailKarya({ id }: Props) {
               item.pameran?.judul ??
               item.pameranTitle ??
               `Pameran #${item.id_pameran}`,
-            isTerbaik: item.is_terbaik ?? item.isTerbaik ?? false,
+            terbaikRank: item.terbaik_rank ?? item.terbaikRank ?? null,
+            predikat: item.predikat ?? null,
           };
         });
 
@@ -173,6 +184,18 @@ export default function DetailKarya({ id }: Props) {
                 found.pameranTitle?.trim() || `Pameran #${found.pameranId}`,
             });
           }
+
+          const siblings = list.filter(
+            (item) => item.id !== found.id && item.pameranId === found.pameranId,
+          );
+          setSiblingAwards({
+            takenRanks: siblings
+              .map((s) => s.terbaikRank)
+              .filter((r): r is TerbaikRank => !!r),
+            takenPredikat: siblings
+              .map((s) => s.predikat)
+              .filter((p): p is PredikatKarya => !!p),
+          });
         }
       } catch (err) {
         console.error("Gagal memuat karya:", err);
@@ -224,7 +247,6 @@ export default function DetailKarya({ id }: Props) {
     }
   };
 
-  // Hanya Ketua PBL
   const handleSave = async () => {
     if (!form || isReadOnly) return;
     if (form.canEdit === false) {
@@ -263,10 +285,7 @@ export default function DetailKarya({ id }: Props) {
       router.push("/ketua-pbl/karya");
     } catch (err: any) {
       if (err.response?.status === 422) {
-        const laravelErrors = err.response.data.errors as Record<
-          string,
-          string[]
-        >;
+        const laravelErrors = err.response.data.errors as Record<string, string[]>;
         const mapped: Record<string, string> = {};
         if (laravelErrors.id_pameran)
           mapped.pameranId = laravelErrors.id_pameran[0];
@@ -314,39 +333,75 @@ export default function DetailKarya({ id }: Props) {
     }
   };
 
-  // Creator toggle karya terbaik
-  const handlePilihTerbaik = async () => {
-    if (!form || !isCreator) return;
+  // Admin — penilaian: set/batalkan peringkat terbaik (1-3)
+  const handleSetRank = async (rank: TerbaikRank) => {
+    if (!form || !isAdmin) return;
     setIsLoading(true);
     try {
-      const result = await PilihTerbaik(form.id);
+      const result = await SetTerbaikRank(form.id, rank);
       if (result.status !== "success") {
-        throw new Error(result.message || "Gagal memilih karya terbaik");
+        throw new Error(result.message || "Gagal menentukan peringkat terbaik");
       }
-      setForm((prev) => (prev ? { ...prev, isTerbaik: true } : prev));
-      showToast("Karya berhasil dipilih sebagai terbaik!", "success");
+      setForm((prev) => (prev ? { ...prev, terbaikRank: rank } : prev));
+      showToast(`Karya ditetapkan sebagai Terbaik ${rank}!`, "success");
     } catch (err) {
-      showToast("Gagal memilih karya terbaik.", "error");
-      console.error("Gagal memilih terbaik:", err);
+      showToast("Gagal menentukan peringkat terbaik.", "error");
+      console.error("Gagal set peringkat terbaik:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Creator batalkan karya terbaik
-  const handleBatalkanTerbaik = async () => {
-    if (!form || !isCreator) return;
+  const handleCancelRank = async () => {
+    if (!form || !isAdmin) return;
     setIsLoading(true);
     try {
-      const result = await BatalkanTerbaik(form.id);
+      const result = await BatalkanTerbaikRank(form.id);
       if (result.status !== "success") {
-        throw new Error(result.message || "Gagal membatalkan karya terbaik");
+        throw new Error(result.message || "Gagal membatalkan peringkat terbaik");
       }
-      setForm((prev) => (prev ? { ...prev, isTerbaik: false } : prev));
-      showToast("Predikat terbaik berhasil dibatalkan.", "info");
+      setForm((prev) => (prev ? { ...prev, terbaikRank: null } : prev));
+      showToast("Peringkat terbaik berhasil dibatalkan.", "info");
     } catch (err) {
-      showToast("Gagal membatalkan predikat terbaik.", "error");
-      console.error("Gagal membatalkan terbaik:", err);
+      showToast("Gagal membatalkan peringkat terbaik.", "error");
+      console.error("Gagal batalkan peringkat terbaik:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Admin — penilaian: set/batalkan predikat
+  const handleSetPredikat = async (predikat: PredikatKarya) => {
+    if (!form || !isAdmin) return;
+    setIsLoading(true);
+    try {
+      const result = await SetPredikatKarya(form.id, predikat);
+      if (result.status !== "success") {
+        throw new Error(result.message || "Gagal menentukan predikat");
+      }
+      setForm((prev) => (prev ? { ...prev, predikat } : prev));
+      showToast(`Karya diberi predikat "${predikat}"!`, "success");
+    } catch (err) {
+      showToast("Gagal menentukan predikat.", "error");
+      console.error("Gagal set predikat:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelPredikat = async () => {
+    if (!form || !isAdmin) return;
+    setIsLoading(true);
+    try {
+      const result = await BatalkanPredikatKarya(form.id);
+      if (result.status !== "success") {
+        throw new Error(result.message || "Gagal membatalkan predikat");
+      }
+      setForm((prev) => (prev ? { ...prev, predikat: null } : prev));
+      showToast("Predikat berhasil dibatalkan.", "info");
+    } catch (err) {
+      showToast("Gagal membatalkan predikat.", "error");
+      console.error("Gagal batalkan predikat:", err);
     } finally {
       setIsLoading(false);
     }
@@ -475,7 +530,7 @@ export default function DetailKarya({ id }: Props) {
 
       <div className="w-full px-4 sm:px-6 lg:px-0 py-6">
         <div className="max-w-[1200px] mx-auto">
-          {/* Banner read-only — Admin & KPS */}
+          {/* Banner read-only — Admin (hapus & menilai karya terbaik) */}
           {isReadOnly && (
             <div className="mb-6 flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
               <svg
@@ -492,14 +547,9 @@ export default function DetailKarya({ id }: Props) {
               </svg>
               <p className="text-xs text-amber-700">
                 {" "}
-                <span className="font-semibold">
-                  {isAdmin ? "Admin" : "KPS"}
-                </span>{" "}
-                —{" "}
-                {isAdmin
-                  ? "hanya dapat menghapus karya."
-                  : "hanya dapat menentukan karya terbaik."}{" "}
-                Data tidak dapat diubah.
+                <span className="font-semibold">Admin</span> — hanya dapat
+                menghapus karya dan menentukan peringkat/predikat terbaik. Data
+                tidak dapat diubah.
               </p>
             </div>
           )}
@@ -525,7 +575,7 @@ export default function DetailKarya({ id }: Props) {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-            {/* Gambar — read-only untuk Admin & KPS */}
+            {/* Gambar — read-only untuk Admin */}
             <div
               className={`space-y-3 ${
                 isReadOnly || isPameranLocked
@@ -546,7 +596,7 @@ export default function DetailKarya({ id }: Props) {
               />
             </div>
 
-            {/* Form — read-only untuk Admin & KPS */}
+            {/* Form — read-only untuk Admin */}
             <div
               className={
                 isReadOnly || isPameranLocked
@@ -576,12 +626,17 @@ export default function DetailKarya({ id }: Props) {
           <DetailAction
             // Admin
             onDelete={isAdmin ? () => setShowConfirm(true) : undefined}
-            // Creator: Simpan jika tidak locked
             onSave={isCreator && !isPameranLocked ? handleSave : undefined}
-            // Creator: Pilih/Batalkan terbaik
-            onPilihTerbaik={isCreator ? handlePilihTerbaik : undefined}
-            onBatalkanTerbaik={isCreator ? handleBatalkanTerbaik : undefined}
-            isTerbaik={form.isTerbaik}
+            // Admin: Penilaian — Peringkat 1-3 & Predikat
+            isAdmin={isAdmin}
+            currentRank={form.terbaikRank}
+            takenRanks={siblingAwards.takenRanks}
+            onSetRank={handleSetRank}
+            onCancelRank={handleCancelRank}
+            currentPredikat={form.predikat}
+            takenPredikat={siblingAwards.takenPredikat}
+            onSetPredikat={handleSetPredikat}
+            onCancelPredikat={handleCancelPredikat}
             loading={isLoading}
           />
         </div>

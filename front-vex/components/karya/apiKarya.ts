@@ -1,4 +1,5 @@
 import url from "@/lib/axios";
+import { PredikatKarya, TerbaikRank } from "@/types/karya";
 
 // =============================
 // DAFTAR KARYA MILIK CREATOR
@@ -69,20 +70,47 @@ export async function GetStanTersedia(id_pameran: number) {
 }
 
 // =============================
-// KARYA SEMUA (untuk Creator — pilih karya terbaik)
+// KARYA SEMUA (listing publik, dipakai juga untuk cek award di halaman detail)
 // =============================
 export async function GetKaryaSemua() {
   const res = await url.get("/api/creator/karya/semua");
   return res.data;
 }
 
-export async function PilihTerbaik(id_karya: number) {
-  const res = await url.patch(`/api/creator/karya/${id_karya}/terbaik`);
+// =============================
+// PENILAIAN KARYA TERBAIK (ADMIN ONLY)
+// Peringkat: Terbaik 1-3, unik per pameran
+// =============================
+export async function SetTerbaikRank(id_karya: number, rank: TerbaikRank) {
+  const res = await url.patch(`/api/admin/karya/${id_karya}/terbaik-rank`, {
+    rank,
+  });
   return res.data;
 }
 
-export async function BatalkanTerbaik(id_karya: number) {
-  const res = await url.patch(`/api/creator/karya/${id_karya}/batalkan`);
+export async function BatalkanTerbaikRank(id_karya: number) {
+  const res = await url.patch(
+    `/api/admin/karya/${id_karya}/terbaik-rank/batal`,
+  );
+  return res.data;
+}
+
+// =============================
+// PENILAIAN PREDIKAT KARYA (ADMIN ONLY)
+// Best Visualization / Best Creativity & Innovation / Best Functionality, unik per pameran
+// =============================
+export async function SetPredikatKarya(
+  id_karya: number,
+  predikat: PredikatKarya,
+) {
+  const res = await url.patch(`/api/admin/karya/${id_karya}/predikat`, {
+    predikat,
+  });
+  return res.data;
+}
+
+export async function BatalkanPredikatKarya(id_karya: number) {
+  const res = await url.patch(`/api/admin/karya/${id_karya}/predikat/batal`);
   return res.data;
 }
 

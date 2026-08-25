@@ -71,7 +71,7 @@ export default function FilterSection({
           {/* FILTERS */}
           <div
             className={`w-full lg:w-[40%] grid gap-3 lg:gap-[30px] ${
-               hideKategori ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'
+              hideKategori ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'
             }`}
           >
             {!hideKategori && setSelectedKategori && (
