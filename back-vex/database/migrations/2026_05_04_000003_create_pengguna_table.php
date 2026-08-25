@@ -18,12 +18,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
 
-            $table->unsignedBigInteger('kelas')->nullable();
             $table->string('kategori_kode')->nullable();
 
-            $table->foreign('kelas')->references('id_kelas')->on('kelas')->cascadeOnDelete();
             $table->foreign('kategori_kode')->references('kode_kategori')->on('kategori')->cascadeOnDelete();
-            $table->enum('role', ['Admin', 'KPS', 'Ketua PBL', 'Pengunjung'])->default('Pengunjung');
+            $table->enum('role', ['Admin', 'Creator', 'Pengunjung'])->default('Pengunjung');
             $table->enum('status', ['Aktif', 'Tidak Aktif'])->default('Aktif');
 
             $table->string('new_email')->nullable();

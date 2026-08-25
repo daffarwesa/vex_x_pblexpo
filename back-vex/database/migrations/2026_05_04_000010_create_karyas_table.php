@@ -23,7 +23,8 @@ return new class extends Migration {
             $table->string('tautan');
             $table->string('gambar_poster');
             $table->string('gambar_sampul');
-            $table->unsignedBigInteger('lantai')->nullable();
+            $table->boolean('is_juara')->default(false);
+            $table->boolean('is_best')->default(false);
         });
     }
 

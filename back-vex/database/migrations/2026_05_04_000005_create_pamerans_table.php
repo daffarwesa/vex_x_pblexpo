@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('banner');
             $table->string('judul');
             $table->text('deskripsi');
-            $table->integer('kapasitas')->default(24);
             $table->date('tanggal_mulai_persiapan')->useCurrent();
             $table->date('tanggal_akhir_persiapan')->useCurrent();
             $table->date('tanggal_buka')->useCurrent();
