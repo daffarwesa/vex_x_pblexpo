@@ -14,7 +14,7 @@ type UserType = {
   role: string;
   status: string;
   email: string;
-  prodi: string;
+  kategori_kode: string;
   kelas: string;
 };
 

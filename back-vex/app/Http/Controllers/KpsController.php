@@ -11,17 +11,17 @@ class KpsController extends Controller
 {
     // =============================
     // LIHAT SEMUA KARYA PER KATEGORI
-    // (Visitor hanya lihat karya dari kategorinya)
+    // (Creator hanya lihat karya dari kategorinya)
     // =============================
     public function daftarKarya(Request $request)
     {
-        $visitor = $request->user();
+        $creator = $request->user();
 
-        // Ambil karya berdasarkan kategori Visitor
+        // Ambil karya berdasarkan kategori Creator
         $karya = Karya::with(['stan.pameran', 'pengguna:id,nama'])
             ->withCount('suka')
-            ->whereHas('stan.pameran', function ($query) use ($visitor) {
-                $query->where('kategori', $visitor->program_studi);
+            ->whereHas('stan.pameran', function ($query) use ($creator) {
+                $query->where('kategori_kode', $creator->kategori_kode);
             })
             ->get();
 
@@ -37,7 +37,7 @@ class KpsController extends Controller
     // =============================
     public function pilihTerbaik(Request $request, $id_karya)
     {
-        $visitor = $request->user();
+        $creator = $request->user();
         $karya = Karya::with('stan.pameran')->find($id_karya);
 
         if (!$karya) {
@@ -47,8 +47,8 @@ class KpsController extends Controller
             ], 404);
         }
 
-        // Pastikan karya dari kategori Visitor
-        if ($karya->stan->pameran->kategori !== $visitor->program_studi) {
+        // Pastikan karya dari kategori Creator
+        if ($karya->stan->pameran->kategori_kode !== $creator->kategori_kode) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Anda tidak berhak memilih karya dari kategori lain.',
@@ -56,8 +56,8 @@ class KpsController extends Controller
         }
 
         // Cek apakah sudah ada karya terbaik di kategori ini
-        $karya_terbaik = Karya::whereHas('stan.pameran', function ($query) use ($visitor) {
-            $query->where('kategori', $visitor->program_studi);
+        $karya_terbaik = Karya::whereHas('stan.pameran', function ($query) use ($creator) {
+            $query->where('kategori_kode', $creator->kategori_kode);
         })
             ->where('is_terbaik', true)
             ->first();
@@ -85,7 +85,7 @@ class KpsController extends Controller
     // =============================
     public function batalkanTerbaik(Request $request, $id_karya)
     {
-        $visitor = $request->user();
+        $creator = $request->user();
         $karya = Karya::with('stan.pameran')->find($id_karya);
 
         if (!$karya) {
@@ -95,8 +95,8 @@ class KpsController extends Controller
             ], 404);
         }
 
-        // Pastikan karya dari kategori Visitor
-        if ($karya->stan->pameran->kategori !== $visitor->program_studi) {
+        // Pastikan karya dari kategori Creator
+        if ($karya->stan->pameran->kategori_kode !== $creator->kategori_kode) {
             return response()->json([
                 'status'  => 'error',
                 'message' => 'Anda tidak berhak membatalkan karya dari kategori lain.',
@@ -127,7 +127,7 @@ class KpsController extends Controller
     // =============================
     public function karyaTerbaik()
     {
-        $karya = Karya::with(['stan.pameran.prodi', 'pengguna:id,nama'])
+        $karya = Karya::with(['stan.pameran.kategori', 'pengguna:id,nama'])
             ->withCount('suka')
             ->where('is_terbaik', true)
             ->get();

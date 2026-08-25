@@ -57,7 +57,7 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
         const p = res.pameran;
 
         setForm({
-          kategori: p.kode_prodi || '',
+          kategori: p.kode_kategori || '',
           title: p.title || '',
           capacity: p.stats?.kapasitas ?? 24,
           publishDate: toInputDate(p.stats?.startDate),
@@ -128,7 +128,7 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
       setLoading(true);
 
       const formData = new FormData();
-      formData.append('kategori', form.kategori);
+      formData.append('kategori_kode', form.kategori);
       formData.append('judul', form.title);
       formData.append('kapasitas', String(form.capacity));
       formData.append('tanggal_mulai', form.publishDate);
@@ -154,7 +154,7 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
         if (status === 422) {
           const laravelErrors = data.errors as Record<string, string[]>;
           const fieldMap: Record<string, keyof FormErrors> = {
-            kategori: 'kategori',
+            kategori_kode: 'kategori',
             judul: 'title',
             kapasitas: 'capacity',
             tanggal_mulai: 'publishDate',

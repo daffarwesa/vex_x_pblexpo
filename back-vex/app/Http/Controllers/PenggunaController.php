@@ -79,8 +79,8 @@ class PenggunaController extends Controller
         $request->validate([
             'nama'  => 'required|string|max:255',
             'email' => 'required|email',
-            'role'  => 'required|in:Visitor',
-            'prodi' => 'required',
+            'role'  => 'required|in:Creator',
+            'kategori_kode' => 'required|exists:kategori,kode_kategori',
         ]);
 
         if (Pengguna::where('email', $request->email)->exists()) {
@@ -97,7 +97,7 @@ class PenggunaController extends Controller
                 'password' => Hash::make($request->email),
                 'role' => $request->role,
                 'status' => 'aktif',
-                'program_studi' => $request->prodi,
+                'kategori_kode' => $request->kategori_kode,
                 'kelas' => $request->kelas
             ]);
 
@@ -122,7 +122,7 @@ class PenggunaController extends Controller
     {
         $pengguna = Pengguna::with([
             'kelas',
-            'prodi'
+            'kategori'
         ])
             ->where('role', $role)
             ->get();
@@ -141,7 +141,7 @@ class PenggunaController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'email' => 'required|email',
-            'role' => 'required',
+            'role' => 'required|in:Creator',
             'status' => 'required',
         ]);
 
@@ -159,7 +159,7 @@ class PenggunaController extends Controller
             'email' => $request->email,
             'role' => $request->role,
             'status' => $request->status,
-            'program_studi' => $request->program_studi,
+            'kategori_kode' => $request->kategori_kode,
             'kelas' => $request->kelas,
         ]);
 
@@ -266,7 +266,7 @@ class PenggunaController extends Controller
                 ], 404);
             }
 
-            if ($user->role === Pengguna::ROLE_VISITOR) {
+            if ($user->role === Pengguna::ROLE_CREATOR) {
                 if (!$user->isAktif()) {
                     return response()->json([
                         'status'  => 'error',
@@ -280,7 +280,7 @@ class PenggunaController extends Controller
             // set role User
             $abilities = match ($user->role) {
                 Pengguna::ROLE_ADMIN   => ['admin'],
-                Pengguna::ROLE_VISITOR => ['visitor'],
+                Pengguna::ROLE_CREATOR => ['creator'],
                 default                => ['pengunjung'],
             };
 
@@ -289,7 +289,7 @@ class PenggunaController extends Controller
             // path User saat login
             $redirectTo = match ($user->role) {
                 Pengguna::ROLE_ADMIN   => '/admin/pengguna',
-                Pengguna::ROLE_VISITOR => '/visitor/karya',
+                Pengguna::ROLE_CREATOR => '/creator/karya',
                 default                => '/',
             };
 
@@ -305,7 +305,7 @@ class PenggunaController extends Controller
                     'email' => $user->email,
                     'role' => $user->role,
                     'kelas' => $user->kelas,
-                    'program_studi' => $user->program_studi,
+                    'kategori_kode' => $user->kategori_kode,
                 ],
             ]);
             

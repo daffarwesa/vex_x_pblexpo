@@ -69,7 +69,7 @@ class PameranController extends Controller
     // =============================
     public function index()
     {
-        $pameran = Pameran::with('prodi')
+        $pameran = Pameran::with('kategori')
             ->withCount(['karya', 'suka'])
             ->get();
 
@@ -77,9 +77,9 @@ class PameranController extends Controller
             'id' => $item->id_pameran,
             'slug' => $item->slug,
             'title' => $item->judul,
-            'subtitle' => $item->prodi?->nama_prodi ?? $item->kategori,
-            'category' => $item->prodi?->nama_prodi ?? $item->kategori,
-            'kode_prodi' => $item->kategori,
+            'subtitle' => $item->kategori?->nama_kategori ?? $item->kategori_kode,
+            'category' => $item->kategori?->nama_kategori ?? $item->kategori_kode,
+            'kode_kategori' => $item->kategori_kode,
             'date' => $item->tanggal_mulai,
             ...$this->buildBannerUrls($item),
             'likes' => $item->suka_count,
@@ -97,7 +97,7 @@ class PameranController extends Controller
                 'prepareEndDate' => $item->tanggal_akhir_persiapan,
                 'startDate' => $item->tanggal_mulai,
                 'endDate' => $item->tanggal_akhir,
-                'studyLevel' => $item->prodi?->nama_prodi ?? $item->kategori,
+                'studyLevel' => $item->kategori?->nama_kategori ?? $item->kategori_kode,
             ],
             'institution' => 'Politeknik Negeri Batam',
         ]);
@@ -120,7 +120,7 @@ class PameranController extends Controller
 // =============================
     public function show($identifier)
     {
-        $pameran = Pameran::with(['model3d', 'prodi'])
+        $pameran = Pameran::with(['model3d', 'kategori'])
             ->withCount(['karya', 'suka'])
             ->where('slug', $identifier)
             ->first();
@@ -136,9 +136,9 @@ class PameranController extends Controller
             'id' => $pameran->id_pameran,
             'slug' => $pameran->slug,
             'title' => $pameran->judul,
-            'subtitle' => $pameran->prodi?->nama_prodi ?? $pameran->kategori,
-            'kode_prodi' => $pameran->kategori,
-            'category' => $pameran->prodi?->nama_prodi ?? $pameran->kategori,
+            'subtitle' => $pameran->kategori?->nama_kategori ?? $pameran->kategori_kode,
+            'kode_kategori' => $pameran->kategori_kode,
+            'category' => $pameran->kategori?->nama_kategori ?? $pameran->kategori_kode,
             'date' => $pameran->tanggal_mulai,
             ...$this->buildBannerUrls($pameran),
             'likes' => $pameran->suka_count,
@@ -157,7 +157,7 @@ class PameranController extends Controller
                 'prepareEndDate' => $pameran->tanggal_akhir_persiapan,
                 'startDate' => $pameran->tanggal_mulai,
                 'endDate' => $pameran->tanggal_akhir,
-                'studyLevel' => $pameran->prodi?->nama_prodi ?? $pameran->kategori,
+                'studyLevel' => $pameran->kategori?->nama_kategori ?? $pameran->kategori_kode,
             ],
             'institution' => 'Politeknik Negeri Batam',
         ];
@@ -174,7 +174,7 @@ class PameranController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'category' => 'required|exists:prodi,kode_prodi',
+            'kategori_kode' => 'required|exists:kategori,kode_kategori',
             'banner' => 'required|image|mimes:png,jpg,jpeg|max:5000',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -198,7 +198,7 @@ class PameranController extends Controller
 
         $pameran = Pameran::create([
             'model_pameran' => $modelPameran->id_model,
-            'kategori' => $request->category,
+            'kategori_kode' => $request->kategori_kode,
             'banner' => $bannerPath,
             'judul' => $request->title,
             'deskripsi' => $request->description,
@@ -239,7 +239,7 @@ class PameranController extends Controller
         }
 
         $request->validate([
-            'kategori' => 'sometimes|exists:prodi,kode_prodi',
+            'kategori_kode' => 'sometimes|exists:kategori,kode_kategori',
             'banner' => 'sometimes|image|mimes:png,jpg,jpeg|max:5000',
             'judul' => 'sometimes|string|max:255',
             'deskripsi' => 'sometimes|string',
@@ -275,8 +275,8 @@ class PameranController extends Controller
             $pameran->judul = $request->judul;
         if ($request->filled('deskripsi'))
             $pameran->deskripsi = $request->deskripsi;
-        if ($request->filled('kategori'))
-            $pameran->kategori = $request->kategori;
+        if ($request->filled('kategori_kode'))
+            $pameran->kategori_kode = $request->kategori_kode;
         if ($request->filled('kapasitas'))
             $pameran->kapasitas = $request->kapasitas;
         if ($request->filled('tanggal_mulai'))

@@ -74,7 +74,7 @@ asy
     (PenggunaController)
     {
         register(data:[nama,email,psssword]) --> (RegisterPage): OK, 
-        registerThroughAdmin(data:[nama,email,role,prodi]) --> (FormTambahUser): OK, 
+        registerThroughAdmin(data:[nama,email,role,kategori_kode]) --> (FormTambahUser): OK, 
         getByRole(role): OK,
         updateThroughAdmin(data:[nama,email,role,satus]) --> (UserDetail): OK, 
         verifyOtp(data:[token,otp]) --> (VerifikasiPage): OK,

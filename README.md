@@ -38,7 +38,7 @@ Platform ini memungkinkan pengunjung untuk:
 - 🏛️ **Explore 3D exhibition halls** yang dirender real-time
 - 🖼️ **View project showcases** dengan detail lengkap
 - ❤️ **Like & comment** pada proyek favorit
-- 🔎 **Search & filter** berdasarkan tahun, prodi, dan semester
+- 🔎 **Search & filter** berdasarkan tahun, kategori, dan semester
 - 🌍 **Akses dari mana saja** — no physical presence required
 
 > Bukan PDF kesepian yang terjebak di Google Drive. 🥀
@@ -54,8 +54,8 @@ Platform ini memungkinkan pengunjung untuk:
 | 🎨 **3D Exhibition** | Walk around virtual booths, real-time rendering via Three.js |
 | 🖼️ **Project Showcase** | Poster, cover image, demo video, deskripsi, team info |
 | ❤️ **Community Interaction** | Like, comment, vote proyek terbaik |
-| 🔎 **Smart Search** | Filter by year, prodi, semester, title |
-| 👤 **Role Management** | Admin, Ketua PBL, KPS, Visitor |
+| 🔎 **Smart Search** | Filter by year, kategori, semester, title |
+| 👤 **Role Management** | Admin, Creator, Pengunjung |
 | 🔒 **Secure Auth** | Role-based access control via Laravel |
 
 </div>
@@ -184,9 +184,8 @@ pbl-vex/
 | Role | Akses |
 |------|-------|
 | 👑 **Admin** | Manage exhibition, users, dan semua konten platform |
-| 📤 **Ketua PBL** | Upload dan manage proyek PBL tim |
-| 🏆 **KPS** | Memilih proyek terbaik dari semua submission |
-| 👁️ **Visitor** | View, like, comment, dan vote proyek |
+| 📤 **Creator** | Upload, manage proyek, dan memilih karya terbaik |
+| 👁️ **Pengunjung** | View, like, comment, dan vote proyek |
 
 </div>
 

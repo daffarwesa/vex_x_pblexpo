@@ -4,7 +4,7 @@ import React from 'react';
 import { FaUser } from 'react-icons/fa';
 import { FiInfo } from 'react-icons/fi';
 import { HiPencilAlt } from 'react-icons/hi';
-import { UserType, getProdiKode, getKelasId, getKelasNama } from '@/types/pengguna';
+import { UserType, getKategoriKode, getKelasId, getKelasNama } from '@/types/pengguna';
 import { Button } from '@/components/shared/ui/Button';
 import { KATEGORI_OPTIONS, KELAS_OPTIONS } from '@/types/pameran';
 
@@ -68,11 +68,11 @@ export default function UserDetail({
               onChange={onFormChange}
             />
 
-            {/* Program Studi — ambil kode dari ProdiType | string */}
+            {/* Kategori — ambil kode dari KategoriType | string */}
             {/* <SelectField
-              label="Program Studi"
-              name="prodi"
-              value={formData?.prodi ? getProdiKode(formData.prodi) : ''}
+              label="Kategori"
+              name="kategori_kode"
+              value={formData?.kategori_kode ? getKategoriKode(formData.kategori_kode) : ''}
               isEdit={isEdit}
               onChange={onFormChange}
               options={KATEGORI_OPTIONS}
@@ -172,13 +172,13 @@ function DetailField({ label, name, value, isEdit, onChange, className = '', ...
   );
 }
 
-type ProdiOption = {
+type KategoriOption = {
   kode: string;
   nama: string;
 };
 
 type SelectFieldProps = FieldProps & {
-  options: ProdiOption[];
+  options: KategoriOption[];
 };
 
 function SelectField({ label, name, value, isEdit, options, onChange }: SelectFieldProps) {
@@ -189,7 +189,7 @@ function SelectField({ label, name, value, isEdit, options, onChange }: SelectFi
       {isEdit ? (
         <select name={name} value={value} onChange={onChange} className="w-full bg-gray-200 p-2 px-3 rounded-lg">
           <option value="" disabled>
-            -- Pilih Prodi --
+            -- Pilih Kategori --
           </option>
 
           {options.map((opt) => (

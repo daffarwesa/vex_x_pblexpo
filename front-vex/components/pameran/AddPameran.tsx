@@ -88,7 +88,7 @@ export default function AddPameran() {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("category", form.kategori);
+      formData.append("kategori_kode", form.kategori);
       formData.append("title", form.title);
       formData.append("capacity", String(form.capacity));
       formData.append("start_date", form.publishDate);
@@ -116,7 +116,7 @@ export default function AddPameran() {
           // Kembalikan error validasi Laravel ke masing-masing field
           const laravelErrors = data.errors as Record<string, string[]>;
           const fieldMap: Record<string, keyof FormErrors> = {
-            category: "kategori",
+            kategori_kode: "kategori",
             title: "title",
             capacity: "capacity",
             start_date: "publishDate",

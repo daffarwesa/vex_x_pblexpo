@@ -17,7 +17,7 @@ type User = {
   email: string;
   role: string;
   kelas?: string | null;
-  program_studi?: string | null;
+  kategori_kode?: string | null;
 };
 
 type AuthType = {

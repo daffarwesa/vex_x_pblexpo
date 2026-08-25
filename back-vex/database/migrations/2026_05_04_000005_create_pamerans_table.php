@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id('id_pameran');
 
             $table->unsignedBigInteger('model_pameran');
-            $table->string('kategori');
+            $table->string('kategori_kode');
 
             $table->foreign('model_pameran')->references('id_model')->on('model')->cascadeOnDelete();
-            $table->foreign('kategori')->references('kode_prodi')->on('prodi')->cascadeOnDelete();
+            $table->foreign('kategori_kode')->references('kode_kategori')->on('kategori')->cascadeOnDelete();
             $table->string('banner');
             $table->string('judul');
             $table->text('deskripsi');

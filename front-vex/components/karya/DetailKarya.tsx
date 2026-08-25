@@ -83,7 +83,7 @@ export default function DetailKarya({ id }: Props) {
   const { user, loading: authLoading } = useAuth();
 
   const isAdmin = user?.role === "Admin";
-  const isVisitor = user?.role === "Visitor";
+  const isCreator = user?.role === "Creator";
 
   // Read-only untuk Admin
   const isReadOnly = isAdmin;
@@ -98,8 +98,8 @@ export default function DetailKarya({ id }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Berlaku untuk Visitor jika periode edit pameran sudah ditutup
-  const isPameranLocked = isVisitor && form?.canEdit === false;
+  // Berlaku untuk Creator jika periode edit pameran sudah ditutup
+  const isPameranLocked = isCreator && form?.canEdit === false;
 
   const [currentPameran, setCurrentPameran] = useState<{
     id: number;
@@ -109,10 +109,10 @@ export default function DetailKarya({ id }: Props) {
   // ── Guard ──
   useEffect(() => {
     if (authLoading) return;
-    if (!isAdmin && !isVisitor) {
+    if (!isAdmin && !isCreator) {
       router.replace("/");
     }
-  }, [authLoading, isAdmin, isVisitor, router]);
+  }, [authLoading, isAdmin, isCreator, router]);
 
   // ── Load data karya ──
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function DetailKarya({ id }: Props) {
     const load = async () => {
       try {
         const storageBase = process.env.NEXT_PUBLIC_STORAGE_URL ?? 'http://localhost:8000/storage';
-        const res = isVisitor && !isAdmin
+        const res = isCreator && !isAdmin
           ? await GetKaryaSemua()
           : isAdmin
             ? await GetKaryaAdmin()
@@ -180,7 +180,7 @@ export default function DetailKarya({ id }: Props) {
     };
 
     load();
-  }, [id, authLoading, isVisitor, isAdmin]);
+  }, [id, authLoading, isCreator, isAdmin]);
 
   // ── Handlers ──
 
@@ -314,9 +314,9 @@ export default function DetailKarya({ id }: Props) {
     }
   };
 
-  // Visitor toggle karya terbaik
+  // Creator toggle karya terbaik
   const handlePilihTerbaik = async () => {
-    if (!form || !isVisitor) return;
+    if (!form || !isCreator) return;
     setIsLoading(true);
     try {
       const result = await PilihTerbaik(form.id);
@@ -333,9 +333,9 @@ export default function DetailKarya({ id }: Props) {
     }
   };
 
-  // Visitor batalkan karya terbaik
+  // Creator batalkan karya terbaik
   const handleBatalkanTerbaik = async () => {
-    if (!form || !isVisitor) return;
+    if (!form || !isCreator) return;
     setIsLoading(true);
     try {
       const result = await BatalkanTerbaik(form.id);
@@ -576,11 +576,11 @@ export default function DetailKarya({ id }: Props) {
           <DetailAction
             // Admin
             onDelete={isAdmin ? () => setShowConfirm(true) : undefined}
-            // Visitor: Simpan jika tidak locked
-            onSave={isVisitor && !isPameranLocked ? handleSave : undefined}
-            // Visitor: Pilih/Batalkan terbaik
-            onPilihTerbaik={isVisitor ? handlePilihTerbaik : undefined}
-            onBatalkanTerbaik={isVisitor ? handleBatalkanTerbaik : undefined}
+            // Creator: Simpan jika tidak locked
+            onSave={isCreator && !isPameranLocked ? handleSave : undefined}
+            // Creator: Pilih/Batalkan terbaik
+            onPilihTerbaik={isCreator ? handlePilihTerbaik : undefined}
+            onBatalkanTerbaik={isCreator ? handleBatalkanTerbaik : undefined}
             isTerbaik={form.isTerbaik}
             loading={isLoading}
           />

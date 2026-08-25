@@ -68,11 +68,11 @@ const resolvedMenu: NavItem[] = loading
       { title: 'PAMERAN', subtitle: '3D BOOTH', link: '/admin/pameran' },
       { title: 'DASHBOARD', subtitle: 'ADMIN', link: '/admin/pengguna' },
     ]
-  : user?.role === 'Visitor'
+  : user?.role === 'Creator'
   ? [
       { title: 'BERANDA', subtitle: 'UTAMA', link: '/' },
       { title: 'PAMERAN', subtitle: '3D BOOTH', link: '/pameran' },
-      { title: 'DASHBOARD', subtitle: 'VISITOR', link: '/visitor/karya' },
+      { title: 'DASHBOARD', subtitle: 'CREATOR', link: '/creator/karya' },
     ]
   : menuItems ?? defaultMenu;
   // ===== AUTH DESKTOP =====

@@ -15,7 +15,7 @@ export default function NavKetuaPBL({ onAddClick, isFormOpen }: AddOn) {
   const pathname = usePathname();
 
   const menuItems = [
-    { id: 1, title: 'Karya', icon: <FaImage size={17} />, link: '/visitor/karya' },
+    { id: 1, title: 'Karya', icon: <FaImage size={17} />, link: '/creator/karya' },
   ];
 
   return (

@@ -1,7 +1,7 @@
 import { FaUser } from 'react-icons/fa';
 import { FaCircleCheck } from 'react-icons/fa6';
 import { FiXCircle } from 'react-icons/fi';
-import { UserType, getProdiKode } from '@/types/pengguna';
+import { UserType } from '@/types/pengguna';
 import { KATEGORI_OPTIONS } from '@/types/pameran';
 
 type Props = {
@@ -14,10 +14,10 @@ type Props = {
 export default function UserCard({ user, onClick, isActive, onToggleStatus }: Props) {
   const inactive = user.status === 'Tidak Aktif';
 
-  // Resolve nama prodi dari kode atau object
-  const prodiNama = typeof user.prodi === 'object'
-    ? user.prodi.nama_prodi ?? ''
-    : KATEGORI_OPTIONS.find(p => p.kode === user.prodi)?.nama ?? user.prodi;
+  // Resolve nama kategori dari kode atau object
+  const kategoriNama = typeof user.kategori_kode === 'object'
+    ? user.kategori_kode.nama_kategori ?? ''
+    : KATEGORI_OPTIONS.find(p => p.kode === user.kategori_kode)?.nama ?? user.kategori_kode;
 
   return (
     <div
@@ -52,9 +52,9 @@ export default function UserCard({ user, onClick, isActive, onToggleStatus }: Pr
 
           {/* <p className="text-xs text-gray-400 truncate">{user.role}</p> */}
 
-          {/* Tampilkan prodi jika ada */}
-          {prodiNama && (
-            <p className="text-xs text-gray-500 truncate">{prodiNama}</p>
+          {/* Tampilkan kategori jika ada */}
+          {kategoriNama && (
+            <p className="text-xs text-gray-500 truncate">{kategoriNama}</p>
           )}
         </div>
       </div>

@@ -4,7 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import NavKetuaPBL from "@/components/shared/ui/NavKetuaPBL";
 
 export const metadata: Metadata = {
-  title: "V-EX | Visitor",
+  title: "V-EX | Creator",
   description: "Virtual Exhibition",
 };
 
@@ -13,7 +13,6 @@ export default function IndexLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   return (
     <div>
       <Navbar />

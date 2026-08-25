@@ -25,7 +25,7 @@ export async function getKaryaList(exhibitionId: string) {
 
 export async function getPameranFolder(exhibitionId: string) {
     const res = await url.get(`/api/pameran/${exhibitionId}`)
-    const kategori = res.data.pameran?.kode_prodi ?? "default"
+    const kategori = res.data.pameran?.kode_kategori ?? "default"
     return kategori.toLowerCase().replaceAll(" ", "-")
 }
 

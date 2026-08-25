@@ -4,16 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Prodi extends Model
+class Kategori extends Model
 {
     public $timestamps    = false;
-    protected $table      = 'prodi';
-    protected $primaryKey = 'kode_prodi';
+    protected $table      = 'kategori';
+    protected $primaryKey = 'kode_kategori';
     public $incrementing  = false;
     protected $keyType    = 'string';
 
     protected $fillable = [
-        'kode_prodi',
-        'nama_prodi',
+        'kode_kategori',
+        'nama_kategori',
     ];
 }

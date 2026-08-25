@@ -13,7 +13,7 @@ class Pameran extends Model
 
     protected $fillable = [
         'model_pameran',
-        'kategori',
+        'kategori_kode',
         'banner',
         'judul',
         'slug',
@@ -49,10 +49,10 @@ class Pameran extends Model
         return $this->belongsTo(ModelPameran::class, 'model_pameran', 'id_model');
     }
 
-    // Relasi ke tabel prodi
-    public function prodi()
+    // Relasi ke tabel kategori
+    public function kategori()
     {
-        return $this->belongsTo(Prodi::class, 'kategori', 'kode_prodi');
+        return $this->belongsTo(Kategori::class, 'kategori_kode', 'kode_kategori');
     }
 
     public function karya()

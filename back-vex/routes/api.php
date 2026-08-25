@@ -90,11 +90,11 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // =============================
-    // VISITOR (formerly Ketua PBL + KPS)
+    // CREATOR (formerly Visitor / Ketua PBL + KPS)
     // =============================
-    Route::middleware('role:Visitor')->prefix('visitor')->group(function () {
+    Route::middleware('role:Creator')->prefix('creator')->group(function () {
         Route::get('/dashboard', function () {
-            return response()->json(['status' => 'success', 'page' => 'Visitor Dashboard']);
+            return response()->json(['status' => 'success', 'page' => 'Creator Dashboard']);
         });
 
         // Pameran tersedia untuk karya (tahap persiapan, sesuai kategori)

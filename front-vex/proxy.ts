@@ -6,9 +6,9 @@ export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   const isAdminPage = pathname.startsWith('/admin');
-  const isVisitorPage = pathname.startsWith('/visitor');
+  const isCreatorPage = pathname.startsWith('/creator');
 
-  if (!isAdminPage && !isVisitorPage) {
+  if (!isAdminPage && !isCreatorPage) {
     return NextResponse.next();
   }
 
@@ -20,7 +20,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  if (isVisitorPage && role !== 'Visitor') {
+  if (isCreatorPage && role !== 'Creator') {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -28,5 +28,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/visitor/:path*'],
+  matcher: ['/admin/:path*', '/creator/:path*'],
 };

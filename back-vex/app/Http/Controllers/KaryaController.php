@@ -165,7 +165,7 @@ class KaryaController extends Controller
         return [
             'id' => $item->id_karya,
             'title' => $item->judul,
-            'category' => $item->pameran?->kategori ?? '',
+            'category' => $item->pameran?->kategori_kode ?? '',
             ...$this->buildKaryaImageUrls($item),
             'link' => $item->tautan,
             'description' => $item->deskripsi,
@@ -490,19 +490,19 @@ class KaryaController extends Controller
     public function pameranTersedia(Request $request): JsonResponse
     {
         $user = $request->user();
-        $prodi = $user->prodi?->kode_prodi ?? null;
+        $kategoriKode = $user->kategori?->kode_kategori ?? null;
 
-        if (!$prodi) {
+        if (!$kategoriKode) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Kategori Visitor tidak ditemukan.',
+                'message' => 'Kategori Creator tidak ditemukan.',
             ], 404);
         }
 
         $today = now()->toDateString();
 
-        $pameran = Pameran::with('prodi')
-            ->where('kategori', $prodi)
+        $pameran = Pameran::with('kategori')
+            ->where('kategori_kode', $kategoriKode)
             ->where('tanggal_mulai_persiapan', '<=', $today)
             ->where('tanggal_akhir_persiapan', '>=', $today)
             ->get()

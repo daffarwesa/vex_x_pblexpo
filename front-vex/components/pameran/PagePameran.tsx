@@ -7,7 +7,7 @@ import { GetPameran } from "./apiPameran";
 import { useAuth } from "@/context/AuthContext";
 
 import ProjectCard from "@/components/shared/ui/ProjectCard";
-import { ProdiType } from "@/components/shared/filter/SelectProdi";
+import { KategoriType } from "@/components/shared/filter/SelectKategori";
 import { TahunType } from "@/components/shared/filter/SelectTahun";
 import { SemesterType } from "@/components/shared/filter/SelectSemester";
 
@@ -24,7 +24,7 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
   const isAdmin = user?.role === "Admin";
 
   const [emblaRef] = useEmblaCarousel({ align: "start" });
-  const [selectedProdi, setSelectedProdi] = useState<ProdiType | null>(null);
+  const [selectedKategori, setSelectedKategori] = useState<KategoriType | null>(null);
   const [selectedTahun, setSelectedTahun] = useState<TahunType | null>(null);
   const [selectedSemester, setSelectedSemester] = useState<SemesterType | null>(
     null,
@@ -52,13 +52,13 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
       const matchSearch =
         item.title.toLowerCase().includes(search.toLowerCase()) ||
         item.category.toLowerCase().includes(search.toLowerCase());
-      const matchProdi = !selectedProdi || item.category === selectedProdi.name;
+      const matchKategori = !selectedKategori || item.category === selectedKategori.name;
       const matchTahun =
         !selectedTahun ||
         new Date(item.date).getFullYear().toString() === selectedTahun.name;
-      return matchSearch && matchProdi && matchTahun;
+      return matchSearch && matchKategori && matchTahun;
     });
-  }, [data, search, selectedProdi, selectedTahun]);
+  }, [data, search, selectedKategori, selectedTahun]);
 
   const today = new Date();
   today.setHours(23, 59, 59, 999);
@@ -144,8 +144,8 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
           <FilterSection
             search={search}
             setSearch={setSearch}
-            selectedProdi={selectedProdi}
-            setSelectedProdi={setSelectedProdi}
+            selectedKategori={selectedKategori}
+            setSelectedKategori={setSelectedKategori}
             selectedTahun={selectedTahun}
             setSelectedTahun={setSelectedTahun}
             selectedSemester={selectedSemester}

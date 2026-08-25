@@ -68,7 +68,7 @@ export const KELAS_OPTIONS = [
   },
 ]
 
-export type ProdiOption = (typeof KATEGORI_OPTIONS)[number];
+export type KategoriOption = (typeof KATEGORI_OPTIONS)[number];
 
 export type PameranDescription = {
   title: string;

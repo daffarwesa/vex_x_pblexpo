@@ -53,18 +53,17 @@ export default function Admin() {
   ) => {
     const { name, value } = e.target;
 
-    // PRODI
-    if (name === "program_studi") {
-      const selectedProdi = KATEGORI_OPTIONS.find((p) => p.kode === value);
+    // KATEGORI
+    if (name === "kategori_kode") {
+      const selectedKategori = KATEGORI_OPTIONS.find((p) => p.kode === value);
 
       setFormData((prev) =>
         prev
           ? {
             ...prev,
-            program_studi: value,
-            prodi: {
-              kode_prodi: value,
-              nama_prodi: selectedProdi?.nama || "",
+            kategori_kode: {
+              kode_kategori: value,
+              nama_kategori: selectedKategori?.nama || "",
             },
           }
           : null,
@@ -202,10 +201,10 @@ export default function Admin() {
               </div>
             ) : (
               <>
-                {/* Visitor */}
+                {/* Creator */}
                 <section  className="min-h-[280px]">
                   <SectionHeader
-                    title="Visitor"
+                    title="Creator"
                     currentPage={pageMhs}
                     totalPages={totalPages}
                     onNext={nextPage}

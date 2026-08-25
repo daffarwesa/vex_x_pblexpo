@@ -19,8 +19,8 @@ export function useUsers() {
   const loadUsers = async () => {
     try {
       setIsLoading(true);
-      const visitorRes = await GetRole('Visitor');
-      setUsers(visitorRes.data ?? []);
+      const creatorRes = await GetRole('Creator');
+      setUsers(creatorRes.data ?? []);
     } catch (error) {
       console.error(error);
       setUsers([]);
@@ -53,14 +53,14 @@ const filterData = (data: UserType[]) =>
     return matchName && matchStatus;
   });
 
-  // Semua user yang dimuat adalah Visitor — KPS sudah tidak ada sebagai role terpisah
+  // Semua user yang dimuat adalah Creator — KPS sudah tidak ada sebagai role terpisah
   const filteredKps = useMemo(
     () => [] as typeof users, // KPS tidak ada lagi
     [users],
   );
 
   const filteredMhs = useMemo(
-    () => filterData(users.filter((u) => u.role === 'Visitor')),
+    () => filterData(users.filter((u) => u.role === 'Creator')),
     [users, searchTerm, selectedStatus],
   );
 
@@ -100,7 +100,7 @@ const filterData = (data: UserType[]) =>
         email: newUser.email,
         role: newUser.role,
 
-        prodi: typeof newUser.prodi === 'object' ? newUser.prodi.kode_prodi : newUser.prodi,
+        kategori_kode: typeof newUser.kategori_kode === 'object' ? newUser.kategori_kode.kode_kategori : newUser.kategori_kode,
 
         kelas: typeof newUser.kelas === 'object' ? String(newUser.kelas.id_kelas) : newUser.kelas,
       });

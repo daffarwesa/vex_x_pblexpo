@@ -5,7 +5,7 @@ import FilterSection from "@/components/pameran/FilterSection";
 import KaryaGrid from "@/components/karya/KaryaGrid";
 import { KaryaItem, PameranItem } from "@/types/karya";
 import { KATEGORI_OPTIONS } from "@/types/pameran";
-import { ProdiType } from "@/components/shared/filter/SelectProdi";
+import { KategoriType } from "@/components/shared/filter/SelectKategori";
 import { TahunType } from "@/components/shared/filter/SelectTahun";
 import { SemesterType } from "@/components/shared/filter/SelectSemester";
 import { useAuth } from "@/context/AuthContext";
@@ -19,13 +19,13 @@ export default function PageKarya({ href }: Props) {
   const { user, loading: authLoading } = useAuth();
 
   const isAdmin   = user?.role === "Admin";
-  const isVisitor = user?.role === "Visitor";
+  const isCreator = user?.role === "Creator";
 
   const [karyaList, setKaryaList] = useState<KaryaItem[]>([]);
   const [pameranList, setPameranList] = useState<PameranItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [selectedProdi, setSelectedProdi] = useState<ProdiType | null>(null);
+  const [selectedKategori, setSelectedKategori] = useState<KategoriType | null>(null);
   const [selectedTahun, setSelectedTahun] = useState<TahunType | null>(null);
   const [selectedSemester, setSelectedSemester] = useState<SemesterType | null>(
     null,
@@ -45,7 +45,7 @@ export default function PageKarya({ href }: Props) {
       try {
         const storageBase = process.env.NEXT_PUBLIC_STORAGE_URL ?? 'http://localhost:8000/storage';
 
-        const res = isVisitor && !isAdmin
+        const res = isCreator && !isAdmin
           ? await GetKaryaSemua()
           : isAdmin
             ? await GetKaryaAdmin()
@@ -105,7 +105,7 @@ export default function PageKarya({ href }: Props) {
     };
 
     fetchKarya();
-  }, [authLoading, isAdmin, isVisitor]);
+  }, [authLoading, isAdmin, isCreator]);
 
   // =============================
   // PAGINATION HELPER
@@ -129,7 +129,7 @@ export default function PageKarya({ href }: Props) {
   // DATA KPS — group by pameran
   // =============================
   const karyaByPameran = useMemo(() => {
-    if (!isVisitor || isAdmin) return [];
+    if (!isCreator || isAdmin) return [];
 
     const keyword = search.toLowerCase();
     const filtered = karyaList.filter((item) => {
@@ -159,32 +159,32 @@ export default function PageKarya({ href }: Props) {
     });
 
     return Array.from(map.values());
-  }, [isVisitor, isAdmin, karyaList, pameranList, search, selectedTahun, selectedSemester]);
+  }, [isCreator, isAdmin, karyaList, pameranList, search, selectedTahun, selectedSemester]);
 
   // =============================
   // DATA NON-KPS — group by category
   // =============================
   const filteredData = useMemo(() => {
-    if (isVisitor && !isAdmin) return [];
+    if (isCreator && !isAdmin) return [];
     return karyaList.filter((item) => {
-      const prodi = KATEGORI_OPTIONS.find((p) => p.kode === item.category);
-      const categoryName = prodi?.nama || item.category;
+      const kategori = KATEGORI_OPTIONS.find((p) => p.kode === item.category);
+      const categoryName = kategori?.nama || item.category;
       const keyword = search.toLowerCase();
       const matchSearch =
         item.title.toLowerCase().includes(keyword) ||
         categoryName.toLowerCase().includes(keyword);
-      const matchProdi = !selectedProdi || categoryName === selectedProdi.name;
+      const matchKategori = !selectedKategori || categoryName === selectedKategori.name;
       const matchTahun = !selectedTahun || item.year === selectedTahun.name;
       const matchSemester =
         !selectedSemester || item.semester === selectedSemester.name;
-      return matchSearch && matchProdi && matchTahun && matchSemester;
+      return matchSearch && matchKategori && matchTahun && matchSemester;
     });
   }, [
-    isVisitor,
+    isCreator,
     isAdmin,
     karyaList,
     search,
-    selectedProdi,
+    selectedKategori,
     selectedTahun,
     selectedSemester,
   ]);
@@ -195,7 +195,7 @@ export default function PageKarya({ href }: Props) {
     ),
   ];
 
-  // kpsProdiNama removed — unused variable
+  // Nama kategori KPS tidak dipakai.
 
   // =============================
   // LOADING
@@ -242,7 +242,7 @@ export default function PageKarya({ href }: Props) {
   // =============================
   // RENDER KPS
   // =============================
-  if (isVisitor && !isAdmin) {
+  if (isCreator && !isAdmin) {
     return (
       <div className="min-h-screen bg-secondary-color font-poppins">
         <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
@@ -254,7 +254,7 @@ export default function PageKarya({ href }: Props) {
               setSelectedTahun={setSelectedTahun}
               selectedSemester={selectedSemester}
               setSelectedSemester={setSelectedSemester}
-              hideProdi={true}
+              hideKategori={true}
               searchPlaceholder="Cari karya atau pameran..."
             />
           </div>
@@ -294,7 +294,7 @@ export default function PageKarya({ href }: Props) {
   }
 
   // =============================
-  // RENDER DEFAULT (Admin / Visitor)
+  // RENDER DEFAULT (Admin / Creator)
   // =============================
   return (
   <div className="min-h-screen bg-secondary-color font-poppins">
@@ -303,13 +303,13 @@ export default function PageKarya({ href }: Props) {
         <FilterSection
           search={search}
           setSearch={setSearch}
-          selectedProdi={selectedProdi}
-          setSelectedProdi={setSelectedProdi}
+          selectedKategori={selectedKategori}
+          setSelectedKategori={setSelectedKategori}
           selectedTahun={selectedTahun}
           setSelectedTahun={setSelectedTahun}
           selectedSemester={selectedSemester}
           setSelectedSemester={setSelectedSemester}
-        hideProdi={!isAdmin}
+        hideKategori={!isAdmin}
         />
       </div>
     </section>
@@ -326,8 +326,8 @@ export default function PageKarya({ href }: Props) {
             const currentPage = pages[cat] || 1;
             const start = (currentPage - 1) * PER_PAGE;
             const currentData = data.slice(start, start + PER_PAGE);
-            const prodi = KATEGORI_OPTIONS.find((p) => p.kode === cat);
-            const categoryName = prodi?.nama || cat;
+            const kategori = KATEGORI_OPTIONS.find((p) => p.kode === cat);
+            const categoryName = kategori?.nama || cat;
 
             return (
               <KaryaGrid

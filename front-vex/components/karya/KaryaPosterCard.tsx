@@ -12,8 +12,8 @@ interface PosterCardProps {
 export default function PosterCard({ karya, pameranList }: PosterCardProps) {
   const pameran = pameranList.find((item) => item.id === karya.pameranId);
 
-  const prodi = KATEGORI_OPTIONS.find((p) => p.kode === karya.category);
-  const categoryName = prodi?.nama || karya.category;
+  const kategori = KATEGORI_OPTIONS.find((p) => p.kode === karya.category);
+  const categoryName = kategori?.nama || karya.category;
   return (
     <div className="mt-1 bg-white rounded-xl overflow-hidden hover:scale-102 shadow-md hover:shadow-xl/40 transition duration-300 group">
       <div className="relative aspect-[3/4] w-full">

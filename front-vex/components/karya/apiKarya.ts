@@ -1,10 +1,10 @@
 import url from "@/lib/axios";
 
 // =============================
-// DAFTAR KARYA MILIK VISITOR
+// DAFTAR KARYA MILIK CREATOR
 // =============================
 export async function GetKarya() {
-  const res = await url.get("/api/visitor/karya");
+  const res = await url.get("/api/creator/karya");
   return res.data;
 }
 
@@ -20,7 +20,7 @@ export async function GetKaryaAdmin() {
 // AMBIL MODEL STAN
 // =============================
 export async function GetModelStan() {
-  const res = await url.get("/api/visitor/model-stan");
+  const res = await url.get("/api/creator/model-stan");
   return res.data;
 }
 
@@ -28,7 +28,7 @@ export async function GetModelStan() {
 // TAMBAH KARYA
 // =============================
 export async function PostKarya(formData: FormData) {
-  const res = await url.post("/api/visitor/karya", formData, {
+  const res = await url.post("/api/creator/karya", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
@@ -38,7 +38,7 @@ export async function PostKarya(formData: FormData) {
 // EDIT KARYA
 // =============================
 export async function UpdateKarya(id: number, formData: FormData) {
-  const res = await url.post(`/api/visitor/karya/${id}/update`, formData, {
+  const res = await url.post(`/api/creator/karya/${id}/update`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
@@ -49,11 +49,11 @@ export async function UpdateKarya(id: number, formData: FormData) {
 // =============================
 export async function GetPameranTersedia() {
   try {
-    const res = await url.get("/api/visitor/pameran-tersedia");
+    const res = await url.get("/api/creator/pameran-tersedia");
     return res.data;
   } catch (err: any) {
     if (err?.response?.status === 404) {
-      const res = await url.get("/api/visitor/pameran");
+      const res = await url.get("/api/creator/pameran");
       return res.data;
     }
     throw err;
@@ -64,25 +64,25 @@ export async function GetPameranTersedia() {
 // STAN TERSEDIA
 // =============================
 export async function GetStanTersedia(id_pameran: number) {
-  const res = await url.get(`/api/visitor/stan/${id_pameran}`);
+  const res = await url.get(`/api/creator/stan/${id_pameran}`);
   return res.data;
 }
 
 // =============================
-// KARYA SEMUA (untuk Visitor — pilih karya terbaik)
+// KARYA SEMUA (untuk Creator — pilih karya terbaik)
 // =============================
 export async function GetKaryaSemua() {
-  const res = await url.get("/api/visitor/karya/semua");
+  const res = await url.get("/api/creator/karya/semua");
   return res.data;
 }
 
 export async function PilihTerbaik(id_karya: number) {
-  const res = await url.patch(`/api/visitor/karya/${id_karya}/terbaik`);
+  const res = await url.patch(`/api/creator/karya/${id_karya}/terbaik`);
   return res.data;
 }
 
 export async function BatalkanTerbaik(id_karya: number) {
-  const res = await url.patch(`/api/visitor/karya/${id_karya}/batalkan`);
+  const res = await url.patch(`/api/creator/karya/${id_karya}/batalkan`);
   return res.data;
 }
 

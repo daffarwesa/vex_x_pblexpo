@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
 
-import PageKarya from '@/components/karya/PageKarya';
+import DetailKarya from '@/components/karya/DetailKarya';
 import AddKarya from '@/components/karya/AddKarya';
 import NavKetuaPBL from '@/components/shared/ui/NavKetuaPBL';
 
-export default function KaryaPage() {
+export default function DetailKaryaPage() {
+  const { id } = useParams();
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const handleAddClick = () => {
     setIsFormOpen((prev) => !prev);
@@ -15,7 +18,7 @@ export default function KaryaPage() {
     <div className="w-full">
       <NavKetuaPBL isFormOpen={isFormOpen} onAddClick={handleAddClick} />
 
-      {isFormOpen ? <AddKarya /> : <PageKarya href="/visitor/karya/" />}
+      {isFormOpen ? <AddKarya /> : <DetailKarya id={Number(id)} />}
     </div>
   );
 }
