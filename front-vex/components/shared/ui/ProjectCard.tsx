@@ -17,7 +17,7 @@ export interface ProjectCard {
   date: string;
   stats: {
     startDate: string;
-    endDate: string;
+    endDate: string | null;
   };
 }
 
@@ -31,9 +31,14 @@ export default function ProjectCard({ project, className }: ProjectData) {
 
   const today = new Date();
   const startDate = new Date(project.stats?.startDate);
-  const endDate = new Date(project.stats?.endDate);
-  endDate.setHours(23, 59, 59, 999);
-  const isOpen = today >= startDate && today <= endDate;
+  // endDate null → tidak ada batas tutup, cukup cek sudah dibuka
+  const isOpen = project.stats?.endDate
+    ? (() => {
+        const end = new Date(project.stats.endDate);
+        end.setHours(23, 59, 59, 999);
+        return today >= startDate && today <= end;
+      })()
+    : today >= startDate;
   return (
     <div
       className={`relative overflow-hidden cursor-pointer ${className ?? ""}`}

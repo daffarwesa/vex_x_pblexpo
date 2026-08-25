@@ -17,7 +17,7 @@ const initialForm: FormState = {
   nama: "",
   email: "",
   kategori_kode: "",
-  kelas: "",
+  // kelas: "",
   role: "",
   status: "Aktif",
 };
@@ -129,30 +129,7 @@ export default function FormTambahUser({ onClose, onSave }: Props) {
             </select>
           </div>
           {/* Kelas — hanya untuk Creator */}
-          {form.role === "Creator" && (
-            <div  className="">
-              <p className="text-sm font-semibold mb-1 text-gray-600">Kelas</p>
-              <select 
-                name="kelas"
-                value={
-                  typeof form.kelas === "object"
-                    ? String(form.kelas.id_kelas)
-                    : form.kelas
-                }
-                onChange={handleChange}
-                className="w-full bg-gray-200 p-2 px-4 rounded-lg"
-              >
-                <option value="" disabled>
-                  -- Pilih Kelas --
-                </option>
-                {KELAS_OPTIONS.map((kelas) => (
-                  <option key={kelas.id_kelas} value={kelas.id_kelas}>
-                    {kelas.nama_kelas}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+       
 
           {/* Status */}
           <div>

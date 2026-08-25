@@ -17,9 +17,7 @@ export default function AddPameran() {
   const [form, setForm] = useState<PameranForm>({
     kategori: "",
     title: "",
-    capacity: 24,
     publishDate: "",
-    endDate: "",
     prepareStart: "",
     prepareEnd: "",
     description: "",
@@ -50,9 +48,7 @@ export default function AddPameran() {
     setForm({
       kategori: "",
       title: "",
-      capacity: 24,
       publishDate: "",
-      endDate: "",
       prepareStart: "",
       prepareEnd: "",
       description: "",
@@ -68,8 +64,7 @@ export default function AddPameran() {
     if (!form.image) newErrors.image = "Thumbnail wajib diupload";
     if (!form.kategori) newErrors.kategori = "Kategori wajib dipilih";
     if (!form.title) newErrors.title = "Judul pameran wajib diisi";
-    if (!form.publishDate) newErrors.publishDate = "Tanggal mulai wajib diisi";
-    if (!form.endDate) newErrors.endDate = "Tanggal berakhir wajib diisi";
+    if (!form.publishDate) newErrors.publishDate = "Tanggal buka wajib diisi";
     if (!form.prepareStart) newErrors.prepareStart = "Tanggal persiapan mulai wajib diisi";
     if (!form.prepareEnd) newErrors.prepareEnd = "Tanggal persiapan berakhir wajib diisi";
     if (!form.description) newErrors.description = "Deskripsi wajib diisi";
@@ -90,11 +85,9 @@ export default function AddPameran() {
       const formData = new FormData();
       formData.append("kategori_kode", form.kategori);
       formData.append("title", form.title);
-      formData.append("capacity", String(form.capacity));
-      formData.append("start_date", form.publishDate);
-      formData.append("end_date", form.endDate);
       formData.append("prepare_start", form.prepareStart);
       formData.append("prepare_end", form.prepareEnd);
+      formData.append("open_date", form.publishDate);
       formData.append("description", form.description);
       if (form.image) formData.append("banner", form.image);
 
@@ -118,11 +111,9 @@ export default function AddPameran() {
           const fieldMap: Record<string, keyof FormErrors> = {
             kategori_kode: "kategori",
             title: "title",
-            capacity: "capacity",
-            start_date: "publishDate",
-            end_date: "endDate",
             prepare_start: "prepareStart",
             prepare_end: "prepareEnd",
+            open_date: "publishDate",
             description: "description",
             banner: "image",
           };

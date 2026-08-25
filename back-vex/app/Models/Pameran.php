@@ -21,7 +21,6 @@ class Pameran extends Model
         'judul',
         'slug',
         'deskripsi',
-        'kapasitas',
         'tanggal_mulai_persiapan',
         'tanggal_akhir_persiapan',
         'tanggal_buka',
@@ -69,5 +68,10 @@ class Pameran extends Model
             'id_pameran',
             'id_karya'
         );
+    }
+
+    public function sponsor()
+    {
+        return $this->hasMany(Sponsor::class, 'id_pameran', 'id_pameran');
     }
 }

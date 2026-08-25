@@ -17,7 +17,7 @@ export type UserType = {
   status: string;
   email: string;
   kategori_kode: KategoriType | string;
-  kelas: KelasType | string;
+  // kelas: KelasType | string;
 };
 
 // Helper untuk ekstrak nilai kategori/kelas

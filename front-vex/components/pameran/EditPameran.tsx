@@ -24,9 +24,7 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
   const [form, setForm] = useState<PameranForm>({
     kategori: '',
     title: '',
-    capacity: 24,
     publishDate: '',
-    endDate: '',
     prepareStart: '',
     prepareEnd: '',
     description: '',
@@ -59,16 +57,30 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
         setForm({
           kategori: p.kode_kategori || '',
           title: p.title || '',
-          capacity: p.stats?.kapasitas ?? 24,
           publishDate: toInputDate(p.stats?.startDate),
-          endDate: toInputDate(p.stats?.endDate),
           prepareStart: toInputDate(p.stats?.prepareStartDate),
           prepareEnd: toInputDate(p.stats?.prepareEndDate),
           description: p.description?.[0]?.content || '',
           image: null,
         });
 
-        setPreview(p.bannerImage || null);
+        // Helper untuk memastikan format URL gambar preview valid
+        const rawBanner = p.bannerLarge || p.bannerImage || '';
+        let bannerPreview: string | null = null;
+        if (rawBanner) {
+          if (rawBanner.startsWith('http://') || rawBanner.startsWith('https://')) {
+            try {
+              bannerPreview = new URL(rawBanner).pathname;
+            } catch {
+              bannerPreview = rawBanner.replace(/^https?:\/\/[^/]+/, '');
+            }
+          } else if (!rawBanner.startsWith('/')) {
+            bannerPreview = `/storage/${rawBanner}`;
+          } else {
+            bannerPreview = rawBanner;
+          }
+        }
+        setPreview(bannerPreview);
       } catch (err) {
         console.error(err);
         setNotFound(true);
@@ -102,8 +114,7 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
 
     if (!form.kategori) newErrors.kategori = 'Kategori wajib dipilih';
     if (!form.title) newErrors.title = 'Judul pameran wajib diisi';
-    if (!form.publishDate) newErrors.publishDate = 'Tanggal mulai wajib diisi';
-    if (!form.endDate) newErrors.endDate = 'Tanggal berakhir wajib diisi';
+    if (!form.publishDate) newErrors.publishDate = 'Tanggal buka wajib diisi';
     if (!form.prepareStart) newErrors.prepareStart = 'Tanggal persiapan mulai wajib diisi';
     if (!form.prepareEnd) newErrors.prepareEnd = 'Tanggal persiapan berakhir wajib diisi';
     if (!form.description) newErrors.description = 'Deskripsi wajib diisi';
@@ -130,11 +141,9 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
       const formData = new FormData();
       formData.append('kategori_kode', form.kategori);
       formData.append('judul', form.title);
-      formData.append('kapasitas', String(form.capacity));
-      formData.append('tanggal_mulai', form.publishDate);
-      formData.append('tanggal_akhir', form.endDate);
       formData.append('tanggal_mulai_persiapan', form.prepareStart);
       formData.append('tanggal_akhir_persiapan', form.prepareEnd);
+      formData.append('tanggal_buka', form.publishDate);
       formData.append('deskripsi', form.description);
       if (form.image) formData.append('banner', form.image);
 
@@ -156,11 +165,9 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
           const fieldMap: Record<string, keyof FormErrors> = {
             kategori_kode: 'kategori',
             judul: 'title',
-            kapasitas: 'capacity',
-            tanggal_mulai: 'publishDate',
-            tanggal_akhir: 'endDate',
             tanggal_mulai_persiapan: 'prepareStart',
             tanggal_akhir_persiapan: 'prepareEnd',
+            tanggal_buka: 'publishDate',
             deskripsi: 'description',
             banner: 'image',
           };

@@ -26,13 +26,11 @@ class Karya extends Model
         'gambar_sampul_large',
         'gambar_sampul_medium',
         'gambar_sampul_small',
-        'lantai',
         'is_juara',
         'is_best',
     ];
 
     protected $casts = [
-        'lantai' => 'integer',
         'is_juara' => 'boolean',
         'is_best' => 'boolean',
     ];
