@@ -46,7 +46,7 @@ class PenggunaController extends Controller
             $userData = [
                 'nama' => $request->nama,
                 'email' => $request->email,
-                'role' => 'Pengunjung',
+                'role' => Pengguna::ROLE_VISITOR,
                 'password' => Hash::make($request->password),
                 'otp_code' => $otpCode,
                 'otp_expires_at' => $expiresAt->timestamp * 1000,

@@ -9,6 +9,7 @@ use App\Http\Controllers\GameAssetController;
 use App\Http\Controllers\KaryaController;
 use App\Http\Controllers\KomentarController;
 use App\Http\Controllers\SukaController;
+use App\Http\Controllers\KunjunganController;
 
 // =============================
 // PUBLIC ROUTES
@@ -34,6 +35,9 @@ Route::get('/pameran/{identifier}', [PameranController::class, 'show']);
 Route::get('/karya/{id_karya}/komentar', [KomentarController::class, 'index']);
 Route::get('/public/karya/terbaik', [KaryaController::class, 'karyaTerbaikAktif']);
 Route::get('/public/karya/favorit', [KaryaController::class, 'karyaFavoritAktif']);
+
+// Catat kunjungan (public, tanpa auth)
+Route::post('/kunjungan', [KunjunganController::class, 'store']);
 
 //-----------------------
 // !! JANGAN DISENTUH !!
@@ -87,6 +91,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('/karya/{id}/toggle-best', [KaryaController::class, 'toggleBest']);
         Route::post('/karya/{id}/toggle-juara', [KaryaController::class, 'toggleJuara']);
+
+        // Statistik kunjungan
+        Route::get('/kunjungan/statistik', [KunjunganController::class, 'statistikRange']);
     
     });
 

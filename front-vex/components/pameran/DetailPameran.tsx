@@ -17,6 +17,7 @@ import { useParams } from "next/navigation";
 import { Button } from "../shared/ui/Button";
 import { Pameran } from "@/types/pameran";
 import { GetDetailPameran } from "./apiPameran";
+import url from "@/lib/axios";
 
 interface Status {
   isLogin?: boolean;
@@ -173,12 +174,14 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
               {/* BUTTON */}
               <div className="flex flex-col sm:flex-row gap-4">
                 {isOpen ? (
-                  <Button
-                    link={`/exhibition/${pameran.slug}`}
-                    className="w-full sm:w-auto min-w-[100%] py-5 px-38 flex items-center justify-center rounded-md"
-                  >
-                    <FaPlay />
-                  </Button>
+                  <div onClick={() => { url.post('/api/kunjungan', { id_pameran: pameran.id }).catch(() => {}); }}>
+                    <Button
+                      link={`/exhibition/${pameran.slug}`}
+                      className="w-full sm:w-auto min-w-[100%] py-5 px-38 flex items-center justify-center rounded-md"
+                    >
+                      <FaPlay />
+                    </Button>
+                  </div>
                 ) : (
                   <div className="w-full sm:w-auto min-w-[100%] py-5 px-38 bg-gray-300 text-gray-500 rounded-md flex justify-center items-center">
                     <FaPlay />
