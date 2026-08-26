@@ -5,12 +5,9 @@ import useEmblaCarousel from "embla-carousel-react";
 import Link from "next/link";
 import { GetPameran } from "./apiPameran";
 import { useAuth } from "@/context/AuthContext";
-
 import ProjectCard from "@/components/shared/ui/ProjectCard";
 import { TahunType } from "@/components/shared/filter/SelectTahun";
-
 import FilterSection from "@/components/pameran/FilterSection";
-// import CarouselSection from "@/components/pameran/CarouselSection";
 
 interface PameranProps {
   href?: string;
@@ -36,6 +33,7 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
         setData(res.pameran || []);
       } catch (error) {
         console.error(error);
+        setLoading(false);
       } finally {
         setLoading(false);
       }
@@ -117,10 +115,6 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
               <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
               <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
             </div>
-
-            {/* "Segera Hadir" title skeleton */}
-
-
           </div>
         </section>
 
@@ -150,34 +144,14 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
             selectedTahun={selectedTahun}
             setSelectedTahun={setSelectedTahun}
           />
-          {/* <div className="relative">
-            <h2 className="mb-5 mt-3 md:mb-6 text-2xl sm:text-3xl md:text-[40px] text-white font-semibold border-b-2 md:border-b-3 pb-2">
-              SEGERA HADIR
-            </h2>
-
-            {upcomingData.length === 0 ? (
-              <p className="text-white/60 text-sm py-4">
-                Tidak ada pameran dalam waktu dekat.
-              </p>
-            ) : (
-              <CarouselSection
-                className="w-full text-white"
-                data={upcomingData}
-                href={href}
-                emblaRef={emblaRef}
-              />
-            )}
-          </div> */}
         </div>
       </section>
 
       {/* GRID + PAGINATION */}
-      <main className="autoMid py-10">
+      <main className="autoMid py-[40px]">
         {openData.length === 0 ? (
-          <p className="text-gray-400 text-sm text-center py-10">
-            {isAdmin
-              ? "No Exhibition Yet"
-              : "No Ongoing Exhibition Yet"}
+          <p className="text-gray-400 text-xl font-bold text-center py-[300px]">
+            {isAdmin ? "No Exhibition Yet" : "No Ongoing Exhibition Yet"}
           </p>
         ) : (
           <>

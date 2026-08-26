@@ -13,7 +13,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "V-EX",
+  title: "V-EX+",
   description: "Virtual Exhibition",
 };
 

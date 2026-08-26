@@ -1,9 +1,8 @@
 import { FaCloudUploadAlt } from "react-icons/fa";
-import { PameranForm as PameranFormType, KATEGORI_OPTIONS } from "@/types/pameran";
+import { PameranForm as PameranFormType } from "@/types/pameran";
 import { Button } from "@/components/shared/ui/Button";
 import {
   InputField,
-  SelectField,
   TextareaField,
   Label,
 } from "@/components/shared/ui/InputFields";
@@ -14,9 +13,11 @@ type Props = {
   loading: boolean;
   errors?: Partial<Record<keyof PameranFormType | "image", string>>;
   onChangeImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
-onChange: (
-  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-) => void;
+  onChange: (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => void;
   onSubmit: () => void;
 };
 
@@ -40,9 +41,10 @@ export default function FormPameran({
         <label
           htmlFor="file"
           className={`cursor-pointer h-[220px] md:h-[320px] w-full flex items-center justify-center bg-gray-50 border-2 border-dashed rounded-xl mt-2 overflow-hidden transition-all duration-200
-            ${errors.image
-              ? "border-red-400 bg-red-50 hover:border-red-500"
-              : "border-gray-300 hover:border-main-blue hover:bg-blue-50"
+            ${
+              errors.image
+                ? "border-red-400 bg-red-50 hover:border-red-500"
+                : "border-gray-300 hover:border-main-blue hover:bg-blue-50"
             }`}
         >
           {preview ? (
@@ -73,19 +75,6 @@ export default function FormPameran({
 
       {/* RIGHT - FIELDS */}
       <div className="w-full lg:w-[60%] mt-10 flex flex-col gap-4">
-
-        {/* KATEGORI */}
-        <SelectField
-          name="kategori"
-          label="Kategori"
-          required
-          value={form.kategori}
-          options={KATEGORI_OPTIONS.map((p) => ({ value: p.kode, label: p.nama }))}
-          placeholder="-- Pilih Kategori --"
-          error={errors.kategori}
-          onChange={onChange}
-        />
-
         {/* TITLE */}
         <InputField
           type="text"
@@ -123,6 +112,7 @@ export default function FormPameran({
                 onChange={onChange}
               />
             </div>
+
             <div>
               <p className="text-xs text-gray-400 mb-1">Berakhir</p>
               <InputField

@@ -13,7 +13,6 @@ import {
 } from "react-icons/fa";
 import { HiPencilAlt } from "react-icons/hi";
 import { useParams } from "next/navigation";
-
 import { Button } from "../shared/ui/Button";
 import { Pameran } from "@/types/pameran";
 import { GetDetailPameran } from "./apiPameran";
@@ -21,14 +20,11 @@ import url from "@/lib/axios";
 
 interface Status {
   isLogin?: boolean;
- 
 }
 
 export default function PageDetailPameran({ isLogin = false }: Status) {
-  // SESUDAH (sesuai nama folder [slug] yang sebenarnya)
   const params = useParams();
   const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
-
   const [pameran, setPameran] = useState<Pameran | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,18 +48,17 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
     }
 
     load();
-  }, [slug]); // <-- hanya jalan ulang kalau slug berubah
+  }, [slug]);
 
-  // ─── Loading ───
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-400">
-        Memuat pameran...
+        <p className="text-gray-400 text-xl font-bold text-center py-[300px]">
+          Loading a simple creature
+        </p>
       </div>
     );
   }
-
-  // ─── Error / tidak ditemukan ───
   if (error || !pameran) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-500">
@@ -77,28 +72,22 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
     subtitle,
     date,
     bannerImage,
-    bannerLarge,
-    bannerMedium,
     description,
     stats,
     institution,
   } = pameran;
 
-  // endDate null → pameran tidak ada batas tutup, cukup cek sudah dibuka
   const today = new Date();
   const openDate = new Date(stats.startDate);
   const isOpen = stats.endDate
-    ? today >= openDate && today <= (() => { const d = new Date(stats.endDate); d.setHours(23,59,59,999); return d; })()
+    ? today >= openDate &&
+      today <=
+        (() => {
+          const d = new Date(stats.endDate);
+          d.setHours(23, 59, 59, 999);
+          return d;
+        })()
     : today >= openDate;
-
-  // console.log("DEBUG STATUS PAMERAN:", {
-  //   raw_startDate: stats.startDate,
-  //   raw_endDate: stats.endDate,
-  //   today: today.toString(),
-  //   openDate: openDate.toString(),
-  //   closeDate: closeDate.toString(),
-  //   isOpen,
-  // });
 
   return (
     <div className="min-h-screen bg-gray-50 font-poppins text-gray-800 select-none">
@@ -106,7 +95,7 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
         {/* BANNER */}
         <div className="hidden md:block relative w-full h-[60vh] overflow-hidden">
           <img
-            src={bannerLarge || bannerImage}
+            src={bannerImage}
             alt="Banner"
             className="w-full h-full object-cover object-center opacity-80"
           />
@@ -119,7 +108,6 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
             {/* MOBILE TITLE + EDIT */}
             <div className="md:hidden relative pr-16">
               <div className="absolute right-0 top-0 flex items-center gap-2 z-20">
-              
                 {isLogin && (
                   <Link
                     href={`/admin/pameran/edit/${pameran.slug}`}
@@ -129,7 +117,9 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
                   </Link>
                 )}
               </div>
-              <h1 className="text-4xl font-extrabold uppercase">{title}  <StatusBadge isOpen={isOpen} /></h1>
+              <h1 className="text-4xl font-extrabold uppercase">
+                {title} <StatusBadge isOpen={isOpen} />
+              </h1>
               <p className="text-gray-500 text-sm mt-1">{subtitle}</p>
               <div className="flex items-center gap-4 text-gray-600 mt-2 text-sm">
                 <FaRegCalendarAlt className="text-main-blue" />
@@ -140,7 +130,7 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
             {/* POSTER */}
             <div className="w-full md:w-[55%] lg:w-[100%]">
               <img
-                src={bannerMedium || bannerImage}
+                src={bannerImage}
                 alt={title}
                 className="w-full h-full max-h-[200px] md:max-h-[280px] lg:max-h-[340px] object-cover rounded-lg shadow-lg/40"
               />
@@ -270,8 +260,9 @@ function Row({ title, value }: { title: string; value: any }) {
 function StatusBadge({ isOpen }: { isOpen: boolean }) {
   return (
     <div
-      className={`flex items-center gap-1.5 w-8 h-8 px-2.5 py-1 rounded-full text-white text-xs font-semibold ${isOpen ? "bg-green-500" : "bg-red-500"
-        }`}
+      className={`flex items-center gap-1.5 w-8 h-8 px-2.5 py-1 rounded-full text-white text-xs font-semibold ${
+        isOpen ? "bg-green-500" : "bg-red-500"
+      }`}
     >
       {isOpen ? <FaLockOpen size={12} /> : <FaLock size={12} />}
     </div>

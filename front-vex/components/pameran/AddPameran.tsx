@@ -15,7 +15,6 @@ export default function AddPameran() {
   const [preview, setPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
   const [form, setForm] = useState<PameranForm>({
-    kategori: "",
     title: "",
     publishDate: "",
     prepareStart: "",
@@ -25,11 +24,12 @@ export default function AddPameran() {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    // Hapus error field yang sedang diubah
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -40,13 +40,11 @@ export default function AddPameran() {
     if (!file) return;
     setForm((prev) => ({ ...prev, image: file }));
     setPreview(URL.createObjectURL(file));
-    // Hapus error image
     if (errors.image) setErrors((prev) => ({ ...prev, image: "" }));
   };
 
   const resetForm = () => {
     setForm({
-      kategori: "",
       title: "",
       publishDate: "",
       prepareStart: "",
@@ -61,13 +59,14 @@ export default function AddPameran() {
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!form.image) newErrors.image = "Thumbnail wajib diupload";
-    if (!form.kategori) newErrors.kategori = "Kategori wajib dipilih";
-    if (!form.title) newErrors.title = "Judul pameran wajib diisi";
-    if (!form.publishDate) newErrors.publishDate = "Tanggal buka wajib diisi";
-    if (!form.prepareStart) newErrors.prepareStart = "Tanggal persiapan mulai wajib diisi";
-    if (!form.prepareEnd) newErrors.prepareEnd = "Tanggal persiapan berakhir wajib diisi";
-    if (!form.description) newErrors.description = "Deskripsi wajib diisi";
+    if (!form.image) newErrors.image = "Thumbnail must be uploaded";
+    if (!form.title) newErrors.title = "Exhibition title is required";
+    if (!form.publishDate) newErrors.publishDate = "Opening date is required";
+    if (!form.prepareStart)
+      newErrors.prepareStart = "Preparation start date is required";
+    if (!form.prepareEnd)
+      newErrors.prepareEnd = "Preparation end date is required";
+    if (!form.description) newErrors.description = "Description is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -75,7 +74,7 @@ export default function AddPameran() {
 
   const handleSubmit = async () => {
     if (!validate()) {
-      showToast("Lengkapi semua data terlebih dahulu.", "warning");
+      showToast("Fill all the field.", "warning");
       return;
     }
 
@@ -83,7 +82,6 @@ export default function AddPameran() {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("kategori_kode", form.kategori);
       formData.append("title", form.title);
       formData.append("prepare_start", form.prepareStart);
       formData.append("prepare_end", form.prepareEnd);
@@ -94,11 +92,11 @@ export default function AddPameran() {
       const data = await PostPameran(formData);
 
       if (data.status === "success") {
-        showToast("Pameran berhasil ditambahkan!", "success");
+        showToast("Exhibition has been added!", "success");
         const newSlug = data.pameran?.slug;
         router.push(`/admin/pameran/detail/${newSlug}`);
       } else {
-        showToast("Gagal menambahkan pameran.", "error");
+        showToast("Failed make exhibition.", "error");
       }
     } catch (error: any) {
       if (error.response) {
@@ -106,10 +104,8 @@ export default function AddPameran() {
         const data = error.response.data;
 
         if (status === 422) {
-          // Kembalikan error validasi Laravel ke masing-masing field
           const laravelErrors = data.errors as Record<string, string[]>;
           const fieldMap: Record<string, keyof FormErrors> = {
-            kategori_kode: "kategori",
             title: "title",
             prepare_start: "prepareStart",
             prepare_end: "prepareEnd",
@@ -125,16 +121,28 @@ export default function AddPameran() {
           });
 
           setErrors(mappedErrors);
-          showToast("Periksa kembali data yang diisi.", "error");
+          showToast("Please review the entered data.", "error");
         } else if (status === 404) {
-          showToast(data.message ?? "Data tidak ditemukan.", "error");
+          showToast(
+            data.message ?? "The requested data was not found.",
+            "error",
+          );
         } else if (status === 500) {
-          showToast(data.message ?? "Terjadi kesalahan pada server.", "error");
+          showToast(
+            data.message ?? "An internal server error occurred.",
+            "error",
+          );
         } else {
-          showToast(`Error ${status}: ${data.message ?? "Terjadi kesalahan."}`, "error");
+          showToast(
+            `Error ${status}: ${data.message ?? "An unexpected error occurred."}`,
+            "error",
+          );
         }
       } else {
-        showToast("Tidak dapat terhubung ke server.", "error");
+        showToast(
+          "Unable to connect to the server. Please try again later.",
+          "error",
+        );
       }
     } finally {
       setLoading(false);
