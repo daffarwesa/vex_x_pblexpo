@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import DetailThumbnail from "@/components/karya/DetailThumbnail";
 import DetailPoster from "@/components/karya/DetailPoster";
-import DetailPreview from "@/components/karya/DetailPreview";
+// import DetailPreview from "@/components/karya/DetailPreview";
 import DetailForm from "@/components/karya/DetailForm";
 import DetailAction from "@/components/karya/DetailAction";
 import { showToast } from "@/components/shared/ui/ToastNotification";
@@ -84,7 +84,7 @@ const initialForm: KaryaItem = {
   semester: "",
   description: "",
   booth: "",
-  modelStan: "", // ← FIX: tambahkan field baru
+  modelStan: "1", // ← FIX: tambahkan field baru
   link: "",
   pameranId: undefined,
 };
@@ -233,7 +233,7 @@ export default function AddKaryaPage() {
   return (
     <div className="w-full px-4 sm:px-6 lg:px-0 py-6">
       <div className="max-w-[1200px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start lg:items-stretch">
           <div className="space-y-3">
             <DetailThumbnail
               preview={thumbnailPreview}
@@ -247,14 +247,11 @@ export default function AddKaryaPage() {
             />
           </div>
 
-          <div>
-            <DetailPreview
-              booth={form.booth ?? ""}
-              modelStan={form.modelStan ?? ""} // ← FIX: prop baru untuk value select
-              pameranId={form.pameranId}
-              onChange={(value) => handleChange("modelStan", value)} // ← FIX: update modelStan, bukan booth
-              error={errors.modelStan} // ← FIX
-            />
+          <div className="flex flex-col">
+            <p className="text-xl font-semibold mt-10 mb-1.5">
+              Detail<span className="text-red-500">*</span>
+            </p>
+            
             <DetailForm form={form} onChange={handleChange} errors={errors} />
             <DetailAction onSave={handleSave} loading={isLoading} />
           </div>

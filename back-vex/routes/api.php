@@ -9,7 +9,6 @@ use App\Http\Controllers\GameAssetController;
 use App\Http\Controllers\KaryaController;
 use App\Http\Controllers\KomentarController;
 use App\Http\Controllers\SukaController;
-use App\Http\Controllers\KpsController;
 
 // =============================
 // PUBLIC ROUTES
@@ -33,7 +32,6 @@ Route::prefix('auth')->group(function () {
 Route::get('/pameran', [PameranController::class, 'index']);
 Route::get('/pameran/{identifier}', [PameranController::class, 'show']);
 Route::get('/karya/{id_karya}/komentar', [KomentarController::class, 'index']);
-Route::get('/karya-terbaik', [KpsController::class, 'karyaTerbaik']); // ✅ public
 Route::get('/public/karya/terbaik', [KaryaController::class, 'karyaTerbaikAktif']);
 Route::get('/public/karya/favorit', [KaryaController::class, 'karyaFavoritAktif']);
 
@@ -86,40 +84,30 @@ Route::middleware('auth:sanctum')->group(function () {
         // Manajemen Karya (Admin)
         Route::get('/karya', [KaryaController::class, 'indexAdmin']);
         Route::delete('/karya/{id}', [KaryaController::class, 'destroy']);
+
+        Route::post('/karya/{id}/toggle-best', [KaryaController::class, 'toggleBest']);
+        Route::post('/karya/{id}/toggle-juara', [KaryaController::class, 'toggleJuara']);
     
     });
 
     // =============================
-    // KPS
+    // CREATOR (formerly Visitor / Ketua PBL + KPS)
     // =============================
-    Route::middleware('role:KPS')->prefix('kps')->group(function () {
+    Route::middleware('role:Creator')->prefix('creator')->group(function () {
         Route::get('/dashboard', function () {
-            return response()->json(['status' => 'success', 'page' => 'KPS Dashboard']);
+            return response()->json(['status' => 'success', 'page' => 'Creator Dashboard']);
         });
 
-        // ✅ Manajemen karya terbaik
-        Route::get('/karya', [KpsController::class, 'daftarKarya']);
-        Route::patch('/karya/{id_karya}/terbaik', [KpsController::class, 'pilihTerbaik']);
-        Route::patch('/karya/{id_karya}/batalkan', [KpsController::class, 'batalkanTerbaik']);
-    });
-
-    // =============================
-    // KETUA PBL
-    // =============================
-    Route::middleware('role:Ketua PBL')->prefix('ketua-pbl')->group(function () {
-        Route::get('/dashboard', function () {
-            return response()->json(['status' => 'success', 'page' => 'Ketua PBL Dashboard']);
-        });
-        // Pameran tersedia untuk karya (tahap persiapan, sesuai prodi)
+        // Pameran tersedia untuk karya (tahap persiapan, sesuai kategori)
         Route::get('/pameran-tersedia', [KaryaController::class, 'pameranTersedia']);
         Route::get('/stan/{id_pameran}', [KaryaController::class, 'stanTersedia']);
+
         // Manajemen Karya
         Route::get('/karya', [KaryaController::class, 'index']);
         Route::post('/karya', [KaryaController::class, 'store']);
         Route::put('/karya/{id}', [KaryaController::class, 'update']);
         Route::post('/karya/{id}/update', [KaryaController::class, 'update']);
         Route::get('/model-stan', [KaryaController::class, 'getModelStan']);
-        
     });
 
     // =============================

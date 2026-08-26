@@ -83,12 +83,12 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
     institution,
   } = pameran;
 
-  // Laravel kirim YYYY-MM-DD → langsung pakai new Date(), tidak perlu convertDate
+  // endDate null → pameran tidak ada batas tutup, cukup cek sudah dibuka
   const today = new Date();
   const openDate = new Date(stats.startDate);
-  const closeDate = new Date(stats.endDate);
-  closeDate.setHours(23, 59, 59, 999);
-  const isOpen = today >= openDate && today <= closeDate;
+  const isOpen = stats.endDate
+    ? today >= openDate && today <= (() => { const d = new Date(stats.endDate); d.setHours(23,59,59,999); return d; })()
+    : today >= openDate;
 
   // console.log("DEBUG STATUS PAMERAN:", {
   //   raw_startDate: stats.startDate,
@@ -231,15 +231,13 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
               <Stat title="Total Suka" value={stats.likes} />
               <Stat title="Total Karya" value={stats.karya} />
               <Stat title="Tanggal Buka" value={stats.startDate} />
-              <Stat title="Tanggal Tutup" value={stats.endDate} />
-              <Stat title="Program Studi" value={stats.studyLevel} />
+              <Stat title="Kategori" value={stats.studyLevel} />
             </div>
             <div className="md:hidden space-y-3">
               <Row title="Total Suka" value={stats.likes} />
               <Row title="Total Karya" value={stats.karya} />
               <Row title="Tanggal Buka" value={stats.startDate} />
-              <Row title="Tanggal Tutup" value={stats.endDate} />
-              <Row title="Program Studi" value={stats.studyLevel} />
+              <Row title="Kategori" value={stats.studyLevel} />
             </div>
           </div>
         </div>

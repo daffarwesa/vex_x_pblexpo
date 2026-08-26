@@ -77,10 +77,10 @@ class PenggunaController extends Controller
     public function registerThroughAdmin(Request $request)
     {
         $request->validate([
-            'nama' => 'required|string|max:255',
+            'nama'  => 'required|string|max:255',
             'email' => 'required|email',
-            'role' => 'required|in:Ketua PBL,KPS',
-            'prodi' => 'required',
+            'role'  => 'required|in:Creator',
+            'kategori_kode' => 'required|exists:kategori,kode_kategori',
         ]);
 
         if (Pengguna::where('email', $request->email)->exists()) {
@@ -95,10 +95,9 @@ class PenggunaController extends Controller
                 'nama' => $request->nama,
                 'email' => $request->email,
                 'password' => Hash::make($request->email),
-                'role' => $request->role,
-                'status' => 'aktif',
-                'program_studi' => $request->prodi,
-                'kelas' => $request->kelas
+                'role' => Pengguna::ROLE_CREATOR,
+                'status' => Pengguna::STATUS_AKTIF,
+                'kategori_kode' => $request->kategori_kode,
             ]);
 
             return response()->json([
@@ -121,8 +120,7 @@ class PenggunaController extends Controller
     public function getByRole($role)
     {
         $pengguna = Pengguna::with([
-            'kelas',
-            'prodi'
+            'kategori'
         ])
             ->where('role', $role)
             ->get();
@@ -141,7 +139,7 @@ class PenggunaController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'email' => 'required|email',
-            'role' => 'required',
+            'role' => 'required|in:Creator',
             'status' => 'required',
         ]);
 
@@ -159,8 +157,7 @@ class PenggunaController extends Controller
             'email' => $request->email,
             'role' => $request->role,
             'status' => $request->status,
-            'program_studi' => $request->program_studi,
-            'kelas' => $request->kelas,
+            'kategori_kode' => $request->kategori_kode,
         ]);
 
         return response()->json([
@@ -266,10 +263,10 @@ class PenggunaController extends Controller
                 ], 404);
             }
 
-            if (in_array($user->role, [Pengguna::ROLE_KPS, Pengguna::ROLE_KETUA_PBL])) {
+            if ($user->role === Pengguna::ROLE_CREATOR) {
                 if (!$user->isAktif()) {
                     return response()->json([
-                        'status' => 'error',
+                        'status'  => 'error',
                         'message' => 'Akun Anda telah dinonaktifkan. Hubungi Admin.'
                     ], 403);
                 }
@@ -279,20 +276,18 @@ class PenggunaController extends Controller
 
             // set role User
             $abilities = match ($user->role) {
-                Pengguna::ROLE_ADMIN => ['admin'],
-                Pengguna::ROLE_KPS => ['kps'],
-                Pengguna::ROLE_KETUA_PBL => ['ketua-pbl'],
-                default => ['pengunjung'],
+                Pengguna::ROLE_ADMIN   => ['admin'],
+                Pengguna::ROLE_CREATOR => ['creator'],
+                default                => ['pengunjung'],
             };
 
             $token = $user->createToken('token', $abilities)->plainTextToken;
 
             // path User saat login
             $redirectTo = match ($user->role) {
-                Pengguna::ROLE_ADMIN => '/admin/pengguna',
-                Pengguna::ROLE_KPS => '/kps/karya',
-                Pengguna::ROLE_KETUA_PBL => '/ketua-pbl/karya',
-                default => '/',
+                Pengguna::ROLE_ADMIN   => '/admin/pengguna',
+                Pengguna::ROLE_CREATOR => '/creator/karya',
+                default                => '/',
             };
 
             return response()->json([
@@ -306,8 +301,7 @@ class PenggunaController extends Controller
                     'nama' => $user->nama,
                     'email' => $user->email,
                     'role' => $user->role,
-                    'kelas' => $user->kelas,
-                    'program_studi' => $user->program_studi,
+                    'kategori_kode' => $user->kategori_kode,
                 ],
             ]);
             

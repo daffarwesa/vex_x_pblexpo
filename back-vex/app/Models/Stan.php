@@ -12,6 +12,7 @@ class Stan extends Model
 
     protected $fillable = [
         'id_pameran',
+        'id_kategori',
         'model_stan',
     ];
 
@@ -19,6 +20,12 @@ class Stan extends Model
     public function pameran()
     {
         return $this->belongsTo(Pameran::class, 'id_pameran', 'id_pameran');
+    }
+
+    // Relasi ke kategori
+    public function kategori()
+    {
+        return $this->belongsTo(Kategori::class, 'id_kategori', 'id_kategori');
     }
 
     // Relasi ke model 3D stan

@@ -46,7 +46,7 @@ class GameAssetController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => 'http://localhost:3000',
+            'Access-Control-Allow-Origin' => 'http://localhost:8000',
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -93,7 +93,7 @@ class GameAssetController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => 'http://localhost:3000',
+            'Access-Control-Allow-Origin' => 'http://localhost:8000',
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -116,7 +116,7 @@ class GameAssetController extends Controller
         return response()->json([
             // pakai identifier yang sama persis yang dikirim client (slug atau id),
             // supaya endpoint hall-model juga bisa resolve dengan cara yang sama
-            'model_hall' => url("/api/experience/hall-model/{$identifier}"),
+            'model_hall' => "http://localhost:8000/experience/hall-model/{$identifier}",
         ]);
     }
 
@@ -137,7 +137,6 @@ class GameAssetController extends Controller
             ->leftJoin('stan', 'karya.id_stan', '=', 'stan.id_stan')
             ->leftJoin('model', 'stan.model_stan', '=', 'model.id_model')
             ->leftJoin('pengguna', 'karya.id_pengguna', '=', 'pengguna.id')
-            ->leftJoin('kelas', 'pengguna.kelas', '=', 'kelas.id_kelas')
             ->where('karya.id_pameran', $idPameran)
             ->select(
                 'karya.id_karya',
@@ -148,11 +147,10 @@ class GameAssetController extends Controller
                 'karya.tautan',
                 'karya.gambar_poster',
                 'karya.gambar_sampul',
-                'karya.lantai',
-                'karya.is_terbaik',
+                'karya.is_best',
+                'pengguna.nama as nama_pengguna',
                 'model.nama_model as nama_stan',
-                DB::raw('model.`3d_model` as booth_model'),
-                'kelas.nama_kelas as zona'
+                DB::raw('model.`3d_model` as booth_model')
             )
             ->orderBy('karya.id_karya')
             ->get();
@@ -189,7 +187,7 @@ class GameAssetController extends Controller
             return [
                 'id_karya' => $karya->id_karya,
                 'id_stan' => $karya->nama_stan ?? ('Stan ' . $karya->id_stan),
-                'kelas' => strtolower(substr($karya->zona ?? '', 0, 1)),
+                'nama_pengguna' => $karya->nama_pengguna ?? 'Anonim',
                 'booth_name' => $karya->judul,
                 'judul' => $karya->judul,
                 'deskripsi' => $karya->deskripsi,
@@ -197,10 +195,9 @@ class GameAssetController extends Controller
                 'poster' => $karya->gambar_poster ? '/storage/' . $karya->gambar_poster : null,
                 'sampul' => $this->getYoutubeThumbnail($karya->tautan),
                 'model_path' => $boothModel
-                    ? url('/api/experience/booth-model/' . basename($boothModel))
+                    ? "http://localhost:8000/experience/booth-model/" . basename($boothModel)
                     : null,
-                'lantai' => $karya->lantai,
-                'is_terbaik' => (bool) $karya->is_terbaik,
+                'is_terbaik' => (bool) $karya->is_best,
                 'is_terbanyak' => $idTerbanyak !== null && $karya->id_karya === $idTerbanyak,
                 'total_suka' => $totalSuka,
                 'komentar' => $komentar,

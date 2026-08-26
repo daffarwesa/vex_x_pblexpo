@@ -5,18 +5,18 @@ import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headless
 import { ChevronDownIcon, XMarkIcon } from '@heroicons/react/20/solid';
 import axios from "@/lib/axios"
 
-export type ProdiType = {
+export type KategoriType = {
   id: number;
   name: string;
 };
 
-interface SelectProdiProps {
-  selected: ProdiType | null;
-  onChange: (prodi: ProdiType | null) => void;
+interface SelectKategoriProps {
+  selected: KategoriType | null;
+  onChange: (kategori: KategoriType | null) => void;
 }
 
-export default function SelectProdi({ selected, onChange }: SelectProdiProps) {
-  const [prodiList, setProdiList] = useState<ProdiType[]>([]);
+export default function SelectKategori({ selected, onChange }: SelectKategoriProps) {
+  const [kategoriList, setKategoriList] = useState<KategoriType[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -28,9 +28,9 @@ export default function SelectProdi({ selected, onChange }: SelectProdiProps) {
           (json.pameran ?? []).map((item: any) => item.category)
         )];
 
-        setProdiList(unique.map((name, index) => ({ id: index + 1, name })));
+        setKategoriList(unique.map((name, index) => ({ id: index + 1, name })));
       } catch (err) {
-        console.error('Gagal memuat prodi:', err);
+        console.error('Gagal memuat kategori:', err);
       }
     }
 
@@ -44,7 +44,7 @@ export default function SelectProdi({ selected, onChange }: SelectProdiProps) {
           {/* BUTTON */}
           <ListboxButton className="relative w-full cursor-pointer rounded-full bg-white py-2 pl-[15px] pr-[30px] text-left text-sm font-poppins shadow-xl/20 ring-1 ring-gray-200 focus:outline-none focus:ring-2 focus:ring-main-blue/60">
             <span className={`block truncate ${selected ? 'text-gray-800 font-medium' : 'text-gray-400'}`}>
-              {selected ? selected.name : 'Program Studi'}
+              {selected ? selected.name : 'Kategori'}
             </span>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-[10px]">
               {selected ? (
@@ -67,15 +67,15 @@ export default function SelectProdi({ selected, onChange }: SelectProdiProps) {
             transition
             className="absolute z-10 mt-2 max-h-[400px] w-[300px] overflow-y-auto no-scrollbar rounded-xl bg-white py-1 text-sm ring-1 ring-black/5 shadow-xl/20 focus:outline-none transition data-closed:opacity-0 data-leave:duration-100 data-leave:ease-in"
           >
-            {prodiList.map((prodi) => (
+            {kategoriList.map((kategori) => (
               <ListboxOption
-                key={prodi.id}
-                value={prodi}
+                key={kategori.id}
+                value={kategori}
                 className="group relative cursor-pointer select-none py-2.5 pl-3 pr-4 text-gray-900 data-focus:bg-gray-400/20 data-focus:text-black"
               >
                 {({ selected: isSelected }) => (
                   <span className={`block truncate ${isSelected ? 'font-semibold' : 'font-normal'}`}>
-                    {prodi.name}
+                    {kategori.name}
                   </span>
                 )}
               </ListboxOption>

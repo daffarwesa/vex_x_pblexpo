@@ -10,15 +10,18 @@ import DetailAction from "@/components/karya/DetailAction";
 import {
   GetKarya,
   GetKaryaAdmin,
-  GetKaryaKps,
+  GetKaryaSemua,
   UpdateKarya,
   DeleteKarya,
-  PilihTerbaik,
-  BatalkanTerbaik,
+  SetTerbaikRank,
+  BatalkanTerbaikRank,
+  SetPredikatKarya,
+  BatalkanPredikatKarya,
 } from "@/components/karya/apiKarya";
-import { KaryaItem } from "@/types/karya";
+import { KaryaItem, TerbaikRank, PredikatKarya } from "@/types/karya";
 import { showToast } from "@/components/shared/ui/ToastNotification";
 import { useAuth } from "@/context/AuthContext";
+import { is } from "@react-three/fiber/dist/declarations/src/core/utils";
 
 // =============================
 // HELPERS
@@ -83,11 +86,11 @@ export default function DetailKarya({ id }: Props) {
   const { user, loading: authLoading } = useAuth();
 
   const isAdmin = user?.role === "Admin";
-  const isKps = user?.role === "KPS";
-  const isKetuaPbl = user?.role === "Ketua PBL";
+  const isCreator = user?.role === "Creator";
 
-  // Read-only untuk Admin dan KPS
-  const isReadOnly = isAdmin || isKps;
+  // Read-only untuk Admin (Admin tidak mengedit konten karya,
+  // hanya menghapus & menilai/menentukan karya terbaik)
+  const isReadOnly = isAdmin;
 
   const [form, setForm] = useState<KaryaItem | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState("");
@@ -99,21 +102,27 @@ export default function DetailKarya({ id }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // HANYA berlaku untuk Ketua PBL
-  const isPameranLocked = isKetuaPbl && form?.canEdit === false;
+  // Berlaku untuk Creator jika periode edit pameran sudah ditutup
+  const isPameranLocked = isCreator && form?.canEdit === false;
 
   const [currentPameran, setCurrentPameran] = useState<{
     id: number;
     title: string;
   } | null>(null);
 
+  // Slot rank/predikat yang sudah dipakai karya LAIN di pameran yang sama
+  const [siblingAwards, setSiblingAwards] = useState<{
+    takenRanks: TerbaikRank[];
+    takenPredikat: PredikatKarya[];
+  }>({ takenRanks: [], takenPredikat: [] });
+
   // ── Guard ──
   useEffect(() => {
     if (authLoading) return;
-    if (!isAdmin && !isKps && !isKetuaPbl) {
+    if (!isAdmin && !isCreator) {
       router.replace("/");
     }
-  }, [authLoading, isAdmin, isKps, isKetuaPbl, router]);
+  }, [authLoading, isAdmin, isCreator, router]);
 
   // ── Load data karya ──
   useEffect(() => {
@@ -121,49 +130,45 @@ export default function DetailKarya({ id }: Props) {
 
     const load = async () => {
       try {
-        const res = isKps
-          ? await GetKaryaKps()
+        const storageBase = process.env.NEXT_PUBLIC_STORAGE_URL ?? 'http://localhost:8000/storage';
+        const res = isCreator && !isAdmin
+          ? await GetKaryaSemua()
           : isAdmin
             ? await GetKaryaAdmin()
             : await GetKarya();
 
         const raw = res.karya ?? [];
 
-        // Mapper khusus KPS (field backend berbeda)
-        const list: KaryaItem[] = isKps
-          ? raw.map((item: any) => {
-              const tanggalMulai = item.stan?.pameran?.tanggal_mulai ?? "";
-              const bulan = tanggalMulai
-                ? new Date(tanggalMulai).getMonth() + 1
-                : 0;
-              const semester =
-                bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
+        const list: KaryaItem[] = raw.map((item: any) => {
+          if (item.title && item.image !== undefined) {
+            return item;
+          }
+          const tanggalMulai = item.stan?.pameran?.tanggal_mulai ?? item.pameran?.tanggal_mulai ?? "";
+          const bulan = tanggalMulai ? new Date(tanggalMulai).getMonth() + 1 : 0;
+          const semester = bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
 
-              return {
-                id: item.id_karya,
-                title: item.judul,
-                description: item.deskripsi,
-                category: item.stan?.pameran?.kategori ?? "",
-                image: item.gambar_poster
-                  ? `http://localhost:8000/storage/${item.gambar_poster}`
-                  : "",
-                thumbnail: item.gambar_sampul
-                  ? `http://localhost:8000/storage/${item.gambar_sampul}`
-                  : "",
-                link: item.tautan ?? "",
-                year: tanggalMulai.slice(0, 4),
-                semester,
-                booth: String(item.id_stan ?? ""),
-                modelStan: item.stan?.model_stan
-                  ? String(item.stan.model_stan)
-                  : "", // ← FIX: tambah modelStan untuk KPS juga
-                pameranId: item.id_pameran,
-                pameranTitle:
-                  item.stan?.pameran?.judul ?? `Pameran #${item.id_pameran}`,
-                isTerbaik: item.is_terbaik ?? false,
-              };
-            })
-          : raw;
+          return {
+            id: item.id_karya,
+            title: item.judul,
+            description: item.deskripsi,
+            category: item.stan?.pameran?.kategori ?? item.pameran?.kategori ?? item.category ?? "",
+            image: item.gambar_poster ? `${storageBase}/${item.gambar_poster}` : item.image ?? "",
+            thumbnail: item.gambar_sampul ? `${storageBase}/${item.gambar_sampul}` : item.thumbnail ?? "",
+            link: item.tautan ?? item.link ?? "",
+            year: tanggalMulai.slice(0, 4) || item.year || "",
+            semester: semester || item.semester || "",
+            booth: String(item.id_stan ?? item.booth ?? ""),
+            modelStan: item.stan?.model_stan ? String(item.stan.model_stan) : item.modelStan ?? "",
+            pameranId: item.id_pameran ?? item.pameranId,
+            pameranTitle:
+              item.stan?.pameran?.judul ??
+              item.pameran?.judul ??
+              item.pameranTitle ??
+              `Pameran #${item.id_pameran}`,
+            terbaikRank: item.terbaik_rank ?? item.terbaikRank ?? null,
+            predikat: item.predikat ?? null,
+          };
+        });
 
         const found = list.find((item) => item.id === id);
 
@@ -179,6 +184,18 @@ export default function DetailKarya({ id }: Props) {
                 found.pameranTitle?.trim() || `Pameran #${found.pameranId}`,
             });
           }
+
+          const siblings = list.filter(
+            (item) => item.id !== found.id && item.pameranId === found.pameranId,
+          );
+          setSiblingAwards({
+            takenRanks: siblings
+              .map((s) => s.terbaikRank)
+              .filter((r): r is TerbaikRank => !!r),
+            takenPredikat: siblings
+              .map((s) => s.predikat)
+              .filter((p): p is PredikatKarya => !!p),
+          });
         }
       } catch (err) {
         console.error("Gagal memuat karya:", err);
@@ -186,7 +203,7 @@ export default function DetailKarya({ id }: Props) {
     };
 
     load();
-  }, [id, authLoading, isKps, isAdmin]);
+  }, [id, authLoading, isCreator, isAdmin]);
 
   // ── Handlers ──
 
@@ -230,7 +247,6 @@ export default function DetailKarya({ id }: Props) {
     }
   };
 
-  // Hanya Ketua PBL
   const handleSave = async () => {
     if (!form || isReadOnly) return;
     if (form.canEdit === false) {
@@ -269,10 +285,7 @@ export default function DetailKarya({ id }: Props) {
       router.push("/ketua-pbl/karya");
     } catch (err: any) {
       if (err.response?.status === 422) {
-        const laravelErrors = err.response.data.errors as Record<
-          string,
-          string[]
-        >;
+        const laravelErrors = err.response.data.errors as Record<string, string[]>;
         const mapped: Record<string, string> = {};
         if (laravelErrors.id_pameran)
           mapped.pameranId = laravelErrors.id_pameran[0];
@@ -320,39 +333,75 @@ export default function DetailKarya({ id }: Props) {
     }
   };
 
-  // Hanya KPS
-  const handlePilihTerbaik = async () => {
-    if (!form || !isKps) return;
+  // Admin — penilaian: set/batalkan peringkat terbaik (1-3)
+  const handleSetRank = async (rank: TerbaikRank) => {
+    if (!form || !isAdmin) return;
     setIsLoading(true);
     try {
-      const result = await PilihTerbaik(form.id);
+      const result = await SetTerbaikRank(form.id, rank);
       if (result.status !== "success") {
-        throw new Error(result.message || "Gagal memilih karya terbaik");
+        throw new Error(result.message || "Gagal menentukan peringkat terbaik");
       }
-      setForm((prev) => (prev ? { ...prev, isTerbaik: true } : prev));
-      showToast("Karya berhasil dipilih sebagai terbaik!", "success");
+      setForm((prev) => (prev ? { ...prev, terbaikRank: rank } : prev));
+      showToast(`Karya ditetapkan sebagai Terbaik ${rank}!`, "success");
     } catch (err) {
-      showToast("Gagal memilih karya terbaik.", "error");
-      console.error("Gagal memilih terbaik:", err);
+      showToast("Gagal menentukan peringkat terbaik.", "error");
+      console.error("Gagal set peringkat terbaik:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Hanya KPS
-  const handleBatalkanTerbaik = async () => {
-    if (!form || !isKps) return;
+  const handleCancelRank = async () => {
+    if (!form || !isAdmin) return;
     setIsLoading(true);
     try {
-      const result = await BatalkanTerbaik(form.id);
+      const result = await BatalkanTerbaikRank(form.id);
       if (result.status !== "success") {
-        throw new Error(result.message || "Gagal membatalkan karya terbaik");
+        throw new Error(result.message || "Gagal membatalkan peringkat terbaik");
       }
-      setForm((prev) => (prev ? { ...prev, isTerbaik: false } : prev));
-      showToast("Predikat terbaik berhasil dibatalkan.", "info");
+      setForm((prev) => (prev ? { ...prev, terbaikRank: null } : prev));
+      showToast("Peringkat terbaik berhasil dibatalkan.", "info");
     } catch (err) {
-      showToast("Gagal membatalkan predikat terbaik.", "error");
-      console.error("Gagal membatalkan terbaik:", err);
+      showToast("Gagal membatalkan peringkat terbaik.", "error");
+      console.error("Gagal batalkan peringkat terbaik:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Admin — penilaian: set/batalkan predikat
+  const handleSetPredikat = async (predikat: PredikatKarya) => {
+    if (!form || !isAdmin) return;
+    setIsLoading(true);
+    try {
+      const result = await SetPredikatKarya(form.id, predikat);
+      if (result.status !== "success") {
+        throw new Error(result.message || "Gagal menentukan predikat");
+      }
+      setForm((prev) => (prev ? { ...prev, predikat } : prev));
+      showToast(`Karya diberi predikat "${predikat}"!`, "success");
+    } catch (err) {
+      showToast("Gagal menentukan predikat.", "error");
+      console.error("Gagal set predikat:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelPredikat = async () => {
+    if (!form || !isAdmin) return;
+    setIsLoading(true);
+    try {
+      const result = await BatalkanPredikatKarya(form.id);
+      if (result.status !== "success") {
+        throw new Error(result.message || "Gagal membatalkan predikat");
+      }
+      setForm((prev) => (prev ? { ...prev, predikat: null } : prev));
+      showToast("Predikat berhasil dibatalkan.", "info");
+    } catch (err) {
+      showToast("Gagal membatalkan predikat.", "error");
+      console.error("Gagal batalkan predikat:", err);
     } finally {
       setIsLoading(false);
     }
@@ -481,7 +530,7 @@ export default function DetailKarya({ id }: Props) {
 
       <div className="w-full px-4 sm:px-6 lg:px-0 py-6">
         <div className="max-w-[1200px] mx-auto">
-          {/* Banner read-only — Admin & KPS */}
+          {/* Banner read-only — Admin (hapus & menilai karya terbaik) */}
           {isReadOnly && (
             <div className="mb-6 flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
               <svg
@@ -498,14 +547,9 @@ export default function DetailKarya({ id }: Props) {
               </svg>
               <p className="text-xs text-amber-700">
                 {" "}
-                <span className="font-semibold">
-                  {isAdmin ? "Admin" : "KPS"}
-                </span>{" "}
-                —{" "}
-                {isAdmin
-                  ? "hanya dapat menghapus karya."
-                  : "hanya dapat menentukan karya terbaik."}{" "}
-                Data tidak dapat diubah.
+                <span className="font-semibold">Admin</span> — hanya dapat
+                menghapus karya dan menentukan peringkat/predikat terbaik. Data
+                tidak dapat diubah.
               </p>
             </div>
           )}
@@ -531,7 +575,7 @@ export default function DetailKarya({ id }: Props) {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-            {/* Gambar — read-only untuk Admin & KPS */}
+            {/* Gambar — read-only untuk Admin */}
             <div
               className={`space-y-3 ${
                 isReadOnly || isPameranLocked
@@ -552,7 +596,7 @@ export default function DetailKarya({ id }: Props) {
               />
             </div>
 
-            {/* Form — read-only untuk Admin & KPS */}
+            {/* Form — read-only untuk Admin */}
             <div
               className={
                 isReadOnly || isPameranLocked
@@ -582,12 +626,17 @@ export default function DetailKarya({ id }: Props) {
           <DetailAction
             // Admin
             onDelete={isAdmin ? () => setShowConfirm(true) : undefined}
-            // Ketua PBL
-            onSave={isKetuaPbl && !isPameranLocked ? handleSave : undefined}
-            // KPS
-            onPilihTerbaik={isKps ? handlePilihTerbaik : undefined}
-            onBatalkanTerbaik={isKps ? handleBatalkanTerbaik : undefined}
-            isTerbaik={form.isTerbaik}
+            onSave={isCreator && !isPameranLocked ? handleSave : undefined}
+            // Admin: Penilaian — Peringkat 1-3 & Predikat
+            isAdmin={isAdmin}
+            currentRank={form.terbaikRank}
+            takenRanks={siblingAwards.takenRanks}
+            onSetRank={handleSetRank}
+            onCancelRank={handleCancelRank}
+            currentPredikat={form.predikat}
+            takenPredikat={siblingAwards.takenPredikat}
+            onSetPredikat={handleSetPredikat}
+            onCancelPredikat={handleCancelPredikat}
             loading={isLoading}
           />
         </div>

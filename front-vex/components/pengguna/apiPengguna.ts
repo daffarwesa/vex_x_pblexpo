@@ -10,7 +10,7 @@ export async function CreateUser(data: {
   nama: string;
   email: string;
   role: string;
-  prodi: string;
+  kategori_kode: string;
   kelas: string;
 }) {
   const res = await url.post('/api/admin/pengguna/register-through-admin', data);
@@ -29,12 +29,12 @@ export async function UpdateUser(user: UserType) {
         : typeof user.kelas === 'object'
         ? user.kelas.id_kelas
         : user.kelas,
-    program_studi:
-      user.prodi == null
+    kategori_kode:
+      user.kategori_kode == null
         ? null
-        : typeof user.prodi === 'object'
-        ? user.prodi.kode_prodi
-        : user.prodi,
+        : typeof user.kategori_kode === 'object'
+        ? user.kategori_kode.kode_kategori
+        : user.kategori_kode,
   };
 
   const res = await url.put(`/api/admin/pengguna/${user.id}`, payload);

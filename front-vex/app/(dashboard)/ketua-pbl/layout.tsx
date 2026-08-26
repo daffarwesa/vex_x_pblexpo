@@ -4,7 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import NavKetuaPBL from "@/components/shared/ui/NavKetuaPBL";
 
 export const metadata: Metadata = {
-  title: "V-EX | Ketua PBL",
+  title: "V-EX | Creator",
   description: "Virtual Exhibition",
 };
 

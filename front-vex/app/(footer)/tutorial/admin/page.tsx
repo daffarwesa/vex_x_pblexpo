@@ -67,7 +67,7 @@ const sections: TutorialSubsection[] = [
         title: 'Tambah Pameran',
         steps: [
             'Klik ikon "Tambah Pameran".',
-            'Isi data: Thumbnail, Program Studi, Judul Pameran, Kapasitas Pameran, Tanggal Pameran (mulai dan berakhir), Tanggal Persiapan (mulai dan berakhir), serta Deskripsi.',
+            'Isi data: Thumbnail, Program Studi, Judul Pameran, Tanggal Pameran (mulai), Tanggal Persiapan (mulai dan berakhir), serta Deskripsi.',
             'Klik "Simpan".',
         ],
     },

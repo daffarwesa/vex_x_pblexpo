@@ -68,7 +68,7 @@ const resolvedMenu: NavItem[] = loading
       { title: 'EXHIBITION', subtitle: '3D BOOTH', link: '/admin/pameran' },
       { title: 'DASHBOARD', subtitle: 'ADMIN', link: '/admin/pengguna' },
     ]
-  : user?.role === 'Ketua PBL'
+  : user?.role === 'Creator'
   ? [
       { title: 'HOMEPAGE', subtitle: 'MAIN', link: '/' },
       { title: 'EXHIBITION', subtitle: '3D BOOTH', link: '/pameran' },

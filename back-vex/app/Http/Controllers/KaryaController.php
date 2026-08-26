@@ -6,6 +6,7 @@ use App\Models\Karya;
 use App\Models\Pameran;
 use App\Models\ModelPameran;
 use App\Models\Stan;
+use App\Models\Penilaian;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -17,8 +18,9 @@ use App\Services\Steganography;
 
 class KaryaController extends Controller
 {
-    // private const STORAGE_BASE_URL = 'https://vex.terpalb25.web.id/storage/';
-    private function storageBaseUrl(): string
+    private const STORAGE_BASE_URL = '';
+
+    private function storageUrl(): string
     {
         return rtrim(config('app.url'), '/') . '/storage/';
     }
@@ -34,53 +36,30 @@ class KaryaController extends Controller
     ];
 
     // =============================
-    // HELPER: Cek status edit karya berdasarkan tanggal pameran
+    // HELPER: Cek status edit karya berdasarkan periode PERSIAPAN pameran
     // =============================
     private function getPameranEditStatus(?Pameran $pameran): array
     {
-        if (!$pameran || !$pameran->tanggal_mulai) {
+        if (!$pameran || !$pameran->tanggal_akhir_persiapan) {
             return ['can_edit' => true, 'message' => null];
         }
 
         $now = Carbon::now();
-        $tanggalMulai = Carbon::parse($pameran->tanggal_mulai)->startOfDay();
+        $akhirPersiapan = Carbon::parse($pameran->tanggal_akhir_persiapan)->endOfDay();
 
-        if ($now->lessThan($tanggalMulai)) {
+        if ($now->lessThanOrEqualTo($akhirPersiapan)) {
             return ['can_edit' => true, 'message' => null];
         }
 
-        $tanggalAkhir = $pameran->tanggal_akhir
-            ? Carbon::parse($pameran->tanggal_akhir)->endOfDay()
-            : null;
-
-        $message = ($tanggalAkhir && $now->greaterThan($tanggalAkhir))
-            ? 'Karya tidak dapat diedit karena pameran sudah selesai.'
-            : 'Karya tidak dapat diedit karena pameran sedang berlangsung.';
-
-        return ['can_edit' => false, 'message' => $message];
+        return [
+            'can_edit' => false,
+            'message' => 'Karya tidak dapat diedit karena masa persiapan pameran sudah berakhir dan pameran telah dibuka untuk umum.',
+        ];
     }
 
     // =============================
-    // HELPER: Ganti segmen folder "/original/" jadi "/{size}/"
-    // =============================
-    private function resolveSizePath(?string $originalPath, string $size): ?string
-    {
-        if (!$originalPath) {
-            return null;
-        }
-
-        if ($size === 'original') {
-            return $originalPath;
-        }
-
-        return preg_replace('#/original/#', "/{$size}/", $originalPath, 1);
-    }
-
-    // =============================
-    // HELPER: Generate original + 3 ukuran (75%, 50%, 25%), semua di-watermark LSB
-    // Watermark otomatis menyertakan nama user via Steganography::embedWithUsername()
-    // Output SELALU .png (wajib, agar watermark tidak rusak oleh kompresi JPEG)
-    // Return: ['original' => path, 'large' => path, 'medium' => path, 'small' => path]
+    // HELPER: Generate original + 3 ukuran, watermark LSB tiap versi.
+    // Return array: ['original' => path, 'large' => path, 'medium' => path, 'small' => path]
     // =============================
     private function generateWatermarkedVersions(
         $file,
@@ -92,7 +71,6 @@ class KaryaController extends Controller
         $manager = ImageManager::usingDriver(Driver::class);
         $steganography = new Steganography();
 
-        // Nama file tetap sama di semua ukuran, hanya folder ukurannya yang beda.
         $filename = uniqid() . '.png';
         $paths = [];
 
@@ -120,41 +98,38 @@ class KaryaController extends Controller
     }
 
     // =============================
-    // HELPER: Hapus semua versi file (original + large/medium/small)
+    // HELPER: Hapus semua versi file dari storage berdasarkan 4 kolom karya
+    // $paths = ['original' => .., 'large' => .., 'medium' => .., 'small' => ..]
     // =============================
-    private function deleteAllVersions(?string $originalPath): void
+    private function deleteStoredVersions(array $paths): void
     {
-        if (!$originalPath) {
-            return;
-        }
-
-        foreach (array_keys(self::IMAGE_SIZES) as $size) {
-            $path = $this->resolveSizePath($originalPath, $size);
-            Storage::disk('public')->delete($path);
+        foreach ($paths as $path) {
+            if ($path) {
+                Storage::disk('public')->delete($path);
+            }
         }
     }
 
     // =============================
-    // HELPER: Bangun URL image/thumbnail dengan fallback ke original
+    // HELPER: Bangun URL image dari 4 kolom asli (bukan derive/regex)
     // =============================
     private function buildKaryaImageUrls(Karya $item): array
     {
-        $base = $this->storageBaseUrl();
+        $base = $this->storageUrl();
         $poster = $item->gambar_poster;
         $sampul = $item->gambar_sampul;
-    
+
         return [
-            'image' => $poster ? $base . $poster : '',
-            'imageLarge' => $poster ? $base . $this->resolveSizePath($poster, 'large') : '',
-            'imageSmall' => $poster ? $base . $this->resolveSizePath($poster, 'small') : '',
-            'thumbnail' => $sampul ? $base . $sampul : '',
+            'image'          => $poster ? $base . $poster : '',
+            'imageLarge'     => $poster ? $base . $this->resolveSizePath($poster, 'large') : '',
+            'imageSmall'     => $poster ? $base . $this->resolveSizePath($poster, 'small') : '',
+            'thumbnail'      => $sampul ? $base . $sampul : '',
             'thumbnailMedium' => $sampul ? $base . $this->resolveSizePath($sampul, 'medium') : '',
         ];
     }
 
     // =============================
     // HELPER: Format satu item karya jadi array response
-    // (dipakai bareng oleh index() dan indexAdmin() supaya tidak duplikat)
     // =============================
     private function formatKaryaResponse(Karya $item): array
     {
@@ -163,19 +138,19 @@ class KaryaController extends Controller
         return [
             'id' => $item->id_karya,
             'title' => $item->judul,
-            'category' => $item->pameran?->kategori ?? '',
+            'category' => $item->pameran?->kategori_kode ?? '',
             ...$this->buildKaryaImageUrls($item),
             'link' => $item->tautan,
             'description' => $item->deskripsi,
-            'booth' => $item->id_stan ? (string) $item->id_stan : '', // identitas stan (readOnly)
-            'modelStan' => $item->stan?->model_stan ? (string) $item->stan->model_stan : '', // id_model aktif (dipakai select edit)
+            'booth' => $item->id_stan ? (string) $item->id_stan : '',
+            'modelStan' => $item->stan?->model_stan ? (string) $item->stan->model_stan : '',
             'pameranId' => $item->id_pameran,
             'pameranTitle' => $item->pameran?->judul ?? '',
-            'year' => $item->pameran?->tanggal_mulai
-                ? date('Y', strtotime($item->pameran->tanggal_mulai))
+            'year' => $item->pameran?->tanggal_buka
+                ? date('Y', strtotime($item->pameran->tanggal_buka))
                 : '',
-            'semester' => '',
-            'isTerbaik' => $item->is_terbaik,
+            'isBest' => (bool) $item->is_best,
+            'isJuara' => (bool) $item->is_juara,
             'canEdit' => $editStatus['can_edit'],
             'editMessage' => $editStatus['message'],
         ];
@@ -183,35 +158,31 @@ class KaryaController extends Controller
 
     // =============================
     // HELPER: Format satu item karya untuk section "karya unggulan"
-    // (karya terbaik & karya favorit punya bentuk response yang sama)
     // =============================
     private function formatKaryaHighlight(Karya $item): array
     {
-        $base = $this->storageBaseUrl();
-    
+        $base = $this->storageUrl();
         return [
             'id' => $item->id_karya,
             'title' => $item->judul,
-            'banner' => $item->gambar_sampul ? $base . $item->gambar_sampul : '',
-            'bannerLarge' => $item->gambar_sampul
-                ? $base . $this->resolveSizePath($item->gambar_sampul, 'large')
-                : '',
-            'poster' => $item->gambar_poster ? $base . $item->gambar_poster : '',
-            'posterMedium' => $item->gambar_poster
-                ? $base . $this->resolveSizePath($item->gambar_poster, 'medium')
-                : '',
+            'banner' => $item->gambar_sampul ? asset($base . $item->gambar_sampul) : '',
+            'bannerLarge' => $item->gambar_sampul_large ? asset($base . $item->gambar_sampul_large) : '',
+            'poster' => $item->gambar_poster ? asset($base . $item->gambar_poster) : '',
+            'posterMedium' => $item->gambar_poster_medium ? asset($base . $item->gambar_poster_medium) : '',
+            'isBest' => (bool) $item->is_best,
+            'isJuara' => (bool) $item->is_juara,
         ];
     }
 
     // =============================
-    // DAFTAR KARYA MILIK KETUA PBL
+    // DAFTAR KARYA MILIK PENCIPTA
     // =============================
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
 
         $karya = Karya::where('id_pengguna', $user->id)
-            ->with(['stan.model3d', 'pameran'])
+            ->with(['stan.model3d', 'pameran', 'kategori'])
             ->get()
             ->map(fn(Karya $item) => $this->formatKaryaResponse($item));
 
@@ -222,11 +193,11 @@ class KaryaController extends Controller
     }
 
     // =============================
-    // AMBIL MODEL STAN (jenis = 'stan')
+    // AMBIL MODEL STAN
     // =============================
     public function getModelStan(): JsonResponse
     {
-        $models = ModelPameran::where('jenis', 'stan')->get(['id_model', 'nama_model', '3d_model']);
+        $models = ModelPameran::where('jenis', 'Stan')->get(['id_model', 'nama_model', '3d_model']);
 
         return response()->json([
             'status' => 'success',
@@ -243,7 +214,7 @@ class KaryaController extends Controller
 
         $request->validate([
             'id_pameran' => 'required|exists:pameran,id_pameran',
-            'id_model' => 'required|exists:model,id_model',
+            'id_kategori' => 'required|exists:kategori,id_kategori',
             'judul' => 'required|string|max:255',
             'deskripsi' => 'required|string',
             'tautan' => 'required|url',
@@ -253,9 +224,6 @@ class KaryaController extends Controller
 
         $idPameran = $request->id_pameran;
 
-        // =============================
-        // CEK APAKAH USER SUDAH PUNYA KARYA DI PAMERAN INI
-        // =============================
         $existingKarya = Karya::where('id_pengguna', $user->id)
             ->where('id_pameran', $idPameran)
             ->first();
@@ -268,19 +236,27 @@ class KaryaController extends Controller
             ], 409);
         }
 
-        // =============================
-        // BUAT ENTRY STAN + KARYA BARU
-        // =============================
+        $modelStan = ModelPameran::where('jenis', 'Stan')->first();
+
+        if (!$modelStan) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Model stan belum tersedia di sistem.',
+            ], 500);
+        }
+
         $karya = null;
 
-        DB::transaction(function () use ($request, $user, $idPameran, &$karya) {
+        DB::transaction(function () use ($request, $user, $idPameran, $modelStan, &$karya) {
             $stan = Stan::create([
                 'id_pameran' => $idPameran,
-                'model_stan' => $request->id_model,
+                'id_kategori' => $request->id_kategori,
+                'model_stan' => $modelStan->id_model,
             ]);
 
             $karya = Karya::create([
                 'id_pengguna' => $user->id,
+                'id_kategori' => $request->id_kategori,
                 'id_pameran' => $idPameran,
                 'id_stan' => $stan->id_stan,
                 'judul' => $request->judul,
@@ -288,16 +264,12 @@ class KaryaController extends Controller
                 'tautan' => $request->tautan,
                 'gambar_poster' => '/',
                 'gambar_sampul' => '/',
-                'lantai' => 1,
+           
             ]);
         });
 
         $idKarya = $karya->id_karya;
 
-        // =============================
-        // GENERATE + WATERMARK (original + 3 ukuran) UNTUK POSTER & SAMPUL
-        // Watermark otomatis menyertakan nama user (lihat Steganography::embedWithUsername)
-        // =============================
         $posterFolder = "pameran/{$idPameran}/{$idKarya}/poster";
         $sampulFolder = "pameran/{$idPameran}/{$idKarya}/sampul";
 
@@ -317,9 +289,16 @@ class KaryaController extends Controller
             'sampul'
         );
 
+        // Simpan ke 4 kolom terpisah masing-masing (poster & sampul)
         $karya->update([
             'gambar_poster' => $posterPaths['original'],
+            'gambar_poster_large' => $posterPaths['large'],
+            'gambar_poster_medium' => $posterPaths['medium'],
+            'gambar_poster_small' => $posterPaths['small'],
             'gambar_sampul' => $sampulPaths['original'],
+            'gambar_sampul_large' => $sampulPaths['large'],
+            'gambar_sampul_medium' => $sampulPaths['medium'],
+            'gambar_sampul_small' => $sampulPaths['small'],
         ]);
 
         return response()->json([
@@ -362,7 +341,7 @@ class KaryaController extends Controller
 
         $request->validate([
             'id_pameran' => 'sometimes|exists:pameran,id_pameran',
-            'model_stan' => 'sometimes|exists:model,id_model',
+            'id_kategori' => 'sometimes|exists:kategori,id_kategori',
             'judul' => 'sometimes|string|max:255',
             'deskripsi' => 'sometimes|string',
             'tautan' => 'sometimes|url',
@@ -373,38 +352,24 @@ class KaryaController extends Controller
         $idPameran = $request->filled('id_pameran') ? $request->id_pameran : $karya->id_pameran;
         $idKarya = $karya->id_karya;
 
-        // =============================
-        // UPDATE MODEL STAN (id_stan TIDAK berubah)
-        // =============================
-        if ($request->filled('model_stan')) {
-            if (!$karya->id_stan) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Karya ini belum memiliki stan yang terhubung.',
-                ], 404);
-            }
-
+        if ($request->filled('id_kategori') && $karya->id_stan) {
             $stan = Stan::find($karya->id_stan);
-
-            if (!$stan) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Data stan untuk karya ini tidak ditemukan.',
-                ], 404);
+            if ($stan) {
+                $stan->id_kategori = $request->id_kategori;
+                $stan->save();
             }
-
-            // Hanya ganti model 3D pada stan milik karya ini.
-            // Primary key id_stan tetap sama, tidak pindah ke stan lain.
-            $stan->model_stan = $request->model_stan;
-            $stan->save();
+            $karya->id_kategori = $request->id_kategori;
         }
 
-        // =============================
-        // GANTI GAMBAR (kalau ada file baru diupload)
-        // =============================
         if ($request->hasFile('gambar_poster')) {
             $posterFolder = "pameran/{$idPameran}/{$idKarya}/poster";
-            $this->deleteAllVersions($karya->gambar_poster);
+
+            $this->deleteStoredVersions([
+                $karya->gambar_poster,
+                $karya->gambar_poster_large,
+                $karya->gambar_poster_medium,
+                $karya->gambar_poster_small,
+            ]);
 
             $posterPaths = $this->generateWatermarkedVersions(
                 $request->file('gambar_poster'),
@@ -413,12 +378,22 @@ class KaryaController extends Controller
                 $user->id,
                 'poster'
             );
+
             $karya->gambar_poster = $posterPaths['original'];
+            $karya->gambar_poster_large = $posterPaths['large'];
+            $karya->gambar_poster_medium = $posterPaths['medium'];
+            $karya->gambar_poster_small = $posterPaths['small'];
         }
 
         if ($request->hasFile('gambar_sampul')) {
             $sampulFolder = "pameran/{$idPameran}/{$idKarya}/sampul";
-            $this->deleteAllVersions($karya->gambar_sampul);
+
+            $this->deleteStoredVersions([
+                $karya->gambar_sampul,
+                $karya->gambar_sampul_large,
+                $karya->gambar_sampul_medium,
+                $karya->gambar_sampul_small,
+            ]);
 
             $sampulPaths = $this->generateWatermarkedVersions(
                 $request->file('gambar_sampul'),
@@ -427,12 +402,13 @@ class KaryaController extends Controller
                 $user->id,
                 'sampul'
             );
+
             $karya->gambar_sampul = $sampulPaths['original'];
+            $karya->gambar_sampul_large = $sampulPaths['large'];
+            $karya->gambar_sampul_medium = $sampulPaths['medium'];
+            $karya->gambar_sampul_small = $sampulPaths['small'];
         }
 
-        // =============================
-        // UPDATE FIELD LAIN (kalau dikirim)
-        // =============================
         if ($request->filled('id_pameran')) {
             $karya->id_pameran = $request->id_pameran;
         }
@@ -459,7 +435,7 @@ class KaryaController extends Controller
     }
 
     // =============================
-    // VERIFIKASI WATERMARK (bukti kepemilikan)
+    // VERIFIKASI WATERMARK
     // =============================
     public function verifyWatermark(Request $request, $id): JsonResponse
     {
@@ -489,19 +465,19 @@ class KaryaController extends Controller
     public function pameranTersedia(Request $request): JsonResponse
     {
         $user = $request->user();
-        $prodi = $user->prodi?->kode_prodi ?? null;
+        $kategoriKode = $user->kategori?->kode_kategori ?? null;
 
-        if (!$prodi) {
+        if (!$kategoriKode) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Prodi ketua PBL tidak ditemukan.',
+                'status'  => 'error',
+                'message' => 'Kategori Creator tidak ditemukan.',
             ], 404);
         }
 
         $today = now()->toDateString();
 
-        $pameran = Pameran::with('prodi')
-            ->where('kategori', $prodi)
+        $pameran = Pameran::with('kategori')
+            ->where('kategori_kode', $kategoriKode)
             ->where('tanggal_mulai_persiapan', '<=', $today)
             ->where('tanggal_akhir_persiapan', '>=', $today)
             ->get()
@@ -543,7 +519,7 @@ class KaryaController extends Controller
     // =============================
     public function indexAdmin(Request $request): JsonResponse
     {
-        $karya = Karya::with(['stan.model3d', 'pameran'])
+        $karya = Karya::with(['stan.model3d', 'pameran', 'kategori'])
             ->get()
             ->map(fn(Karya $item) => $this->formatKaryaResponse($item));
 
@@ -575,8 +551,19 @@ class KaryaController extends Controller
             ], 403);
         }
 
-        $this->deleteAllVersions($karya->gambar_poster);
-        $this->deleteAllVersions($karya->gambar_sampul);
+        $this->deleteStoredVersions([
+            $karya->gambar_poster,
+            $karya->gambar_poster_large,
+            $karya->gambar_poster_medium,
+            $karya->gambar_poster_small,
+        ]);
+
+        $this->deleteStoredVersions([
+            $karya->gambar_sampul,
+            $karya->gambar_sampul_large,
+            $karya->gambar_sampul_medium,
+            $karya->gambar_sampul_small,
+        ]);
 
         $karya->delete();
 
@@ -587,15 +574,13 @@ class KaryaController extends Controller
     }
 
     // =============================
-    // KARYA TERBAIK (PAMERAN AKTIF)
+    // KARYA TERBAIK (is_best = true)
     // =============================
     public function karyaTerbaikAktif(): JsonResponse
     {
         $today = now()->toDateString();
 
-        $pameranAktifIds = Pameran::where('tanggal_mulai', '<=', $today)
-            ->where('tanggal_akhir', '>=', $today)
-            ->pluck('id_pameran');
+        $pameranAktifIds = Pameran::where('tanggal_buka', '<=', $today)->pluck('id_pameran');
 
         if ($pameranAktifIds->isEmpty()) {
             return response()->json([
@@ -604,8 +589,8 @@ class KaryaController extends Controller
             ]);
         }
 
-        $karya = Karya::where('is_terbaik', true)
-            ->whereIn('id_pameran', $pameranAktifIds)
+        $karya = Karya::whereIn('id_pameran', $pameranAktifIds)
+            ->where('is_best', true)
             ->get()
             ->map(fn(Karya $item) => $this->formatKaryaHighlight($item));
 
@@ -616,7 +601,7 @@ class KaryaController extends Controller
     }
 
     // =============================
-    // KARYA FAVORIT (ALL PAMERAN)
+    // KARYA FAVORIT (paling banyak disuka)
     // =============================
     public function karyaFavoritAktif(): JsonResponse
     {
@@ -629,6 +614,84 @@ class KaryaController extends Controller
         return response()->json([
             'status' => 'success',
             'karya' => $karya,
+        ]);
+    }
+
+    // =============================
+    // TOGGLE IS_BEST (ADMIN ONLY)
+    // =============================
+    public function toggleBest(Request $request, $id): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'Admin') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak. Hanya Admin yang dapat menandai karya terbaik.',
+            ], 403);
+        }
+
+        $karya = Karya::find($id);
+
+        if (!$karya) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Karya PBL tidak ditemukan.',
+            ], 404);
+        }
+
+        $karya->is_best = !$karya->is_best;
+        $karya->save();
+
+        Penilaian::create([
+            'id_pengguna' => $user->id,
+            'id_karya' => $karya->id_karya,
+            'waktu_penilaian' => now(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => $karya->is_best ? 'Karya ditandai sebagai terbaik.' : 'Tanda karya terbaik dicabut.',
+            'is_best' => $karya->is_best,
+        ]);
+    }
+
+    // =============================
+    // TOGGLE IS_JUARA (ADMIN ONLY)
+    // =============================
+    public function toggleJuara(Request $request, $id): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'Admin') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak. Hanya Admin yang dapat menandai karya juara.',
+            ], 403);
+        }
+
+        $karya = Karya::find($id);
+
+        if (!$karya) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Karya PBL tidak ditemukan.',
+            ], 404);
+        }
+
+        $karya->is_juara = !$karya->is_juara;
+        $karya->save();
+
+        Penilaian::create([
+            'id_pengguna' => $user->id,
+            'id_karya' => $karya->id_karya,
+            'waktu_penilaian' => now(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => $karya->is_juara ? 'Karya ditandai sebagai juara.' : 'Tanda karya juara dicabut.',
+            'is_juara' => $karya->is_juara,
         ]);
     }
 }
