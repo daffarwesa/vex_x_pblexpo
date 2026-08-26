@@ -192,27 +192,13 @@ const boxes = [
             onToggle={() => setShowPassword((prev) => !prev)}
           />
 
-          <div className="flex justify-end">
-            <Link href="/lupa-password" className="text-sm font-medium hover:text-main-blue">
-              Lupa Kata Sandi?
-            </Link>
-          </div>
-
-          <div className="w-full mt-7 border-b-2 border-gray-400 pb-8">
+          <div className="w-full mt-10 pb-6">
             <Button type="submit" className="w-full py-3 border-2 rounded-lg text-lg font-bold">
               {isLoading ? 'Loading...' : 'Masuk'}
             </Button>
           </div>
         </form>
 
-        <div className="mt-4 flex flex-col items-center w-full">
-          <span className="text-sm mb-3">Belum punya akun?</span>
-          <div className="w-full mt-1 border-b border-gray-200 pb-1">
-            <ButtonPutih className="w-full py-3 border-2 rounded-lg text-lg font-bold" link="/register">
-              Daftar
-            </ButtonPutih>
-          </div>
-        </div>
       </motion.div>
     </div>
   );

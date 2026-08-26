@@ -5,8 +5,10 @@ import { useState } from 'react';
 import PageKarya from '@/components/karya/PageKarya';
 import AddKarya from '@/components/karya/AddKarya';
 import NavKetuaPBL from '@/components/shared/ui/NavKetuaPBL';
+import { notFound } from 'next/navigation';
 
 export default function KaryaPage() {
+  notFound()
   const [isFormOpen, setIsFormOpen] = useState(false);
   const handleAddClick = () => {
     setIsFormOpen((prev) => !prev);
