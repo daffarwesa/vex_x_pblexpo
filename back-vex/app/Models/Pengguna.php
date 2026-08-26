@@ -21,7 +21,7 @@ class Pengguna extends Authenticatable
     // konstanta role
     const ROLE_ADMIN     = 'Admin';
     const ROLE_CREATOR   = 'Creator';
-    const ROLE_PENGUNJUNG = 'Pengunjung';
+    const ROLE_VISITOR   = 'Visitor';
 
     const STATUS_AKTIF ='Aktif';
     const STATUS_TIDAK_AKTIF ='Tidak Aktif';
@@ -66,9 +66,9 @@ class Pengguna extends Authenticatable
         return $this->role === self::ROLE_CREATOR;
     }
 
-    public function isPengunjung(): bool
+    public function isVisitor(): bool
     {
-        return $this->role === self::ROLE_PENGUNJUNG;
+        return $this->role === self::ROLE_VISITOR;
     }
 
     public function isAktif(): bool

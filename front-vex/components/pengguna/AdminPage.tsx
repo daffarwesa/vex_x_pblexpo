@@ -11,7 +11,7 @@ import UserDetail from "./UserDetail";
 import SectionHeader from "./SectionHeader";
 import FormTambahUser from "./FormTambahUser";
 import { KATEGORI_OPTIONS, KELAS_OPTIONS } from "@/types/pameran";
-import { useUsers } from "@/hooks/userHook/useUser";
+import { useUsers } from "@/hooks/useUser";
 import { UserType } from "@/types/pengguna";
 import { showToast } from "@/components/shared/ui/ToastNotification";
 
@@ -21,12 +21,6 @@ export default function Admin() {
     setSearchTerm,
     selectedStatus,
     setSelectedStatus,
-    filteredKps,
-    paginatedKps,
-    pageKps,
-    totalPagesKps,
-    nextPageKps,
-    prevPageKps,
     paginatedMhs,
     pageMhs,
     totalPages,
@@ -212,7 +206,7 @@ export default function Admin() {
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                    {paginatedMhs.map((user) => (
+                    {paginatedMhs.map((user: UserType) => (
                       <UserCard
                         key={user.id}
                         user={user}

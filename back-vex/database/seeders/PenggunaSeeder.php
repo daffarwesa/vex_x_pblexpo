@@ -16,12 +16,12 @@ class PenggunaSeeder extends Seeder
         DB::table('pengguna')->truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // Pengunjung
+        // Visitor
         Pengguna::create([
             'nama'          => 'User',
             'email'         => 'user@pbl.com',
             'password'      => Hash::make('password123'),
-            'role'          => Pengguna::ROLE_PENGUNJUNG,
+            'role'          => Pengguna::ROLE_VISITOR,
             // 'kelas'         => null,
             'kategori_kode' => null,
         ]);

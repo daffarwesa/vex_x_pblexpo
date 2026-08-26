@@ -10,8 +10,7 @@ export async function CreateUser(data: {
   nama: string;
   email: string;
   role: string;
-  kategori_kode: string;
-  kelas: string;
+  kategori_kode?: string | null;
 }) {
   const res = await url.post('/api/admin/pengguna/register-through-admin', data);
   return res.data;
@@ -23,12 +22,6 @@ export async function UpdateUser(user: UserType) {
     email: user.email,
     role: user.role,
     status: user.status,
-    kelas:
-      user.kelas == null
-        ? null
-        : typeof user.kelas === 'object'
-        ? user.kelas.id_kelas
-        : user.kelas,
     kategori_kode:
       user.kategori_kode == null
         ? null
