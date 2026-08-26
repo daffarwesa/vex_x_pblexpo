@@ -115,7 +115,7 @@ export function calculateDatesForPreset(
       return {
         startDate: customStart || todayStr,
         endDate: customEnd || todayStr,
-        label: `${customStart || todayStr} s/d ${customEnd || todayStr}`,
+        label: `${customStart || todayStr} to ${customEnd || todayStr}`,
       };
   }
 }
@@ -162,7 +162,7 @@ export default function DateRangeFilter({ value, onChange }: Props) {
               className="absolute z-30 right-0 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 rounded-2xl bg-white p-4 border border-gray-300 focus:outline-none transition data-closed:opacity-0 data-leave:duration-100 data-leave:ease-in"
             >
               <div className="text-sm font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
-                Filter Rentang Waktu
+                Filter Date Range
               </div>
 
               {/* LIST RADIO PRESETS */}
@@ -222,7 +222,7 @@ export default function DateRangeFilter({ value, onChange }: Props) {
                   onClick={() => close()}
                   className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition cursor-pointer"
                 >
-                  Batal
+                  Cancel
                 </button>
                 <button
                   type="button"

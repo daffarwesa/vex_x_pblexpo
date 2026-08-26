@@ -54,7 +54,7 @@ export default function StatistikChart({ data, barColor = '#2563eb' }: Props) {
             <Tooltip
               contentStyle={{ borderRadius: 8, fontSize: 12 }}
               labelStyle={{ fontWeight: 600 }}
-              formatter={(v) => [`${v} pengunjung`, 'Jumlah']}
+              formatter={(v) => [`${v} visitors`, 'Total']}
             />
             <Bar dataKey="pengunjung" fill={barColor} radius={[0, 4, 4, 0]} barSize={16} />
           </BarChart>
@@ -80,7 +80,7 @@ export default function StatistikChart({ data, barColor = '#2563eb' }: Props) {
         <Tooltip
           contentStyle={{ borderRadius: 8, fontSize: 13 }}
           labelStyle={{ fontWeight: 600 }}
-          formatter={(v) => [`${v} pengunjung`, 'Jumlah']}
+          formatter={(v) => [`${v} visitors`, 'Total']}
         />
         <Bar dataKey="pengunjung" fill={barColor} radius={[4, 4, 0, 0]} />
       </BarChart>

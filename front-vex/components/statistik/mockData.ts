@@ -8,7 +8,9 @@ export function generateDummyByRange(startDate: string, endDate: string): StatDa
   const end = new Date(endDate);
   const diffDays = Math.max(0, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
 
-  // 1 hari / sama -> per jam
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // <= 1 day -> hourly data
   if (diffDays <= 1) {
     const hours = [
       '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
@@ -21,11 +23,10 @@ export function generateDummyByRange(startDate: string, endDate: string): StatDa
     }));
   }
 
-  // 2 - 31 hari -> per hari
+  // 2 - 31 days -> daily data
   if (diffDays <= 31) {
     const result: StatData[] = [];
     const current = new Date(start);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
     while (current <= end) {
       const day = String(current.getDate()).padStart(2, '0');
@@ -39,13 +40,11 @@ export function generateDummyByRange(startDate: string, endDate: string): StatDa
     return result;
   }
 
-  // 32 - 90 hari -> per minggu
+  // 32 - 90 days -> weekly data
   if (diffDays <= 90) {
     const result: StatData[] = [];
     const current = new Date(start);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
-    let weekNum = 1;
     while (current <= end) {
       const wStart = new Date(current);
       const wEnd = new Date(current);
@@ -61,16 +60,14 @@ export function generateDummyByRange(startDate: string, endDate: string): StatDa
       });
 
       current.setDate(current.getDate() + 7);
-      weekNum++;
     }
     return result;
   }
 
-  // > 90 hari -> per bulan
+  // > 90 days -> monthly data
   const result: StatData[] = [];
   const current = new Date(start.getFullYear(), start.getMonth(), 1);
   const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
   while (current <= endMonth) {
     const mLabel = `${months[current.getMonth()]} ${current.getFullYear()}`;

@@ -11,7 +11,7 @@ import { StatData, generateDummyByRange } from "./mockData";
 import { GetDataKunjungan } from "./apiStatistik";
 
 export default function PageStatistik() {
-  const [useDummy, setUseDummy] = useState<boolean>(true); // Default true agar bisa langsung melihat visual
+  const [useDummy, setUseDummy] = useState<boolean>(true); // Default true for immediate visual testing
   const [range, setRange] = useState<DateRangeValue>(() => {
     const initial = calculateDatesForPreset("last_7_days");
     return {
@@ -83,16 +83,16 @@ export default function PageStatistik() {
         <div className="min-w-0">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-gray-800">
-              Statistik Pengunjung
+              Visitor Statistics
             </h1>
             {useDummy && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-300">
-                Mode Demo (Dummy Data)
+                Demo Mode (Dummy Data)
               </span>
             )}
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            Visualisasi log kunjungan pengunjung pameran berdasarkan rentang waktu
+            Visualization of exhibition visitor traffic logs based on date range
           </p>
         </div>
 
@@ -113,7 +113,7 @@ export default function PageStatistik() {
                 useDummy ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
               }`}
             />
-            {useDummy ? "Gunakan Live API" : "Gunakan Dummy Data"}
+            {useDummy ? "Switch to Live API" : "Switch to Dummy Data"}
           </button>
 
           {/* DATE RANGE FILTER DROPDOWN */}
@@ -123,13 +123,13 @@ export default function PageStatistik() {
 
       {/* QUICK PRESET CHIPS */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 scrollbar-thin">
-        <span className="text-xs font-medium text-gray-400 shrink-0">Tes Cepat:</span>
+        <span className="text-xs font-medium text-gray-400 shrink-0">Quick Test:</span>
         {[
-          { key: "latest" as PresetKey, label: "Hari Ini (Per Jam)" },
-          { key: "last_7_days" as PresetKey, label: "7 Hari Terakhir" },
-          { key: "last_1_month" as PresetKey, label: "1 Bulan (Per Hari)" },
-          { key: "last_3_months" as PresetKey, label: "3 Bulan (Per Minggu)" },
-          { key: "last_1_year" as PresetKey, label: "1 Tahun (Per Bulan)" },
+          { key: "latest" as PresetKey, label: "Today (Hourly)" },
+          { key: "last_7_days" as PresetKey, label: "Last 7 Days" },
+          { key: "last_1_month" as PresetKey, label: "Last 1 Month (Daily)" },
+          { key: "last_3_months" as PresetKey, label: "Last 3 Months (Weekly)" },
+          { key: "last_1_year" as PresetKey, label: "Last 1 Year (Monthly)" },
         ].map((item) => (
           <button
             key={item.key}
@@ -149,39 +149,39 @@ export default function PageStatistik() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide">
-            Total Pengunjung
+            Total Visitors
           </p>
           <p className="text-2xl font-bold text-main-blue mt-1">
-            {totalPengunjung.toLocaleString("id-ID")}
+            {totalPengunjung.toLocaleString("en-US")}
           </p>
-          <p className="text-xs text-gray-400 mt-1">Akumulasi pada periode ini</p>
+          <p className="text-xs text-gray-400 mt-1">Accumulated in this period</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide">
-            Rata-rata / Titik
+            Average / Point
           </p>
           <p className="text-2xl font-bold text-emerald-600 mt-1">
-            {averagePengunjung.toLocaleString("id-ID")}
+            {averagePengunjung.toLocaleString("en-US")}
           </p>
-          <p className="text-xs text-gray-400 mt-1">Rata-rata pengunjung per slot</p>
+          <p className="text-xs text-gray-400 mt-1">Average visitors per time slot</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide">
-            Puncak Tertinggi
+            Peak Record
           </p>
           <p className="text-2xl font-bold text-purple-600 mt-1">
-            {peakPengunjung.pengunjung.toLocaleString("id-ID")}
+            {peakPengunjung.pengunjung.toLocaleString("en-US")}
           </p>
           <p className="text-xs text-gray-400 mt-1 truncate">
-            Pada: {peakPengunjung.label}
+            At: {peakPengunjung.label}
           </p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
           <p className="text-xs text-gray-500 uppercase tracking-wide">
-            Periode Aktif
+            Active Period
           </p>
           <p className="text-base font-semibold text-gray-700 mt-1">
             {range.label}
@@ -189,7 +189,7 @@ export default function PageStatistik() {
           <p className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded mt-1 inline-block">
             {range.startDate === range.endDate
               ? range.startDate
-              : `${range.startDate} s/d ${range.endDate}`}
+              : `${range.startDate} to ${range.endDate}`}
           </p>
         </div>
       </div>
@@ -198,10 +198,10 @@ export default function PageStatistik() {
       <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold text-gray-800">
-            Grafik Kunjungan
+            Visitor Traffic Chart
           </h2>
           <span className="text-xs text-gray-400">
-            {data.length} titik data
+            {data.length} data points
           </span>
         </div>
 
@@ -209,12 +209,12 @@ export default function PageStatistik() {
           <div className="flex items-center justify-center h-[360px] text-gray-400">
             <div className="flex flex-col items-center gap-2">
               <div className="w-8 h-8 border-4 border-main-blue border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm">Memuat data statistik...</p>
+              <p className="text-sm">Loading statistics data...</p>
             </div>
           </div>
         ) : data.length === 0 ? (
           <div className="flex items-center justify-center h-[360px] text-gray-400">
-            Belum ada log kunjungan pada rentang tanggal ini.
+            No visitor logs found for this date range.
           </div>
         ) : (
           <StatistikChart data={data} />
