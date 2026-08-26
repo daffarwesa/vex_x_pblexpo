@@ -38,7 +38,7 @@ function StrengthBar({ password }: StrengthBarProps) {
 }
 
 export default function GantiPasswordPage() {
-  notFound();
+  // notFound();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('');

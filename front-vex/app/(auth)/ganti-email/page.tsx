@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { InputField } from '@/components/shared/ui/InputFields';
 
 export default function GantiEmailPage() {
-  notFound();
+  // notFound();
   const router = useRouter();
   const { fetchUser } = useAuth();
 

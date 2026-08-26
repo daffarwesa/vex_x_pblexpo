@@ -5,7 +5,7 @@ import { Button, ButtonPutih } from '@/components/shared/ui/Button';
 import { Verify, Resend } from './apiVerify';
 
 export default function VerifikasiPage() {
-  notFound();
+  // notFound();
   const [otpError, setOtpError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);

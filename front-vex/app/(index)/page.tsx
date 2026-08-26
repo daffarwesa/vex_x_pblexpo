@@ -10,10 +10,6 @@ import { FaStar } from 'react-icons/fa';
 import { useEffect, useRef, useState } from 'react';
 import { GetKaryaTerbaikAktif, GetKaryaFavoritAktif } from './api';
 
-// Media shown in the Release Announcement gallery. The first entry is always the
-// trailer; clicking any screenshot thumbnail swaps the main preview to that image,
-// and clicking the video thumbnail again switches the preview back to the video.
-// Replace the screenshot paths with your real screenshots.
 const RELEASE_VIDEO_ID = 'bLdFe6G7OC8';
 
 type ReleaseMediaItem =
