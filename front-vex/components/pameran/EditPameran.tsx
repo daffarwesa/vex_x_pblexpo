@@ -1,19 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { PameranForm } from '@/types/pameran';
-import FormPameran from './FormPameran';
-import { GetDetailPameran, UpdatePameran } from './apiPameran';
-import { showToast } from '@/components/shared/ui/ToastNotification';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { PameranForm } from "@/types/pameran";
+import FormPameran from "./FormPameran";
+import { GetDetailPameran, UpdatePameran } from "./apiPameran";
+import { showToast } from "@/components/shared/ui/ToastNotification";
 
-type FormErrors = Partial<Record<keyof PameranForm | 'image', string>>;
+type FormErrors = Partial<Record<keyof PameranForm | "image", string>>;
 
 export default function EditPameran() {
   const params = useParams();
   const router = useRouter();
-  // Cek folder untuk halaman edit juga — kalau namanya [slug], ganti jadi:
-const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
+  const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -22,32 +21,35 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
   const [errors, setErrors] = useState<FormErrors>({});
 
   const [form, setForm] = useState<PameranForm>({
-    kategori: '',
-    title: '',
-    publishDate: '',
-    prepareStart: '',
-    prepareEnd: '',
-    description: '',
+    title: "",
+    publishDate: "",
+    prepareStart: "",
+    prepareEnd: "",
+    description: "",
     image: null,
   });
 
   const toInputDate = (value?: string) => {
-    if (!value) return '';
-    if (value.includes('/')) {
-      const [day, month, year] = value.split('/');
+    if (!value) return "";
+
+    if (value.includes("/")) {
+      const [day, month, year] = value.split("/");
       return `${year}-${month}-${day}`;
     }
-    return value.split('T')[0];
+
+    return value.split("T")[0];
   };
 
   useEffect(() => {
     if (!slug) return;
+
     const fetchData = async () => {
       try {
         setFetching(true);
+
         const res = await GetDetailPameran(slug);
 
-        if (res.status !== 'success' || !res.pameran) {
+        if (res.status !== "success" || !res.pameran) {
           setNotFound(true);
           return;
         }
@@ -55,31 +57,36 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
         const p = res.pameran;
 
         setForm({
-          kategori: p.kode_kategori || '',
-          title: p.title || '',
+          title: p.title || "",
           publishDate: toInputDate(p.stats?.startDate),
           prepareStart: toInputDate(p.stats?.prepareStartDate),
           prepareEnd: toInputDate(p.stats?.prepareEndDate),
-          description: p.description?.[0]?.content || '',
+          description: p.description?.[0]?.content || "",
           image: null,
         });
 
         // Helper untuk memastikan format URL gambar preview valid
-        const rawBanner = p.bannerLarge || p.bannerImage || '';
+        const rawBanner = p.bannerLarge || p.bannerImage || "";
+
         let bannerPreview: string | null = null;
+
         if (rawBanner) {
-          if (rawBanner.startsWith('http://') || rawBanner.startsWith('https://')) {
+          if (
+            rawBanner.startsWith("http://") ||
+            rawBanner.startsWith("https://")
+          ) {
             try {
               bannerPreview = new URL(rawBanner).pathname;
             } catch {
-              bannerPreview = rawBanner.replace(/^https?:\/\/[^/]+/, '');
+              bannerPreview = rawBanner.replace(/^https?:\/\/[^/]+/, "");
             }
-          } else if (!rawBanner.startsWith('/')) {
+          } else if (!rawBanner.startsWith("/")) {
             bannerPreview = `/storage/${rawBanner}`;
           } else {
             bannerPreview = rawBanner;
           }
         }
+
         setPreview(bannerPreview);
       } catch (err) {
         console.error(err);
@@ -88,50 +95,86 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
         setFetching(false);
       }
     };
+
     fetchData();
   }, [slug]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
     if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
     }
   };
 
   const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
     if (!file) return;
-    setForm((prev) => ({ ...prev, image: file }));
+
+    setForm((prev) => ({
+      ...prev,
+      image: file,
+    }));
+
     setPreview(URL.createObjectURL(file));
 
-    if (errors.image) setErrors((prev) => ({ ...prev, image: '' }));
+    if (errors.image) {
+      setErrors((prev) => ({
+        ...prev,
+        image: "",
+      }));
+    }
   };
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!form.kategori) newErrors.kategori = 'Kategori wajib dipilih';
-    if (!form.title) newErrors.title = 'Judul pameran wajib diisi';
-    if (!form.publishDate) newErrors.publishDate = 'Tanggal buka wajib diisi';
-    if (!form.prepareStart) newErrors.prepareStart = 'Tanggal persiapan mulai wajib diisi';
-    if (!form.prepareEnd) newErrors.prepareEnd = 'Tanggal persiapan berakhir wajib diisi';
-    if (!form.description) newErrors.description = 'Deskripsi wajib diisi';
-    // Image tidak wajib di edit (boleh tetap pakai gambar lama)
+    if (!form.title) {
+      newErrors.title = "Exhibition title is required";
+    }
+
+    if (!form.publishDate) {
+      newErrors.publishDate = "Opening date is required";
+    }
+
+    if (!form.prepareStart) {
+      newErrors.prepareStart = "Preparation start date is required";
+    }
+
+    if (!form.prepareEnd) {
+      newErrors.prepareEnd = "Preparation end date is required";
+    }
+
+    if (!form.description) {
+      newErrors.description = "Description is required";
+    }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
     if (!slug) {
-      showToast('Slug pameran tidak ditemukan.', 'error');
+      showToast("Exhibition slug was not found.", "error");
       return;
     }
 
     if (!validate()) {
-      showToast('Lengkapi semua data terlebih dahulu.', 'warning');
+      showToast("Please complete all required fields.", "warning");
       return;
     }
 
@@ -139,61 +182,83 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
       setLoading(true);
 
       const formData = new FormData();
-      formData.append('kategori_kode', form.kategori);
-      formData.append('judul', form.title);
-      formData.append('tanggal_mulai_persiapan', form.prepareStart);
-      formData.append('tanggal_akhir_persiapan', form.prepareEnd);
-      formData.append('tanggal_buka', form.publishDate);
-      formData.append('deskripsi', form.description);
-      if (form.image) formData.append('banner', form.image);
+
+      formData.append("judul", form.title);
+
+      formData.append("tanggal_mulai_persiapan", form.prepareStart);
+
+      formData.append("tanggal_akhir_persiapan", form.prepareEnd);
+
+      formData.append("tanggal_buka", form.publishDate);
+
+      formData.append("deskripsi", form.description);
+
+      if (form.image) {
+        formData.append("banner", form.image);
+      }
 
       const data = await UpdatePameran(slug, formData);
 
-      if (data.status === 'success') {
-        showToast('Pameran berhasil diupdate!', 'success');
+      if (data.status === "success") {
+        showToast("Exhibition updated successfully!", "success");
+
         router.push(`/admin/pameran/detail/${slug}`);
       } else {
-        showToast('Gagal mengupdate pameran.', 'error');
+        showToast("Failed to update exhibition.", "error");
       }
     } catch (error: any) {
       if (error.response) {
         const status = error.response.status;
+
         const data = error.response.data;
 
         if (status === 422) {
           const laravelErrors = data.errors as Record<string, string[]>;
+
           const fieldMap: Record<string, keyof FormErrors> = {
-            kategori_kode: 'kategori',
-            judul: 'title',
-            tanggal_mulai_persiapan: 'prepareStart',
-            tanggal_akhir_persiapan: 'prepareEnd',
-            tanggal_buka: 'publishDate',
-            deskripsi: 'description',
-            banner: 'image',
+            judul: "title",
+            tanggal_mulai_persiapan: "prepareStart",
+            tanggal_akhir_persiapan: "prepareEnd",
+            tanggal_buka: "publishDate",
+            deskripsi: "description",
+            banner: "image",
           };
 
           const mappedErrors: FormErrors = {};
+
           if (laravelErrors) {
             Object.entries(laravelErrors).forEach(([key, messages]) => {
               const fieldKey = fieldMap[key];
-              if (fieldKey) mappedErrors[fieldKey] = messages[0];
+
+              if (fieldKey) {
+                mappedErrors[fieldKey] = messages[0];
+              }
             });
           }
 
           setErrors(mappedErrors);
-          showToast('Periksa kembali data yang diisi.', 'error');
+
+          showToast("Please review the entered data.", "error");
         } else if (status === 404) {
-          showToast(data.message ?? 'Data tidak ditemukan.', 'error');
+          showToast(
+            data.message ?? "The requested data was not found.",
+            "error",
+          );
         } else if (status === 500) {
-          showToast('Terjadi kesalahan pada server.', 'error');
+          showToast("An internal server error occurred.", "error");
         } else {
-          showToast(`Terjadi kesalahan (${status}).`, 'error');
+          showToast(`An error occurred (${status}).`, "error");
         }
 
-        console.error('STATUS:', status);
-        console.error('DATA:', JSON.stringify(data, null, 2));
+        console.error("STATUS:", status);
+
+        console.error("DATA:", JSON.stringify(data, null, 2));
       } else {
-        showToast('Tidak dapat terhubung ke server.', 'error');
+        showToast(
+          "Unable to connect to the server. Please try again later.",
+          "error",
+        );
+
         console.error(error);
       }
     } finally {
@@ -201,19 +266,21 @@ const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
     }
   };
 
-  if (fetching)
+  if (fetching) {
     return (
       <div className="min-h-screen bg-secondary-color flex items-center justify-center">
-        <p className="text-white">Memuat data pameran...</p>
+        <p className="text-white">Loading exhibition data...</p>
       </div>
     );
+  }
 
-  if (notFound)
+  if (notFound) {
     return (
       <div className="min-h-screen bg-secondary-color flex items-center justify-center">
-        <p className="text-white">Data pameran tidak ditemukan.</p>
+        <p className="text-white">Exhibition data not found.</p>
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen bg-secondary-color select-none pb-20 md:pb-30">
