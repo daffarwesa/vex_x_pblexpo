@@ -1,220 +1,409 @@
 'use client';
-// komponen
-import { Card, Logo, BestTag, FavTag } from '@/components/shared/ui/Components';
+// components
+import { Card, BestTag, FavTag } from '@/components/shared/ui/Components';
 import { Button } from '@/components/shared/ui/Button';
 import Carousel, { CarouselKaryaItem } from '@/components/shared/ui/Carousel';
-// icon
-import { BiCube, BiGlobe } from 'react-icons/bi';
+// icons
+import { BiCube, BiGlobe, BiSolidLeftArrow, BiSolidRightArrow } from 'react-icons/bi';
 import { FaStar } from 'react-icons/fa';
-// karya terbaik & favorit
-import { useEffect, useState } from 'react';
+// best & favorite work
+import { useEffect, useRef, useState } from 'react';
 import { GetKaryaTerbaikAktif, GetKaryaFavoritAktif } from './api';
 
+// Media shown in the Release Announcement gallery. The first entry is always the
+// trailer; clicking any screenshot thumbnail swaps the main preview to that image,
+// and clicking the video thumbnail again switches the preview back to the video.
+// Replace the screenshot paths with your real screenshots.
+const RELEASE_VIDEO_ID = 'bLdFe6G7OC8';
+
+type ReleaseMediaItem =
+  | { type: 'video'; videoId: string; thumbnail: string; title: string }
+  | { type: 'image'; src: string; title: string };
+
+const releaseMedia: ReleaseMediaItem[] = [
+  {
+    type: 'video',
+    videoId: RELEASE_VIDEO_ID,
+    thumbnail: `https://img.youtube.com/vi/${RELEASE_VIDEO_ID}/hqdefault.jpg`,
+    title: 'Release Trailer',
+  },
+  { type: 'image', src: '/image/BGSection3.png', title: 'Screenshot 1' },
+  { type: 'image', src: '/image/BGSection3.png', title: 'Screenshot 2' },
+  { type: 'image', src: '/image/BGSection3.png', title: 'Screenshot 3' },
+  { type: 'image', src: '/image/BGSection3.png', title: 'Screenshot 4' },
+  { type: 'image', src: '/image/BGSection3.png', title: 'Screenshot 5' },
+];
+
 export default function HomePage() {
-  const [karyaTerbaik, setKaryaTerbaik] = useState<CarouselKaryaItem[]>([]);
-  const [karyaFavorit, setKaryaFavorit] = useState<CarouselKaryaItem[]>([]);
+  const [bestWork, setBestWork] = useState<CarouselKaryaItem[]>([]);
+  const [favoriteWork, setFavoriteWork] = useState<CarouselKaryaItem[]>([]);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+  const activeMedia = releaseMedia[activeMediaIndex];
+  const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const tutorialLink = '/tutorial/umum';
+
+  const goToPrevMedia = () =>
+    setActiveMediaIndex((i) => (i - 1 + releaseMedia.length) % releaseMedia.length);
+  const goToNextMedia = () => setActiveMediaIndex((i) => (i + 1) % releaseMedia.length);
+
+  // Scrolls the thumbnail strip itself (used by the hover arrows), independent
+  // from which media is currently active.
+  const scrollThumbs = (direction: 'left' | 'right') => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const amount = el.clientWidth * 0.8;
+    el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    thumbRefs.current[activeMediaIndex]?.scrollIntoView({
+      behavior: 'smooth',
+      inline: 'center',
+      block: 'nearest',
+    });
+  }, [activeMediaIndex]);
 
   useEffect(() => {
     GetKaryaTerbaikAktif()
       .then((data) => {
-        if (data.status === 'success') setKaryaTerbaik(data.karya);
+        if (data.status === 'success') setBestWork(data.karya);
       })
-      .catch((err) => console.error('Gagal mengambil karya terbaik:', err));
+      .catch((err) => console.error('Failed to fetch best work:', err));
 
     GetKaryaFavoritAktif()
       .then((data) => {
-        if (data.status === 'success') setKaryaFavorit(data.karya);
+        if (data.status === 'success') setFavoriteWork(data.karya);
       })
-      .catch((err) => console.error('Gagal mengambil karya favorit:', err));
+      .catch((err) => console.error('Failed to fetch favorite work:', err));
   }, []);
 
   return (
     <div className="flex flex-col w-full bg-secondary-color select-none">
-      {/* SECTION 1 - Hero */}
-      <section className="bg-[url(/image/BG1.jpg)] bg-cover bg-center w-full">
-        <div className="autoMid min-h-screen px-4 sm:px-6 lg:px-0 grid grid-cols-1 lg:grid-cols-2 items-start lg:items-center pt-8 sm:pt-10 lg:pt-0">
-          <div className="hidden lg:block" />
+      {/* SECTION 1 - Hero (full-image background, artwork already contains the wordmark) */}
+      {/* Separate mobile artwork below sm: — the wide diagonal desktop crop doesn't survive a phone viewport.
+          Swap /image/BGSection1-mobile.png for your real mobile crop, then re-check the button's left/bottom % against it. */}
+      <section className="relative w-full overflow-hidden">
+        <div className="relative w-full aspect-[4/5] sm:aspect-video bg-[url(/image/BGSection1-mobile.png)] sm:bg-[url(/image/BGSection1.png)] bg-cover bg-center">
+          {/* Explore button: hidden on phone, visible from sm: up */}
+          <div className="hidden sm:block absolute sm:left-[3%] sm:bottom-[33%]">
+            <Button
+              link="/pameran"
+              className="font-bold px-4 sm:px-8 lg:px-10 py-1.5 sm:py-2.5 lg:py-3 text-xs sm:text-base rounded-md transition-all duration-300 hover:scale-105"
+            >
+              Explore
+            </Button>
+          </div>
+        </div>
+      </section>
 
-          <div className="flex justify-center lg:justify-end items-start lg:items-center">
-            <div className="w-full max-w-[460px] xl:max-w-[520px] flex flex-col gap-6">
-              <div className="flex justify-center lg:justify-start">
-                <Logo />
-              </div>
-
-              <div className="aspect-video rounded-md overflow-hidden shadow-[0px_0px_8px_2px_rgba(0,0,0,0.25)]">
+      {/* SECTION 2 - Release Announcement (Steam-style: click a thumbnail to swap the main preview) */}
+      <section id="release" className="bg-main-blue w-full scroll-mt-24">
+        <div className="autoMid py-[64px] px-4 sm:px-6 lg:px-0 flex flex-col gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-8 items-center">
+            <div className="order-2 lg:order-1 aspect-video rounded-md overflow-hidden shadow-[0px_0px_8px_2px_rgba(0,0,0,0.25)] bg-black">
+              {activeMedia.type === 'video' ? (
                 <iframe
-                  src="https://www.youtube.com/embed/bLdFe6G7OC8?si=GZeAFFL7zB47tmud"
+                  src={`https://www.youtube.com/embed/${activeMedia.videoId}?si=GZeAFFL7zB47tmud`}
                   className="w-full h-full"
-                  title="Demo V-EX"
+                  title="Release Announcement"
                   allowFullScreen
                 />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={activeMedia.src} alt={activeMedia.title} className="w-full h-full object-cover" />
+              )}
+            </div>
+
+            <div className="order-1 lg:order-2 flex flex-col gap-6 text-white items-center lg:items-end text-center lg:text-right">
+              <div className="leading-none">
+                <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">RELEASE</p>
+                <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">ANNOUNCEMENT</p>
               </div>
 
-              <div className="flex justify-end">
-                <Button
-                  link="/pameran"
-                  className="font-bold px-8 sm:px-12 py-3 rounded-md transition-all duration-300 hover:scale-105"
+              <Button
+                link="https://www.youtube.com/watch?v=bLdFe6G7OC8"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-10 sm:px-14 py-2 lg:py-3 rounded-md hover:scale-105 transition !bg-[#F5811F] hover:!bg-[#DD6E10]"
+              >
+                Watch
+              </Button>
+            </div>
+          </div>
+
+          {/* Horizontal thumbnail strip — hover reveals scroll arrows on desktop;
+              on phone the arrows are removed entirely and it's just swipe-scrollable. */}
+          <div className="group relative">
+            {/* Left arrow - desktop/hover only */}
+            <button
+              type="button"
+              onClick={() => scrollThumbs('left')}
+              aria-label="Scroll thumbnails left"
+              className="hidden sm:flex absolute left-0 top-0 bottom-2 z-10 w-10 items-center justify-center
+                bg-gradient-to-r from-main-blue via-main-blue/80 to-transparent
+                opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            >
+              <span className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-md hover:bg-white transition">
+                <BiSolidLeftArrow className="text-main-blue text-sm" />
+              </span>
+            </button>
+
+            {/* Right arrow - desktop/hover only */}
+            <button
+              type="button"
+              onClick={() => scrollThumbs('right')}
+              aria-label="Scroll thumbnails right"
+              className="hidden sm:flex absolute right-0 top-0 bottom-2 z-10 w-10 items-center justify-center
+                bg-gradient-to-l from-main-blue via-main-blue/80 to-transparent
+                opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            >
+              <span className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-md hover:bg-white transition">
+                <BiSolidRightArrow className="text-main-blue text-sm" />
+              </span>
+            </button>
+
+            <div
+              ref={scrollContainerRef}
+              className="flex gap-4 overflow-x-auto pb-2 scroll-smooth [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-white/30 [&::-webkit-scrollbar-track]:bg-white/5"
+            >
+              {releaseMedia.map((item, i) => (
+                <button
+                  key={i}
+                  ref={(el) => {
+                    thumbRefs.current[i] = el;
+                  }}
+                  type="button"
+                  onClick={() => setActiveMediaIndex(i)}
+                  aria-label={item.title}
+                  aria-pressed={i === activeMediaIndex}
+                  className={`shrink-0 w-[220px] sm:w-[260px] aspect-video rounded-md overflow-hidden shadow-lg relative transition
+                    ${i === activeMediaIndex ? 'ring-2 ring-white' : 'ring-1 ring-white/20 opacity-70 hover:opacity-100'}`}
                 >
-                  Lainnya
-                </Button>
-              </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.type === 'video' ? item.thumbnail : item.src}
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                  {item.type === 'video' && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <span className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center">
+                        <span className="w-0 h-0 border-y-[6px] border-y-transparent border-l-[10px] border-l-main-blue ml-0.5" />
+                      </span>
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 2 - Tampilkan Karyamu */}
-      <section id="karya" className="bg-secondary-color w-full scroll-mt-24">
-        <div className="autoMid px-4 sm:px-6 lg:px-[20px] py-[80px] lg:py-[180px] min-h-[740px] grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-          <div className="relative order-1 lg:order-2 w-full">
+      {/* SECTION 3 - Show Your Projects (image background) */}
+      {/* Separate mobile artwork below sm: — same pattern as Section 1.
+          Swap /image/BGSection3-mobile.png for your real mobile crop. */}
+      {/* Mobile order: title (centered) -> image -> description/button. Desktop: unchanged 2-column layout. */}
+      <section
+        id="karya"
+        className="relative bg-main-blue sm:bg-[url(/image/BGSection3.png)] bg-cover bg-center w-full scroll-mt-24"
+      >
+        <div className="autoMid px-4 sm:px-6 lg:px-[20px] py-[80px] lg:py-[180px] min-h-[740px] flex flex-col items-center gap-10 lg:grid lg:grid-cols-2 lg:items-start">
+          {/* Title - mobile only, centered, first */}
+          <div className="order-1 lg:hidden text-white text-center leading-none">
+            <p className="font-poppins font-thin text-4xl leading-none">SHOW YOUR</p>
+            <p className="font-tilt-wrap font-bold text-4xl leading-none">PROJECTS</p>
+          </div>
+
+          {/* Image */}
+          <div className="order-2 lg:order-2 relative w-full">
             <Card link="/image/BG1.svg" title="lobby" className="w-full h-full object-cover rounded-xl" />
           </div>
 
-          <div className="order-2 lg:order-1 flex flex-col gap-8 justify-center">
-            <div className="text-main-blue leading-none">
-              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">TAMPILKAN</p>
-              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">KARYAMU</p>
+          {/* Desktop: title + description + button combined in one column (unchanged) */}
+          <div className="hidden lg:flex lg:order-1 flex-col gap-8 justify-center">
+            <div className="text-white leading-none">
+              <p className="font-poppins font-thin text-5xl lg:text-6xl leading-none">SHOW YOUR</p>
+              <p className="font-tilt-wrap font-bold text-5xl lg:text-6xl leading-none">PROJECTS</p>
             </div>
 
-            <div className="flex flex-col gap-5 text-black max-w-[500px]">
+            <div className="flex flex-col gap-5 text-white max-w-[500px]">
               <div className="flex items-start gap-3">
-                <BiCube className="text-[22px] sm:text-lg shrink-0 mt-1" />
-                <p className="text-[16px] sm:text-[18px] lg:text-lg font-poppins font-light">
-                  Jelajahi karya dari berbagai sudut dalam ruang virtual.
+                <BiCube className="text-lg shrink-0 mt-1" />
+                <p className="text-lg font-poppins font-light">
+                  Explore projects from every angle inside a virtual space.
                 </p>
               </div>
-
               <div className="flex items-start gap-3">
-                <BiGlobe className="text-[22px] sm:text-lg shrink-0 mt-1" />
-                <p className="text-[16px] sm:text-[18px] lg:text-lg font-poppins font-light">
-                  Rasakan suasana pameran seperti di dunia nyata.
+                <BiGlobe className="text-lg shrink-0 mt-1" />
+                <p className="text-lg font-poppins font-light">
+                  Be immersed in the exhibitions, just like in real life.
                 </p>
               </div>
             </div>
 
             <Button
               link={tutorialLink}
-              className="w-[50%] px-10 sm:px-14 lg:px-18 py-2 lg:py-3 rounded-md hover:scale-102 duration-500">
+              className="w-[50%] px-10 lg:px-18 py-2 lg:py-3 rounded-md hover:scale-102 duration-500 !bg-[#F5811F] hover:!bg-[#DD6E10]"
+            >
+              Tutorial
+            </Button>
+          </div>
+
+          {/* Mobile only: description + button, after the image */}
+          <div className="order-3 lg:hidden flex flex-col gap-5 text-white max-w-[500px] w-full items-center">
+            <div className="flex flex-col gap-5 w-full">
+              <div className="flex items-start gap-3">
+                <BiCube className="text-[22px] shrink-0 mt-1" />
+                <p className="text-[16px] sm:text-[18px] font-poppins font-light">
+                  Explore projects from every angle inside a virtual space.
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <BiGlobe className="text-[22px] shrink-0 mt-1" />
+                <p className="text-[16px] sm:text-[18px] font-poppins font-light">
+                  Be immersed in the exhibitions, just like in real life.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              link={tutorialLink}
+              className="w-[60%] px-10 py-2 rounded-md hover:scale-102 duration-500 !bg-[#F5811F] hover:!bg-[#DD6E10]"
+            >
               Tutorial
             </Button>
           </div>
         </div>
       </section>
 
-      {/* SECTION 3 - Pilih Stan */}
-      <section id="stan" className="bg-secondary-color w-full scroll-mt-24">
-        <div className="autoMid py-[60px] min-h-[740px] flex flex-col gap-10 px-4 sm:px-6 lg:px-0">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-end w-full pb-6 lg:pb-10">
-            <div className="order-2 lg:order-1 flex items-end">
-              <p className="font-poppins font-light text-[16px] sm:text-[18px] lg:text-lg w-full max-w-[500px]">
-                Kami menyediakan 3 aset bawaan yang dapat anda pilih untuk menampilkan karya-karya anda.
-              </p>
-            </div>
-
-            <div className="order-1 lg:order-2 text-main-blue flex flex-col lg:items-end text-left lg:text-right">
-              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">
-                PILIH DARI BERBAGAI
-              </p>
-              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">STAN</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-[50px] w-full">
-            <Card link="/image/img-stan-a.svg" title="STAN_1" className="w-full aspect-[4/3] object-cover rounded-xl" />
-            <Card link="/image/img-stan-b.svg" title="STAN_2" className="w-full aspect-[4/3] object-cover rounded-xl" />
-            <div className="sm:col-span-2 lg:col-span-1">
-              <Card
-                link="/image/img-stan-c.svg"
-                title="STAN_3"
-                className="w-full aspect-[4/3] object-cover rounded-xl"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 4 - Penghargaan */}
+      {/* SECTION 4 - Get Rewarded */}
       <section className="bg-white w-full">
         <div className="autoMid min-h-[460px] py-[84px] px-4 sm:px-6 lg:px-0 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-stretch">
+          <div className="order-1 lg:order-2 flex flex-col justify-center items-center lg:items-end text-main-blue text-center lg:text-right gap-1">
+            <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">BE THE</p>
+            <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">CHAMPION</p>
+            <p className="font-poppins font-light text-[16px] sm:text-lg mt-2">
+              Out of every category in the exhibition.
+            </p>
+          </div>
+
+          {/* Badges: always side-by-side, even on phone */}
+          <div className="order-2 lg:order-1 grid grid-cols-2 gap-4 sm:gap-6 items-stretch">
             <Card
               link="/image/BestBadge.svg"
               title="best badge"
               className="w-full aspect-[4/3] object-cover rounded-xl h-full"
             />
             <Card
-              link="/image/FavoriteBadge.svg"
+              link="/image/SecondBestBadge.svg"
               title="favorite badge"
               className="w-full aspect-[4/3] object-cover rounded-xl h-full"
             />
           </div>
-
-          <div className="flex flex-col justify-center items-start lg:items-end text-main-blue text-left lg:text-right gap-1">
-            <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">DAPATKAN</p>
-            <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">PENGHARGAAN</p>
-          </div>
         </div>
       </section>
 
-      {/* SECTION 5 - Karya Terbaik */}
+      {/* SECTION 5 - Best Work */}
+      {/* Mobile order: title (centered) -> carousel -> description. Desktop: unchanged 8-col layout. */}
       <section className="bg-secondary-color w-full">
-        <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] grid grid-cols-1 lg:grid-cols-8 gap-10 px-4 sm:px-6 lg:px-0 items-start">
-          <div className="order-1 lg:order-2 lg:col-span-5 relative w-full shadow-xl rounded-xl overflow-hidden">
+        <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] flex flex-col items-center gap-10 px-4 sm:px-6 lg:px-0 lg:grid lg:grid-cols-8 lg:items-start">
+          {/* Title - mobile only, centered, first */}
+          <div className="order-1 lg:hidden text-main-blue text-center">
+            <p className="font-poppins font-thin text-4xl leading-none">BEST</p>
+            <p className="font-tilt-wrap font-bold text-4xl leading-none">PROJECT</p>
+          </div>
+
+          {/* Carousel */}
+          <div className="order-2 lg:order-2 lg:col-span-5 relative w-full shadow-xl rounded-xl overflow-hidden">
             <BestTag className="absolute right-0 top-0 z-10 scale-75 sm:scale-90 lg:scale-100 origin-top-right" />
             <div className="w-full aspect-[3/4] md:aspect-video">
-              <Carousel data={karyaTerbaik} className="w-full h-full rounded-xl overflow-hidden" />
+              <Carousel data={bestWork} className="w-full h-full rounded-xl overflow-hidden" />
             </div>
           </div>
 
-          <div className="order-2 lg:order-1 lg:col-span-3 flex flex-col gap-8">
+          {/* Desktop: title + description combined (unchanged) */}
+          <div className="hidden lg:flex lg:order-1 lg:col-span-3 flex-col gap-8">
             <div className="text-main-blue">
-              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">KARYA</p>
-              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">TERBAIK</p>
+              <p className="font-poppins font-thin text-5xl lg:text-6xl leading-none">BEST</p>
+              <p className="font-tilt-wrap font-bold text-5xl lg:text-6xl leading-none">PROJECT</p>
             </div>
-
             <div className="grid gap-5 max-w-[500px]">
               {[
-                'Dinilai langsung oleh kepala program studi berdasarkan kualitas, kreativitas, inovasi, dan nilai terbaik dari setiap karya.',
-                'Setiap program studi memilih satu karya terbaik sebagai perwakilan yang akan ditampilkan di landing page hingga pameran berikutnya.',
+                'Judged directly by department heads based on quality, creativity, innovation, and overall excellence.',
+                'Each department selects one best work as its representative, featured on the landing page until the next exhibition.',
               ].map((text, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <FaStar className="text-[22px] sm:text-lg shrink-0 mt-1" />
-                  <p className="text-[16px] sm:text-[18px] lg:text-lg font-poppins font-light text-justify">{text}</p>
+                  <FaStar className="text-lg shrink-0 mt-1" />
+                  <p className="text-lg font-poppins font-light text-justify">{text}</p>
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Mobile only: description, after the carousel */}
+          <div className="order-3 lg:hidden grid gap-5 max-w-[500px] text-main-blue">
+            {[
+              'Judged directly by department heads based on quality, creativity, innovation, and overall excellence.',
+              'Each department selects one best work as its representative, featured on the landing page until the next exhibition.',
+            ].map((text, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <FaStar className="text-[22px] shrink-0 mt-1" />
+                <p className="text-[16px] sm:text-[18px] font-poppins font-light text-justify">{text}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* SECTION 6 - Karya Favorit */}
+      {/* SECTION 6 - Favorite Work */}
+      {/* Mobile order: title (centered) -> carousel -> description. Desktop: unchanged 8-col layout. */}
       <section className="bg-secondary-color w-full">
-        <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] grid grid-cols-1 lg:grid-cols-8 gap-10 px-4 sm:px-6 lg:px-0 items-start">
-          <div className="order-1 lg:col-span-5 relative rounded-xl shadow-xl overflow-hidden w-full">
+        <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] flex flex-col items-center gap-10 px-4 sm:px-6 lg:px-0 lg:grid lg:grid-cols-8 lg:items-start">
+          {/* Title - mobile only, centered, first */}
+          <div className="order-1 lg:hidden text-main-blue text-center">
+            <p className="font-poppins font-thin text-4xl leading-none">FAVORITE</p>
+            <p className="font-tilt-wrap font-bold text-4xl leading-none">PROJECT</p>
+          </div>
+
+          {/* Carousel */}
+          <div className="order-2 lg:order-1 lg:col-span-5 relative rounded-xl shadow-xl overflow-hidden w-full">
             <FavTag className="absolute left-0 top-0 z-10 scale-75 sm:scale-90 lg:scale-100 origin-top-left" />
             <div className="w-full aspect-[3/4] md:aspect-video">
-              <Carousel data={karyaFavorit} className="w-full h-full rounded-xl overflow-hidden" />
+              <Carousel data={favoriteWork} className="w-full h-full rounded-xl overflow-hidden" />
             </div>
           </div>
 
-          <div className="order-2 lg:col-span-3 flex flex-col gap-8">
-            <div className="text-main-blue flex flex-col items-start lg:items-end text-left lg:text-right">
-              <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl leading-none">KARYA</p>
-              <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl leading-none">FAVORIT</p>
+          {/* Desktop: title + description combined (unchanged) */}
+          <div className="hidden lg:flex lg:order-2 lg:col-span-3 flex-col gap-8">
+            <div className="text-main-blue flex flex-col items-end text-right">
+              <p className="font-poppins font-thin text-5xl lg:text-6xl leading-none">FAVORITE</p>
+              <p className="font-tilt-wrap font-bold text-5xl lg:text-6xl leading-none">PROJECT</p>
             </div>
-
             <div className="grid gap-5">
               {[
-                'Ditentukan berdasarkan jumlah likes terbanyak dari seluruh pengunjung sebagai karya terfavorit global dari keseluruhan pameran.',
-                'Karya dengan likes tertinggi akan menjadi yang paling populer dan berhak memperoleh medali karya terfavorit utama.',
+                'Determined by the highest number of likes from all visitors, making it the most favorited work across the entire exhibition.',
+                'The work with the most likes becomes the most popular entry and earns the top favorite-work medal.',
               ].map((text, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <FaStar className="text-[22px] sm:text-lg shrink-0 mt-1" />
-                  <p className="text-[16px] sm:text-[18px] lg:text-lg font-poppins font-light text-justify">{text}</p>
+                  <FaStar className="text-lg shrink-0 mt-1" />
+                  <p className="text-lg font-poppins font-light text-justify">{text}</p>
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Mobile only: description, after the carousel */}
+          <div className="order-3 lg:hidden grid gap-5 text-main-blue">
+            {[
+              'Determined by the highest number of likes from all visitors, making it the most favorited work across the entire exhibition.',
+              'The work with the most likes becomes the most popular entry and earns the top favorite-work medal.',
+            ].map((text, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <FaStar className="text-[22px] shrink-0 mt-1" />
+                <p className="text-[16px] sm:text-[18px] font-poppins font-light text-justify">{text}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -235,20 +424,19 @@ export default function HomePage() {
             />
           </div>
 
-          <div className="order-2 lg:order-1 lg:col-span-4 flex flex-col gap-8">
+          <div className="order-2 lg:order-1 lg:col-span-4 flex flex-col gap-8 items-center text-center lg:items-start lg:text-left">
             <div className="text-main-blue">
               <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl xl:text-7xl leading-none">
-                PENASARAN?
+                CURIOUS?
               </p>
-              <div className="flex items-end gap-3 whitespace-nowrap leading-none">
-                <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl">COBA</p>
-                <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl">SEKARANG</p>
+              <div className="flex items-end justify-center lg:justify-start gap-3 whitespace-nowrap leading-none">
+                <p className="font-tilt-wrap font-bold text-4xl sm:text-5xl lg:text-6xl">TRY IT</p>
+                <p className="font-poppins font-thin text-4xl sm:text-5xl lg:text-6xl">NOW</p>
               </div>
             </div>
 
             <p className="font-poppins font-light text-[16px] sm:text-lg max-w-[520px]">
-              Buat, eksplorasi, dan temukan karya-karya menarik lainnya dengan pengalaman interaktif yang seru dan
-              mendalam.
+              Create, explore, and discover exciting projects with an interactive experience that's fun and immersive.
             </p>
           </div>
 
@@ -257,7 +445,7 @@ export default function HomePage() {
               link="/register"
               className="px-10 sm:px-14 lg:px-18 py-2 lg:py-3 rounded-md hover:scale-110 transition"
             >
-              Daftar
+              Register
             </Button>
           </div>
         </div>

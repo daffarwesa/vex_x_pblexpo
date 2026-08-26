@@ -5,14 +5,14 @@ import Footer from "@/components/layout/Footer";
 import BackToTop from '@/components/shared/ui/BackToTop';
 
 export const metadata: Metadata = {
-    title: "V-EX",
+    title: "V-EX+",
     description: "Virtual Exhibition",
 };
 
 export default function IndexLayout({ children }: { children: React.ReactNode }) {
     const userMenu = [
-        { title: "BERANDA", subtitle: "UTAMA", link: "/" },
-        { title: "PAMERAN", subtitle: "3D BOOTH", link: "/pameran" },
+        { title: "HOMEPAGE", subtitle: "MAIN", link: "/" },
+        { title: "EXHIBITION", subtitle: "3D BOOTH", link: "/pameran" },
     ];
     return (
         <div>

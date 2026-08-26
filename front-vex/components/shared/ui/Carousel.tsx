@@ -50,7 +50,7 @@ export default function Carousel({ data, className }: CarouselProps) {
   if (!data || data.length === 0) {
     return (
       <div className="h-[580px] flex font-bold text-gray-400 text-md lg:text-[23px] items-center justify-center bg-gray-200 rounded-xl font-medium">
-        Belum ada karya terbaik
+        No Projects Yet
       </div>
     );
   }
