@@ -41,12 +41,12 @@ export default function Footer() {
                 <li>
                   <LinkAkses link={"/pameran"} title={"Exhibition"} />
                 </li>
-                <li>
+                {/* <li>
                   <LinkAkses link={"/#karya"} title={"Projects"} />
                 </li>
                 <li>
                   <LinkAkses link={"/#akun"} title={"Account"} />
-                </li>
+                </li> */}
               </ul>
             </div>
 
@@ -59,10 +59,10 @@ export default function Footer() {
                   <LinkAkses link={"/faqs"} title={"FAQs"} />
                 </li>
                 <li>
-                  <LinkAkses link={"/petunjuk"} title={"Tutorial"} />
+                  <LinkAkses link={"/tutorial"} title={"Tutorial"} />
                 </li>
                 <li>
-                  <LinkAkses link={"/pelayanan"} title={"Service"} />
+                  <LinkAkses link={"/service"} title={"Service"} />
                 </li>
               </ul>
             </div>
@@ -74,24 +74,24 @@ export default function Footer() {
               <ul className="text-white/70 space-y-2 text-sm sm:text-base">
                 <li>
                   <LinkAksesEks
-                    link={"/syarat-ketentuan"}
+                    link={"/terms-conditions"}
                     title="Terms & Conditions"
                   />
                 </li>
                 <li>
                   <LinkAksesEks
-                    link={"/kebijakan-privasi"}
+                    link={"/privacy-policy"}
                     title="Privacy Policy"
                   />
                 </li>
                 <li>
-                  <LinkAksesEks link={"/hubungi-kami"} title="Contact Us" />
+                  <LinkAksesEks link={"/contact-us"} title="Contact Us" />
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="mt-7 lg:mt-auto flex flex-wrap justify-center sm:justify-start lg:justify-end items-center gap-4 sm:gap-5 text-white">
+          <div className="mt-7 pr-3 lg:mt-auto flex flex-wrap justify-center sm:justify-start lg:justify-end items-center gap-4 sm:gap-5 text-white">
             <LinkAksesEks link="https://www.instagram.com/virtualexhibition204/">
               <FaInstagram className="w-8 h-8 sm:w-10 sm:h-10 hover:scale-125 transition-all cursor-pointer" />
             </LinkAksesEks>
