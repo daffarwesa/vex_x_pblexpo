@@ -1,18 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-main-blue: #2E05E0;
-  --color-secondary-color: #f0f0f0;
-  --color-secondary-gray: #F5F5F5;
+  --color-main-blue: #3612C7;
+  --color-secondary-color: #ffffff;
+  --color-secondary-gray: #ffffff;
   --font-poppins: var(--font-poppins);
   --font-tilt-wrap: var(--font-tilt-wrap);
 }
 
 @layer components {
 
-  .hover-text{
+  .hover-text {
     @apply hover:text-main-blue transition-all cursor-pointer;
   }
+
+  .footer-links .hover-text:hover {
+    @apply text-white;
+  }
+
   .garis {
     @apply absolute bottom-3 left-1/2 h-[2px] w-0 bg-main-blue transition-all duration-320 group-hover:left-0 group-hover:w-full;
   }
@@ -20,9 +25,10 @@
   .autoMid {
     @apply max-w-[80rem] mx-auto px-[20px];
   }
-.input-form{
-  @apply w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-main-blue/50 text-black
-}
+
+  .input-form {
+    @apply w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-main-blue/50 text-black
+  }
 
 }
 

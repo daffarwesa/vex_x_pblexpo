@@ -56,23 +56,23 @@ export default function Navbar({ menuItems }: NavbarProps) {
   const isLogin = !!user;
 
 const defaultMenu: NavItem[] = [
-  { title: 'BERANDA', subtitle: 'UTAMA', link: '/' },
-  { title: 'PAMERAN', subtitle: '3D BOOTH', link: '/pameran' },
+  { title: 'HOMEPAGE', subtitle: 'MAIN', link: '/' },
+  { title: 'EXHIBITON', subtitle: '3D BOOTH', link: '/pameran' },
 ];
 
 const resolvedMenu: NavItem[] = loading
   ? defaultMenu
   : user?.role === 'Admin'
   ? [
-      { title: 'BERANDA', subtitle: 'UTAMA', link: '/' },
-      { title: 'PAMERAN', subtitle: '3D BOOTH', link: '/admin/pameran' },
+      { title: 'HOMEPAGE', subtitle: 'MAIN', link: '/' },
+      { title: 'EXHIBITION', subtitle: '3D BOOTH', link: '/admin/pameran' },
       { title: 'DASHBOARD', subtitle: 'ADMIN', link: '/admin/pengguna' },
     ]
   : user?.role === 'Creator'
   ? [
-      { title: 'BERANDA', subtitle: 'UTAMA', link: '/' },
-      { title: 'PAMERAN', subtitle: '3D BOOTH', link: '/pameran' },
-      { title: 'DASHBOARD', subtitle: 'CREATOR', link: '/creator/karya' },
+      { title: 'HOMEPAGE', subtitle: 'MAIN', link: '/' },
+      { title: 'EXHIBITION', subtitle: '3D BOOTH', link: '/pameran' },
+      { title: 'DASHBOARD', subtitle: 'CREATOR', link: '/ketua-pbl/karya' },
     ]
   : menuItems ?? defaultMenu;
   // ===== AUTH DESKTOP =====
@@ -97,7 +97,7 @@ const AuthDesktop = () => {
       link="/login"
       className="px-5 py-2 text-sm font-bold rounded-md hover:scale-110 transition"
     >
-      Masuk
+      Login
     </Button>
   );
 };
@@ -116,7 +116,7 @@ const AuthDesktop = () => {
       </button>
     ) : (
       <Button link="/login" className="w-full py-3 text-sm font-bold rounded-md">
-        Masuk
+        Login
       </Button>
     );
 
@@ -213,7 +213,7 @@ const AuthDesktop = () => {
                 className="p-3 flex items-center gap-3 hover:bg-gray-100 transition border-b rounded-lg"
               >
                 <FaLock size={18} />
-                <span className="text-sm sm:text-base">Ganti Kata Sandi</span>
+                <span className="text-sm sm:text-base">Change Password</span>
               </Link>
 
               <Link
@@ -221,7 +221,7 @@ const AuthDesktop = () => {
                 className="p-3 flex items-center gap-3 hover:bg-gray-100 transition border-b rounded-lg mt-2"
               >
                 <HiOutlineMail size={22} />
-                <span className="text-sm sm:text-base">Ganti Email</span>
+                <span className="text-sm sm:text-base">Change Email</span>
               </Link>
             </div>
 
@@ -229,7 +229,7 @@ const AuthDesktop = () => {
             <div className="mt-auto pt-4 border-t">
               <button
                 onClick={() => {
-                  const yakin = confirm('Apakah anda yakin ?');
+                  const yakin = confirm('Are you sure?');
 
                   if (!yakin) return;
 
