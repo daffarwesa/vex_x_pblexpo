@@ -3,19 +3,15 @@
 // React
 import React, { useState } from 'react';
 import { motion, Transition } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-
-// Componen
+import { notFound, useRouter } from 'next/navigation';
 import { Logo } from '@/components/shared/ui/Components';
 import { Button, ButtonPutih } from '@/components/shared/ui/Button';
 import { VectorBlueBox } from '@/components/shared/ui/BoxModel';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { InputField, PasswordField } from '@/components/shared/ui/InputFields';
-
-// API
 import { Register } from './apiRegister';
 
 export default function RegisterPage() {
+  notFound();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   // pw_AUTH
