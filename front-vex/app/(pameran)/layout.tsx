@@ -3,7 +3,7 @@ import "@/app/globals.css";
 
 
 export const metadata: Metadata = {
-  title: "V-EX | Pameran",
+  title: "V-EX+ | Exhibition",
   description: "Virtual Exhibition",
 };
 

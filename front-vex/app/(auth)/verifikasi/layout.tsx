@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-  title: 'V-EX+ | Change Password',
+  title: 'V-EX+ | Code Verify',
   description: 'Virtual Exhibition',
 };
 
-export default function ForgotPasswordLayout({
+export default function RegisterLayout({
   children,
 }: {
   children: React.ReactNode;

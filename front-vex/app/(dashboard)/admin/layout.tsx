@@ -4,7 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import NavAdmin from "@/components/shared/ui/NavAdmin";
 
 export const metadata: Metadata = {
-  title: "V-EX | Admin",
+  title: "V-EX+ | Admin Dashboard",
   description: "Virtual Exhibition",
 };
 
