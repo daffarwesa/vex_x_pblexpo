@@ -14,12 +14,27 @@ class KunjunganController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'id_pameran' => 'required|exists:pameran,id_pameran',
-        ]);
+        $idPameran = $request->id_pameran;
+        $slug = $request->slug ?? $request->identifier;
+
+        if (!$idPameran && $slug) {
+            $pameran = \App\Models\Pameran::where('slug', $slug)
+                ->orWhere('id_pameran', $slug)
+                ->first();
+            $idPameran = $pameran?->id_pameran;
+        } elseif ($idPameran && !is_numeric($idPameran)) {
+            $pameran = \App\Models\Pameran::where('slug', $idPameran)
+                ->orWhere('id_pameran', $idPameran)
+                ->first();
+            $idPameran = $pameran?->id_pameran;
+        }
+
+        if (!$idPameran || !\App\Models\Pameran::where('id_pameran', $idPameran)->exists()) {
+            return response()->json(['message' => 'Pameran tidak ditemukan'], 422);
+        }
 
         Kunjungan::create([
-            'id_pameran' => $request->id_pameran,
+            'id_pameran' => $idPameran,
         ]);
 
         return response()->json(['message' => 'Kunjungan dicatat'], 201);

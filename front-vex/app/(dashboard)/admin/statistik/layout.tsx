@@ -3,7 +3,7 @@ import "@/app/globals.css";
 import Footer from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-  title: "V-EX | Admin - Statistik",
+  title: "V-EX+ | Admin Statistics",
   description: "Virtual Exhibition",
 };
 

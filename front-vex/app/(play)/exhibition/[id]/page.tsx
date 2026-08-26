@@ -26,7 +26,7 @@ import { showToast } from "@/components/shared/ui/ToastNotification"; //
 import {
   getKaryaList, getPlayerName, deletePlayer,
   getKaryaDetail, getKaryaLikeStatus, toggleKaryaLike,
-  getKomentar, postKomentar
+  getKomentar, postKomentar, postKunjungan
 } from "@/components/play/apiPlay";
 
 
@@ -132,8 +132,18 @@ export default function ExhibitionPage() {
     [maxFloor]
   );
 
-  // Load karya + max_floor once
+  // Guard agar tidak POST kunjungan dua kali saat StrictMode di dev
+  const hasTrackedVisitor = useRef(false);
+
+  // Load karya + max_floor once & record visit
   useEffect(() => {
+    if (!id) return;
+
+    if (!hasTrackedVisitor.current) {
+      hasTrackedVisitor.current = true;
+      postKunjungan(id).catch(() => {});
+    }
+
     getKaryaList(id)
       .then(({ karya, max_floor }) => {
         setKaryaList(karya);
