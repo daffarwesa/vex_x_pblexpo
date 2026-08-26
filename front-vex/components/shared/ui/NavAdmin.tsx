@@ -15,24 +15,24 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
   const pathname = usePathname();
 
   const menuItems = [
-    {
-      id: 1,
-      title: 'Pengguna',
-      icon: <FaUser size={17} />,
-      link: '/admin/pengguna',
-    },
+    // {
+    //   id: 1,
+    //   title: 'Pengguna',
+    //   icon: <FaUser size={17} />,
+    //   link: '/admin/pengguna',
+    // },
     {
       id: 2,
       title: 'Pameran',
       icon: <FaBook size={17} />,
       link: '/admin/pameran',
     },
-    {
-      id: 3,
-      title: 'Karya',
-      icon: <FaImage size={17} />,
-      link: '/admin/karya',
-    },
+    // {
+    //   id: 3,
+    //   title: 'Karya',
+    //   icon: <FaImage size={17} />,
+    //   link: '/admin/karya',
+    // },
     {
       id: 4,
       title: 'Sponsor',

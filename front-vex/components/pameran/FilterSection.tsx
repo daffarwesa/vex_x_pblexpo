@@ -3,40 +3,26 @@
 import { useState } from 'react';
 
 import SearchBar from '@/components/shared/filter/SearchBar';
-import SelectKategori from '@/components/shared/filter/SelectKategori';
 import SelectTahun from '@/components/shared/filter/SelectTahun';
-import SelectSemester from '@/components/shared/filter/SelectSemester';
 
-import { KategoriType } from '@/components/shared/filter/SelectKategori';
 import { TahunType } from '@/components/shared/filter/SelectTahun';
-import { SemesterType } from '@/components/shared/filter/SelectSemester';
 
 import { HiAdjustmentsHorizontal, HiXMark } from 'react-icons/hi2';
 
 interface FilterSectionProps {
   search: string;
   setSearch: (v: string) => void;
-  selectedKategori?: KategoriType | null;
-  setSelectedKategori?: (v: KategoriType | null) => void;
   selectedTahun: TahunType | null;
   setSelectedTahun: (v: TahunType | null) => void;
-  selectedSemester: SemesterType | null;
-  setSelectedSemester: (v: SemesterType | null) => void;
-  hideKategori?: boolean;
   searchPlaceholder?: string;
 }
 
 export default function FilterSection({
   search,
   setSearch,
-  selectedKategori,
-  setSelectedKategori,
   selectedTahun,
   setSelectedTahun,
-  selectedSemester,
-  setSelectedSemester,
-  hideKategori = false,
-  searchPlaceholder = 'Cari Pameran...',
+  searchPlaceholder = 'Search Exhibition...',
 }: FilterSectionProps) {
   const [openFilter, setOpenFilter] = useState(false);
 
@@ -64,23 +50,13 @@ export default function FilterSection({
         {/* DESKTOP */}
         <div className="hidden md:flex flex-col lg:flex-row gap-4 lg:gap-6 items-stretch lg:items-center justify-between">
           {/* SEARCH */}
-          <div className="w-full lg:w-[50%]">
+          <div className="w-full lg:w-[70%]">
             <SearchBar text={searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
 
           {/* FILTERS */}
-          <div
-            className={`w-full lg:w-[40%] grid gap-3 lg:gap-[30px] ${
-              hideKategori ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'
-            }`}
-          >
-            {!hideKategori && setSelectedKategori && (
-              <SelectKategori selected={selectedKategori ?? null} onChange={setSelectedKategori} />
-            )}
-
+          <div className="w-full lg:w-[15%]">
             <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
-
-            {/* <SelectSemester selected={selectedSemester} onChange={setSelectedSemester} /> */}
           </div>
         </div>
       </section>
@@ -121,13 +97,7 @@ export default function FilterSection({
 
           {/* FILTER CONTENT */}
           <div className="flex flex-col gap-4">
-            {!hideKategori && setSelectedKategori && (
-              <SelectKategori selected={selectedKategori ?? null} onChange={setSelectedKategori} />
-            )}
-
             <SelectTahun selected={selectedTahun} onChange={setSelectedTahun} />
-
-            {/* <SelectSemester selected={selectedSemester} onChange={setSelectedSemester} /> */}
           </div>
 
           {/* BUTTON */}

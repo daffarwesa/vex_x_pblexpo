@@ -34,6 +34,15 @@ const releaseMedia: ReleaseMediaItem[] = [
   { type: 'image', src: '/image/BGSection3.png', title: 'Screenshot 5' },
 ];
 
+// Logos shown in the "In Collaboration With" strip. Replace src with your real
+// partner/collaborator logo paths.
+const collaborators = [
+  { src: '/image/logo-collab-1.svg', alt: 'Collaborator 1' },
+  { src: '/image/logo-collab-2.svg', alt: 'Collaborator 2' },
+  { src: '/image/logo-collab-3.svg', alt: 'Collaborator 3' },
+  { src: '/image/logo-collab-4.svg', alt: 'Collaborator 4' },
+];
+
 export default function HomePage() {
   const [bestWork, setBestWork] = useState<CarouselKaryaItem[]>([]);
   const [favoriteWork, setFavoriteWork] = useState<CarouselKaryaItem[]>([]);
@@ -41,6 +50,7 @@ export default function HomePage() {
   const activeMedia = releaseMedia[activeMediaIndex];
   const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const isFirstRender = useRef(true);
   const tutorialLink = '/tutorial/umum';
 
   const goToPrevMedia = () =>
@@ -56,11 +66,43 @@ export default function HomePage() {
     el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
   };
 
+  // Force the page to always land on Section 1 on load, regardless of URL hash
+  // (e.g. #release, #karya) or the browser's scroll-restoration memory.
   useEffect(() => {
-    thumbRefs.current[activeMediaIndex]?.scrollIntoView({
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    // Kasih sedikit delay supaya browser selesai dulu proses hash-jump instannya,
+    // baru kita smooth-scroll ke atas — biar animasinya keliatan jelas.
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Scroll only the horizontal thumbnail strip itself when the active thumbnail
+  // changes — never touch the page's vertical scroll position. Also skipped on
+  // first render so mounting doesn't cause any scroll movement at all.
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    const container = scrollContainerRef.current;
+    const thumb = thumbRefs.current[activeMediaIndex];
+    if (!container || !thumb) return;
+
+    const thumbLeft = thumb.offsetLeft;
+    const thumbWidth = thumb.offsetWidth;
+    const containerWidth = container.clientWidth;
+    const targetScrollLeft = thumbLeft - containerWidth / 2 + thumbWidth / 2;
+
+    container.scrollTo({
+      left: targetScrollLeft,
       behavior: 'smooth',
-      inline: 'center',
-      block: 'nearest',
     });
   }, [activeMediaIndex]);
 
@@ -97,8 +139,29 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* SECTION 1.5 - In Collaboration With (logo strip) */}
+      <section className="bg-[#3612C7] w-full">
+        <div className="autoMid py-14 sm:py-16 lg:py-20 flex flex-col items-center gap-6 sm:gap-8">
+          <p className="font-poppins font-light text-white/70 text-sm sm:text-base tracking-[0.2em] uppercase">
+            In Collaboration With
+          </p>
+
+          <div className="grid grid-cols-4 gap-6 sm:gap-12 lg:gap-20 items-center w-full max-w-4xl">
+            {collaborators.map((logo, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                src={logo.src}
+                alt={logo.alt}
+                className="w-full h-10 sm:h-16 lg:h-20 object-contain brightness-0 invert opacity-70 hover:opacity-100 transition-opacity duration-300"
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* SECTION 2 - Release Announcement (Steam-style: click a thumbnail to swap the main preview) */}
-      <section id="release" className="bg-main-blue w-full scroll-mt-24">
+      <section id="release" className="bg-[#3612C7] w-full scroll-mt-24">
         <div className="autoMid py-[64px] px-4 sm:px-6 lg:px-0 flex flex-col gap-10">
           <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-8 items-center">
             <div className="order-2 lg:order-1 aspect-video rounded-md overflow-hidden shadow-[0px_0px_8px_2px_rgba(0,0,0,0.25)] bg-black">
@@ -306,7 +369,7 @@ export default function HomePage() {
 
       {/* SECTION 5 - Best Work */}
       {/* Mobile order: title (centered) -> carousel -> description. Desktop: unchanged 8-col layout. */}
-      <section className="bg-secondary-color w-full">
+      <section className="bg-white w-full">
         <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] flex flex-col items-center gap-10 px-4 sm:px-6 lg:px-0 lg:grid lg:grid-cols-8 lg:items-start">
           {/* Title - mobile only, centered, first */}
           <div className="order-1 lg:hidden text-main-blue text-center">
@@ -358,7 +421,7 @@ export default function HomePage() {
 
       {/* SECTION 6 - Favorite Work */}
       {/* Mobile order: title (centered) -> carousel -> description. Desktop: unchanged 8-col layout. */}
-      <section className="bg-secondary-color w-full">
+      <section className="bg-white w-full">
         <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] flex flex-col items-center gap-10 px-4 sm:px-6 lg:px-0 lg:grid lg:grid-cols-8 lg:items-start">
           {/* Title - mobile only, centered, first */}
           <div className="order-1 lg:hidden text-main-blue text-center">

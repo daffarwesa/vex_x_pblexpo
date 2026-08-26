@@ -7,9 +7,7 @@ import { GetPameran } from "./apiPameran";
 import { useAuth } from "@/context/AuthContext";
 
 import ProjectCard from "@/components/shared/ui/ProjectCard";
-import { KategoriType } from "@/components/shared/filter/SelectKategori";
 import { TahunType } from "@/components/shared/filter/SelectTahun";
-import { SemesterType } from "@/components/shared/filter/SelectSemester";
 
 import FilterSection from "@/components/pameran/FilterSection";
 // import CarouselSection from "@/components/pameran/CarouselSection";
@@ -25,11 +23,7 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
   const isAdmin = user?.role === "Admin";
 
   const [emblaRef] = useEmblaCarousel({ align: "start" });
-  const [selectedKategori, setSelectedKategori] = useState<KategoriType | null>(null);
   const [selectedTahun, setSelectedTahun] = useState<TahunType | null>(null);
-  const [selectedSemester, setSelectedSemester] = useState<SemesterType | null>(
-    null,
-  );
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -54,13 +48,12 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
       const matchSearch =
         item.title.toLowerCase().includes(search.toLowerCase()) ||
         item.category.toLowerCase().includes(search.toLowerCase());
-      const matchKategori = !selectedKategori || item.category === selectedKategori.name;
       const matchTahun =
         !selectedTahun ||
         new Date(item.date).getFullYear().toString() === selectedTahun.name;
-      return matchSearch && matchKategori && matchTahun;
+      return matchSearch && matchTahun;
     });
-  }, [data, search, selectedKategori, selectedTahun]);
+  }, [data, search, selectedTahun]);
 
   const today = new Date();
   today.setHours(23, 59, 59, 999);
@@ -97,7 +90,7 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
   // Reset ke halaman 1 setiap kali filter/search berubah
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, selectedKategori, selectedTahun]);
+  }, [search, selectedTahun]);
 
   const totalPages = Math.max(1, Math.ceil(openData.length / ITEMS_PER_PAGE));
 
@@ -154,12 +147,8 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
           <FilterSection
             search={search}
             setSearch={setSearch}
-            selectedKategori={selectedKategori}
-            setSelectedKategori={setSelectedKategori}
             selectedTahun={selectedTahun}
             setSelectedTahun={setSelectedTahun}
-            selectedSemester={selectedSemester}
-            setSelectedSemester={setSelectedSemester}
           />
           {/* <div className="relative">
             <h2 className="mb-5 mt-3 md:mb-6 text-2xl sm:text-3xl md:text-[40px] text-white font-semibold border-b-2 md:border-b-3 pb-2">
@@ -187,8 +176,8 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
         {openData.length === 0 ? (
           <p className="text-gray-400 text-sm text-center py-10">
             {isAdmin
-              ? "Belum ada pameran."
-              : "Tidak ada pameran yang sedang berlangsung."}
+              ? "No Exhibition Yet"
+              : "No Ongoing Exhibition Yet"}
           </p>
         ) : (
           <>

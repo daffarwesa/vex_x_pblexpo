@@ -1,29 +1,29 @@
 import { FaFilePdf, FaArrowRight } from "react-icons/fa";
 
 export const metadata = {
-  title: "Petunjuk | V-EX",
+  title: "Tutorial | V-EX+",
 };
 
 const steps = [
   {
-    title: "Buat atau masuk ke akun",
-    desc: "Daftar menggunakan email aktif, atau langsung masuk jika kamu sudah punya akun sebelumnya.",
+    title: "Create or log into your account",
+    desc: "Register using an active email address, or log in directly if you already have an existing account.",
   },
   {
-    title: "Jelajahi daftar pameran",
-    desc: "Buka menu \"Pameran\" untuk melihat seluruh pameran 3D yang tersedia, atau cari berdasarkan tahun dan judul.",
+    title: "Browse the exhibition list",
+    desc: "Open the \"Exhibition\" menu to view all available 3D exhibitions, or search by year and title.",
   },
   {
-    title: "Masuk ke ruang pameran 3D",
-    desc: "Pilih salah satu pameran untuk masuk ke ruang virtual. Gunakan mouse atau sentuhan layar untuk berjalan dan melihat sekeliling.",
+    title: "Enter a 3D exhibition space",
+    desc: "Select an exhibition to enter the virtual space. Use your mouse or touch screen to walk around and look at your surroundings.",
   },
   {
-    title: "Lihat detail karya",
-    desc: "Klik salah satu stan atau poster karya untuk membuka detail lengkap: deskripsi, video demo, dan tautan terkait.",
+    title: "View project details",
+    desc: "Click on a booth or project poster to open its full details: description, demo video, and related links.",
   },
   {
-    title: "Beri suka dan komentar",
-    desc: "Sampaikan apresiasi dengan menekan tombol suka, atau tinggalkan komentar untuk memberi masukan langsung ke pemilik karya.",
+    title: "Like and comment",
+    desc: "Show your appreciation by hitting the like button, or leave a comment to give direct feedback to the project owner.",
   },
 ];
 
@@ -33,12 +33,12 @@ export default function PetunjukPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="text-main-blue">
-        <p className="font-poppins font-thin text-3xl sm:text-4xl leading-none">CARA</p>
-        <p className="font-tilt-wrap font-bold text-3xl sm:text-4xl leading-none">MENGGUNAKAN V-EX</p>
+        <p className="font-poppins font-thin text-3xl sm:text-4xl leading-none">HOW TO USE</p>
+        <p className="font-tilt-wrap font-bold text-3xl sm:text-4xl leading-none">V-EX+</p>
       </div>
 
       <p className="font-poppins font-light text-gray-600 max-w-2xl">
-        Ikuti langkah-langkah berikut untuk mulai menjelajahi pameran karya PBL secara virtual.
+        Follow the steps below to start exploring PBL project exhibitions virtually.
       </p>
 
       <ol className="flex flex-col gap-6">

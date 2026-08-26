@@ -11,7 +11,7 @@
 @layer components {
 
   .hover-text {
-    @apply hover:text-main-blue transition-all cursor-pointer;
+    @apply hover:text-white transition-all cursor-pointer;
   }
 
   .footer-links .hover-text:hover {

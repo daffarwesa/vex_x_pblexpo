@@ -19,27 +19,25 @@ const menuGroups: MenuGroup[] = [
   {
     label: 'Tutorial',
     items: [
-      { title: 'Panduan Umum', link: '/tutorial/umum' },
-      { title: 'Panduan Pengunjung', link: '/tutorial/pengunjung' },
-      { title: 'Panduan Admin', link: '/tutorial/admin' },
-      { title: 'Panduan Ketua PBL', link: '/tutorial/ketua-pbl' },
-      { title: 'Panduan KPS', link: '/tutorial/kps' },
+      { title: 'Admin', link: '/tutorial/admin' },
+      { title: 'Creator', link: '/tutorial/creator' },
+      { title: 'Visitor', link: '/tutorial/visitor' },
     ],
   },
   {
-    label: 'Sumber',
+    label: 'Source',
     items: [
       { title: 'FAQs', link: '/faqs' },
-      { title: 'Petunjuk', link: '/petunjuk' },
-      { title: 'Pelayanan', link: '/pelayanan' },
+      { title: 'Tutorial', link: '/tutorial-' },
+      { title: 'Service', link: '/service' },
     ],
   },
   {
-    label: 'Hukum',
+    label: 'Terms',
     items: [
-      { title: 'Syarat & Ketentuan', link: '/syarat-ketentuan' },
-      { title: 'Kebijakan Privasi', link: '/kebijakan-privasi' },
-      { title: 'Hubungi Kami', link: '/hubungi-kami' },
+      { title: 'Terms & Conditions', link: '/terms-conditions' },
+      { title: 'Privacy Policy', link: '/privacy-policy' },
+      { title: 'Contact Us', link: '/contact-us' },
     ],
   },
 ];
@@ -83,9 +81,8 @@ export default function SidebarLainnya() {
               </button>
 
               <div
-                className={`grid transition-all duration-300 ease-in-out ${
-                  isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                }`}
+                className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                  }`}
               >
                 <div className="overflow-hidden">
                   <ul className="px-5 pb-4 flex flex-col gap-1">
@@ -95,11 +92,10 @@ export default function SidebarLainnya() {
                         <li key={item.link}>
                           <Link
                             href={item.link}
-                            className={`block py-2 px-3 rounded-lg text-sm font-poppins font-light transition-colors ${
-                              active
-                                ? 'bg-main-blue text-white font-medium'
-                                : 'text-gray-600 hover:bg-secondary-color hover:text-main-blue'
-                            }`}
+                            className={`block py-2 px-3 rounded-lg text-sm font-poppins font-light transition-colors ${active
+                              ? 'bg-main-blue text-white font-medium'
+                              : 'text-gray-600 hover:bg-secondary-color hover:text-main-blue'
+                              }`}
                           >
                             {item.title}
                           </Link>

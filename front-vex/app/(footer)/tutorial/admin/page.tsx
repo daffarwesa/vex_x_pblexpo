@@ -2,93 +2,93 @@ import TutorialSection from '@/components/layout/TutorialSection';
 import type { TutorialSubsection } from '@/components/layout/TutorialSection';
 
 export const metadata = {
-    title: 'Tutorial - Panduan Admin | V-EX',
+    title: 'Tutorial - Admin Guide | V-EX+',
 };
 
 const sections: TutorialSubsection[] = [
     {
         number: '1',
-        title: 'Dashboard Admin',
+        title: 'Admin Dashboard',
         description:
-            'Dashboard admin merupakan halaman utama yang ditampilkan setelah admin berhasil login ke sistem. Halaman ini menampilkan ringkasan informasi dan navigasi untuk mengelola seluruh fitur aplikasi.',
+            'The admin dashboard is the main page displayed after the admin successfully logs into the system. This page shows a summary of information and navigation for managing all application features.',
         steps: [
-            'Setelah berhasil login, admin akan diarahkan ke halaman dashboard yang menampilkan daftar Kepala Program Studi (KPS) dan Mahasiswa (Ketua PBL).',
+            'After logging in successfully, the admin will be directed to the dashboard page, which displays a list of Creators.',
         ],
     },
     {
         number: '2',
-        title: 'Kelola Akun KPS dan Ketua PBL',
-        description: 'Admin dapat mengelola akun pengguna dengan peran KPS (Kepala Program Studi) dan Ketua PBL.',
+        title: 'Manage Creator Accounts',
+        description: 'Admins can manage user accounts with the Creator role.',
         steps: [
-            'Pada dashboard admin, pilih menu "Pengguna".',
-            'Sistem menampilkan daftar semua pengguna yang terdaftar, dikelompokkan berdasarkan Kepala Program Studi dan Mahasiswa.',
+            'On the admin dashboard, select the "Users" menu.',
+            'The system displays a list of all registered users, grouped by Creators.',
         ],
     },
     {
         number: '3',
-        title: 'Tambah Pengguna',
+        title: 'Add User',
         steps: [
-            'Klik tombol "Tambah" untuk menambahkan pengguna.',
-            'Pilih jenis akun: "Kepala Program Studi" atau "Ketua PBL".',
-            'Isi form/data (Nama, Email, Program Studi/Kelas, dan Status).',
-            'Klik "Simpan".',
+            'Click the "Add" button to add a user.',
+            'Select the account type: "Creator".',
+            'Fill in the form/data (Name, Email, Study Program/Class, and Status).',
+            'Click "Save".',
         ],
     },
     {
         number: '4',
-        title: 'Edit Pengguna',
+        title: 'Edit User',
         steps: [
-            'Klik ikon "Edit" pada pengguna yang diinginkan.',
-            'Ubah data yang diperlukan.',
-            'Klik "Simpan".',
+            'Click the "Edit" icon on the desired user.',
+            'Change the required data.',
+            'Click "Save".',
         ],
     },
     {
         number: '5',
         title: 'Edit Status',
         steps: [
-            'Klik ikon "centang hijau" (✅) pada pengguna yang ingin diubah statusnya.',
-            'Sistem akan mengubah status pengguna menjadi "Aktif" atau "Tidak Aktif" secara otomatis.',
-            'Status berhasil diperbarui.',
+            'Click the "green checkmark" icon (✅) on the user whose status you want to change.',
+            'The system will automatically change the user\'s status to "Active" or "Inactive".',
+            'The status has been successfully updated.',
         ],
     },
     {
         number: '6',
-        title: 'Kelola Pameran',
+        title: 'Manage Exhibitions',
         description:
-            'Admin dapat mengelola pameran yang diselenggarakan. Perubahan ini akan berpengaruh kepada seluruh pengguna, di mana Ketua PBL hanya bisa menambahkan karya ketika pameran belum ter-publish.',
+            'Admins can manage the exhibitions being held. These changes affect all users, where Creators can only add projects while the exhibition has not yet been published.',
         steps: [
-            'Pada dashboard admin, pilih menu "Pameran".',
-            'Sistem menampilkan daftar semua pameran yang telah dibuat.',
+            'On the admin dashboard, select the "Exhibition" menu.',
+            'The system displays a list of all exhibitions that have been created.',
         ],
     },
     {
         number: '7',
-        title: 'Tambah Pameran',
+        title: 'Add Exhibition',
         steps: [
-            'Klik ikon "Tambah Pameran".',
-            'Isi data: Thumbnail, Program Studi, Judul Pameran, Tanggal Pameran (mulai), Tanggal Persiapan (mulai dan berakhir), serta Deskripsi.',
-            'Klik "Simpan".',
+            'Click the "Add Exhibition" icon.',
+            'Fill in the data: Thumbnail, Study Program, Exhibition Title, Exhibition Date (start), Preparation Date (start and end), and Description.',
+            'Click "Save".',
         ],
     },
     {
         number: '8',
-        title: 'Edit Pameran',
+        title: 'Edit Exhibition',
         steps: [
-            'Pada daftar pameran, klik ikon "Edit" (berupa pensil) pada pameran yang ingin diubah.',
-            'Sistem menampilkan form edit pameran.',
-            'Ubah data yang diperlukan (Thumbnail, Program Studi, Judul Pameran, dll.).',
-            'Klik "Simpan" untuk menyimpan perubahan.',
+            'In the exhibition list, click the "Edit" icon (pencil) on the exhibition you want to change.',
+            'The system displays the exhibition edit form.',
+            'Change the required data (Thumbnail, Study Program, Exhibition Title, etc.).',
+            'Click "Save" to save the changes.',
         ],
     },
     {
         number: '9',
-        title: 'Hapus Karya',
+        title: 'Delete Project',
         steps: [
-            'Klik ikon "Karya".',
-            'Klik karya yang ingin dihapus.',
-            'Scroll ke bawah pada halaman detail karya, lalu klik tombol "Hapus".',
-            'Sistem menampilkan konfirmasi penghapusan, klik "Ya, Hapus" untuk menghapus karya tersebut secara permanen.',
+            'Click the "Projects" icon.',
+            'Click the project you want to delete.',
+            'Scroll down on the project detail page, then click the "Delete" button.',
+            'The system displays a deletion confirmation, click "Yes, Delete" to permanently delete the project.',
         ],
     },
 ];
@@ -97,8 +97,8 @@ export default function TutorialAdminPage() {
     return (
         <TutorialSection
             title="TUTORIAL"
-            subtitle="PANDUAN ADMIN"
-            intro="Panduan untuk admin dalam mengelola pengguna (KPS dan Ketua PBL), mengelola pameran, serta mengelola karya yang dipamerkan di V-EX."
+            subtitle="ADMIN GUIDE"
+            intro="A guide for admins on managing users (Creators), managing exhibitions, and managing projects displayed on V-EX+."
             sections={sections}
         />
     );

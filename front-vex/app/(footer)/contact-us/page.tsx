@@ -1,15 +1,21 @@
 import { FaInstagram, FaYoutube, FaLinkedin } from "react-icons/fa";
 
 export const metadata = {
-  title: "Hubungi Kami | V-EX",
+  title: "Contact Us | V-EX+",
 };
 
 const kontak = [
   {
     icon: FaInstagram,
-    label: "Instagram",
+    label: "Instagram (V-EX+)",
     value: "@virtualexhibition204",
     link: "https://www.instagram.com/virtualexhibition204/",
+  },
+  {
+    icon: FaInstagram,
+    label: "Instagram (PBL Expo)",
+    value: "@pblexpolibatam",
+    link: "https://www.instagram.com/pblexpolibatam/",
   },
   {
     icon: FaYoutube,
@@ -17,25 +23,25 @@ const kontak = [
     value: "PBL-TRPL204",
     link: "https://youtube.com/@pbl-trpl204?si=kWdrqlvURisWyhHv",
   },
-//   {
-//     icon: FaLinkedin,
-//     label: "LinkedIn",
-//     value: "PBL TRPL-204",
-//     link: "/",
-//   },
+  //   {
+  //     icon: FaLinkedin,
+  //     label: "LinkedIn",
+  //     value: "PBL TRPL-204",
+  //     link: "/",
+  //   },
 ];
 
 export default function HubungiKamiPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="text-main-blue">
-        <p className="font-poppins font-thin text-3xl sm:text-4xl leading-none">HUBUNGI</p>
-        <p className="font-tilt-wrap font-bold text-3xl sm:text-4xl leading-none">KAMI</p>
+        <p className="font-poppins font-thin text-3xl sm:text-4xl leading-none">CONTACT</p>
+        <p className="font-tilt-wrap font-bold text-3xl sm:text-4xl leading-none">US</p>
       </div>
 
       <p className="font-poppins font-light text-gray-600 max-w-2xl">
-        Punya pertanyaan, masukan, atau kendala teknis seputar V-EX? Jangan ragu untuk menghubungi kami melalui
-        kanal berikut.
+        Have a question, feedback, or technical issue about V-EX+? Feel free to reach out to us through the
+        channels below.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -60,9 +66,9 @@ export default function HubungiKamiPage() {
       </div>
 
       <div className="border-t border-gray-200 pt-6 mt-2">
-        <p className="font-poppins font-medium text-main-blue text-base sm:text-lg mb-2">Alamat</p>
+        <p className="font-poppins font-medium text-main-blue text-base sm:text-lg mb-2">Address</p>
         <p className="font-poppins font-light text-gray-600 text-sm sm:text-base leading-relaxed">
-          Jurusan Teknik Informatika, Politeknik Negeri Batam
+          Department of Informatics Engineering, Politeknik Negeri Batam
           <br />
           Jl. Ahmad Yani, Batam Kota, Batam, Kepulauan Riau 29461
         </p>
