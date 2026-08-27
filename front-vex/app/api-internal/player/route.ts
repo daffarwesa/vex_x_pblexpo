@@ -34,8 +34,8 @@ export async function POST(req: Request) {
       updatedAt: Date.now(),
     };
 
-    // Upstash-style — swap for `.set(key, value, "EX", 50)` if you're on ioredis
-    await redis.set(`player:${body.id}`, JSON.stringify(playerData), { ex: 50 });
+    // ioredis style signature: (key, value, "EX", seconds)
+    await redis.set(`player:${body.id}`, JSON.stringify(playerData), "EX", 50);
 
     return NextResponse.json({ success: true });
   } catch (err) {

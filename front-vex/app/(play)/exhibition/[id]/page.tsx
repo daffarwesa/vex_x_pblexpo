@@ -719,56 +719,43 @@ function LoaderWatcher({
   onLoaded: () => void;
 }) {
   const firedRef = useRef(false);
-  const sawActiveRef = useRef(false);
   const dataReadyRef = useRef(dataReady);
 
   useEffect(() => {
     dataReadyRef.current = dataReady;
   }, [dataReady]);
 
-  // Subscribe manual ke progress store milik drei (zustand-based) lewat
-  // useEffect, BUKAN dengan memanggil hook useProgress() langsung di body
-  // render. useProgress() di render-time membaca state yang di-update oleh
-  // THREE.DefaultLoadingManager tepat saat sebuah loader baru (mis.
-  // useGLTF(hallModel) di ExperienceInner) mendaftarkan diri — ini terjadi
-  // dalam render-pass yang sama dengan LoaderWatcher sebagai sibling-nya,
-  // sehingga React menganggapnya "update a component while rendering a
-  // different component". Subscribe via store di luar render path
-  // sepenuhnya menghindari race ini (lihat: pmndrs/drei#314).
+  // Subscribe manual ke progress store milik drei (zustand-based)
   useEffect(() => {
     const unsub = useProgress.subscribe((state) => {
       const { progress, active } = state;
 
       onProgress(progress);
 
-      if (active) sawActiveRef.current = true;
-
       if (firedRef.current) return;
       if (!dataReadyRef.current) return;
 
-      if (sawActiveRef.current && !active && progress >= 100) {
+      // Selesai jika tidak aktif lagi atau progress mencapai 100%
+      if (!active || progress >= 100) {
         firedRef.current = true;
         onLoaded();
       }
     });
 
     return () => unsub();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onLoaded, onProgress]);
 
-  // Fallback: kalau asset sudah ter-cache / tidak ada yang perlu di-load,
-  // store tidak akan pernah memanggil listener dengan active=true sama
-  // sekali. Beri sedikit delay supaya loading screen tetap tampil sebentar
-  // (tidak "flash"), lalu lanjut otomatis.
+  // Safety fallback: jika data siap, pastikan loading tetap selesai
+  // dan tidak stuck jika Drei tidak memicu event un-active
   useEffect(() => {
     if (!dataReady) return;
 
     const t = setTimeout(() => {
-      if (!firedRef.current && !sawActiveRef.current) {
+      if (!firedRef.current) {
         firedRef.current = true;
         onLoaded();
       }
-    }, 600);
+    }, 1200);
 
     return () => clearTimeout(t);
   }, [dataReady, onLoaded]);
