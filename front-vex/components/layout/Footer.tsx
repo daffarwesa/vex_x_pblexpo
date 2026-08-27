@@ -58,9 +58,9 @@ export default function Footer() {
                 <li>
                   <LinkAkses link={"/faqs"} title={"FAQs"} />
                 </li>
-                <li>
+                {/* <li>
                   <LinkAkses link={"/tutorial"} title={"Tutorial"} />
-                </li>
+                </li> */}
                 <li>
                   <LinkAkses link={"/service"} title={"Service"} />
                 </li>

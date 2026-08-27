@@ -1,6 +1,6 @@
 'use client';
 // components
-import { Card, BestTag, FavTag } from '@/components/shared/ui/Components';
+import { Card } from '@/components/shared/ui/Components';
 import { Button } from '@/components/shared/ui/Button';
 import Carousel, { CarouselKaryaItem } from '@/components/shared/ui/Carousel';
 // icons
@@ -369,13 +369,13 @@ export default function HomePage() {
         <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] flex flex-col items-center gap-10 px-4 sm:px-6 lg:px-0 lg:grid lg:grid-cols-8 lg:items-start">
           {/* Title - mobile only, centered, first */}
           <div className="order-1 lg:hidden text-main-blue text-center">
-            <p className="font-poppins font-thin text-4xl leading-none">BEST</p>
-            <p className="font-tilt-wrap font-bold text-4xl leading-none">PROJECT</p>
+            <p className="font-poppins font-thin text-4xl leading-none">CHAMPIONS OF</p>
+            <p className="font-tilt-wrap font-bold text-4xl leading-none">12 CATEGORY</p>
           </div>
 
           {/* Carousel */}
           <div className="order-2 lg:order-2 lg:col-span-3 relative w-full max-w-sm mx-auto lg:mx-0 shadow-xl rounded-xl overflow-hidden">
-            <BestTag className="absolute right-0 top-0 z-10 scale-75 sm:scale-90 lg:scale-100 origin-top-right" />
+            {/* <BestTag className="absolute right-0 top-0 z-10 scale-75 sm:scale-90 lg:scale-100 origin-top-right" /> */}
             <div className="w-full aspect-[3/4]">
               <Carousel data={bestWork} className="w-full h-full rounded-xl overflow-hidden" />
             </div>
@@ -384,8 +384,8 @@ export default function HomePage() {
           {/* Desktop: title + description combined (unchanged) */}
           <div className="hidden lg:flex lg:order-1 lg:col-span-5 flex-col gap-8">
             <div className="text-main-blue">
-              <p className="font-poppins font-thin text-5xl lg:text-6xl leading-none">BEST</p>
-              <p className="font-tilt-wrap font-bold text-5xl lg:text-6xl leading-none">PROJECT</p>
+              <p className="font-poppins font-thin text-5xl lg:text-6xl leading-none">CHAMPIONS OF </p>
+              <p className="font-tilt-wrap font-bold text-5xl lg:text-6xl leading-none">12 CATEGORY</p>
             </div>
             <div className="grid gap-5 max-w-[500px]">
               {[
@@ -421,13 +421,13 @@ export default function HomePage() {
         <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] flex flex-col items-center gap-10 px-4 sm:px-6 lg:px-0 lg:grid lg:grid-cols-8 lg:items-start">
           {/* Title - mobile only, centered, first */}
           <div className="order-1 lg:hidden text-main-blue text-center">
-            <p className="font-poppins font-thin text-4xl leading-none">FAVORITE</p>
-            <p className="font-tilt-wrap font-bold text-4xl leading-none">PROJECT</p>
+            <p className="font-poppins font-thin text-4xl leading-none">SECOND CHAMPIONS</p>
+            <p className="font-tilt-wrap font-bold text-4xl leading-none">OF 12 CATEGORY</p>
           </div>
 
           {/* Carousel */}
           <div className="order-2 lg:order-1 lg:col-span-3 relative rounded-xl shadow-xl overflow-hidden w-full max-w-sm mx-auto lg:mx-0">
-            <FavTag className="absolute left-0 top-0 z-10 scale-75 sm:scale-90 lg:scale-100 origin-top-left" />
+            {/* <FavTag className="absolute left-0 top-0 z-10 scale-75 sm:scale-90 lg:scale-100 origin-top-left" /> */}
             <div className="w-full aspect-[3/4]">
               <Carousel data={favoriteWork} className="w-full h-full rounded-xl overflow-hidden" />
             </div>
@@ -436,8 +436,8 @@ export default function HomePage() {
           {/* Desktop: title + description combined (unchanged) */}
           <div className="hidden lg:flex lg:order-2 lg:col-span-5 flex-col gap-8">
             <div className="text-main-blue flex flex-col items-end text-right">
-              <p className="font-poppins font-thin text-5xl lg:text-6xl leading-none">FAVORITE</p>
-              <p className="font-tilt-wrap font-bold text-5xl lg:text-6xl leading-none">PROJECT</p>
+              <p className="font-poppins font-thin text-5xl lg:text-6xl leading-none">SECOND CHAMPIONS</p>
+              <p className="font-tilt-wrap font-bold text-5xl lg:text-6xl leading-none">OF 12 CATEGORY</p>
             </div>
             <div className="grid gap-5">
               {[
