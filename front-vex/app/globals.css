@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-main-blue: #3612C7;
+  --color-main-blue: #3612c7;
   --color-secondary-color: #ffffff;
   --color-secondary-gray: #ffffff;
   --font-poppins: var(--font-poppins);
@@ -9,9 +9,8 @@
 }
 
 @layer components {
-
   .hover-text {
-    @apply hover:text-white transition-all cursor-pointer;
+    @apply hover:text-gray-400 transition-all cursor-pointer;
   }
 
   .footer-links .hover-text:hover {
@@ -27,9 +26,8 @@
   }
 
   .input-form {
-    @apply w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-main-blue/50 text-black
+    @apply w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-main-blue/50 text-black;
   }
-
 }
 
 ::-webkit-scrollbar {

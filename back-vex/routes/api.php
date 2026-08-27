@@ -27,6 +27,9 @@ Route::post('/pameran/{slug}/kunjungan', [PameranPublicController::class, 'catat
 Route::get('/pameran', [PameranPublicController::class, 'index']);
 Route::get('/pameran/{slug}', [PameranPublicController::class, 'show']);
 
+// Catat kunjungan (public, tanpa auth)
+Route::post('/kunjungan', [KunjunganController::class, 'store']);
+
 // Login admin
 Route::post('/login', [AdminController::class, 'login']);
 
@@ -57,6 +60,9 @@ Route::prefix('auth')->group(function () {
     Route::patch('/karya/{id_karya}/best', [AdminKaryaController::class, 'setBest']);
 
     // Statistik kunjungan
+    Route::get('/kunjungan/statistik', [KunjunganController::class, 'statistikRange']);
+
+    // Statistik kunjungan
     Route::get('/admin/statistik/kunjungan', [AdminStatistikController::class, 'kunjungan']);
 });
 
@@ -77,6 +83,8 @@ Route::prefix('auth')->group(function () {
 // Route::get('/karya/{id_karya}/komentar', [KomentarController::class, 'index']);
 // Route::get('/public/karya/terbaik', [KaryaController::class, 'karyaTerbaikAktif']);
 // Route::get('/public/karya/favorit', [KaryaController::class, 'karyaFavoritAktif']);
+
+
 
 //-----------------------
 // !! JANGAN DISENTUH !!
@@ -128,8 +136,13 @@ Route::prefix('experience')->group(function () {
 //         Route::get('/karya', [KaryaController::class, 'indexAdmin']);
 //         Route::delete('/karya/{id}', [KaryaController::class, 'destroy']);
 
-//         Route::post('/karya/{id}/toggle-best', [KaryaController::class, 'toggleBest']);
-//         Route::post('/karya/{id}/toggle-juara', [KaryaController::class, 'toggleJuara']);
+    //     Route::post('/karya/{id}/toggle-best', [KaryaController::class, 'toggleBest']);
+    //     Route::post('/karya/{id}/toggle-juara', [KaryaController::class, 'toggleJuara']);
+
+    //     // Statistik kunjungan
+    //     Route::get('/kunjungan/statistik', [KunjunganController::class, 'statistikRange']);
+    
+    // });
 
 //     });
 

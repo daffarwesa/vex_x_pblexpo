@@ -1,13 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-
-import SearchBar from '@/components/shared/filter/SearchBar';
-import SelectTahun from '@/components/shared/filter/SelectTahun';
-
-import { TahunType } from '@/components/shared/filter/SelectTahun';
-
-import { HiAdjustmentsHorizontal, HiXMark } from 'react-icons/hi2';
+import { useState } from "react";
+import SearchBar from "@/components/shared/filter/SearchBar";
+import SelectTahun from "@/components/shared/filter/SelectTahun";
+import { TahunType } from "@/components/shared/filter/SelectTahun";
+import { HiAdjustmentsHorizontal, HiXMark } from "react-icons/hi2";
 
 interface FilterSectionProps {
   search: string;
@@ -22,7 +19,7 @@ export default function FilterSection({
   setSearch,
   selectedTahun,
   setSelectedTahun,
-  searchPlaceholder = 'Search Exhibition...',
+  searchPlaceholder = "Search Exhibition...",
 }: FilterSectionProps) {
   const [openFilter, setOpenFilter] = useState(false);
 
@@ -34,7 +31,11 @@ export default function FilterSection({
         <div className="flex md:hidden items-center gap-3">
           {/* SEARCH */}
           <div className="flex-1">
-            <SearchBar text={searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} />
+            <SearchBar
+              text={searchPlaceholder}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
 
           {/* FILTER BUTTON */}
@@ -51,7 +52,11 @@ export default function FilterSection({
         <div className="hidden md:flex flex-col lg:flex-row gap-4 lg:gap-6 items-stretch lg:items-center justify-between">
           {/* SEARCH */}
           <div className="w-full lg:w-[70%]">
-            <SearchBar text={searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} />
+            <SearchBar
+              text={searchPlaceholder}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
 
           {/* FILTERS */}
@@ -66,24 +71,27 @@ export default function FilterSection({
         className={`
           fixed inset-0 z-50 md:hidden
           transition-all duration-300
-          ${openFilter ? 'visible bg-black/40' : 'invisible bg-black/0'}
+          ${openFilter ? "visible bg-black/40" : "invisible bg-black/0"}
         `}
       >
         {/* BACKDROP */}
-        <div className="absolute inset-0" onClick={() => setOpenFilter(false)} />
+        <div
+          className="absolute inset-0"
+          onClick={() => setOpenFilter(false)}
+        />
 
         {/* SHEET */}
         <div
           className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-[30px] p-5 transition-transform duration-300
-            ${openFilter ? 'translate-y-0' : 'translate-y-full'}
+            ${openFilter ? "translate-y-0" : "translate-y-full"}
           `}
         >
           {/* HEADER */}
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-lg font-bold">Filter Pameran</h2>
+              <h2 className="text-lg font-bold">Filter</h2>
 
-              <p className="text-sm text-gray-500">Pilih filter yang ingin digunakan</p>
+              <p className="text-sm text-gray-500">Choose the filter</p>
             </div>
 
             <button
@@ -106,7 +114,7 @@ export default function FilterSection({
             className="w-full mt-6 h-[50px] rounded-2xl bg-main-blue text-white font-semibold active:scale-95 transition
             "
           >
-            Terapkan Filter
+            Apply Filter
           </button>
         </div>
       </div>

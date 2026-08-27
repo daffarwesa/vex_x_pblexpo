@@ -90,3 +90,11 @@ export async function postKomentar(karyaId: number, isi: string, token: string) 
     )
     return res.data
 }
+
+export async function postKunjungan(exhibitionId: string | number) {
+    const res = await url.post('/api/kunjungan', {
+        id_pameran: exhibitionId,
+    });
+    return res.data;
+}
+

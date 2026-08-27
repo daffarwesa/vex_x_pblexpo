@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { Button, ButtonPutih } from '@/components/shared/ui/Button';
 import { useChangeEmail } from './useChangeEmail';
-import { useRouter } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { InputField } from '@/components/shared/ui/InputFields';
 
 export default function GantiEmailPage() {
+  // notFound();
   const router = useRouter();
   const { fetchUser } = useAuth();
 

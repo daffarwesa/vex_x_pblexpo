@@ -93,9 +93,9 @@ export type Pameran = {
   category: string;
   date: string;
   bannerImage: string;
-  bannerLarge: string;
-  bannerMedium: string;
-  bannerSmall: string;
+  // bannerLarge: string;
+  // bannerMedium: string;
+  // bannerSmall: string;
   likes: number;
   karya: number;
   description: PameranDescription[];
@@ -104,7 +104,7 @@ export type Pameran = {
 };
 
 export interface PameranForm {
-  kategori: string; // kategori pameran (kode dari KATEGORI_OPTIONS)
+  // kategori: string; // kategori pameran (kode dari KATEGORI_OPTIONS)
   title: string;
   publishDate: string;
   prepareStart: string;

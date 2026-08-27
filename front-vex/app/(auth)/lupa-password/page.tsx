@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import { Button, ButtonPutih } from '@/components/shared/ui/Button';
 import { InputField } from '@/components/shared/ui/InputFields';
 import { ForgotPassword, ResendEmail } from './apiLupaPassword';
-import { useRouter } from 'next/dist/client/components/navigation';
+import { notFound, useRouter } from 'next/dist/client/components/navigation';
+
 
 export default function LupaPasswordPage() {
+  notFound()
   const router = useRouter();
   const [emailSent, setEmailSent] = useState(false);
   const [emailError, setEmailError] = useState('');

@@ -10,10 +10,6 @@ import { FaStar } from 'react-icons/fa';
 import { useEffect, useRef, useState } from 'react';
 import { GetKaryaTerbaikAktif, GetKaryaFavoritAktif } from './api';
 
-// Media shown in the Release Announcement gallery. The first entry is always the
-// trailer; clicking any screenshot thumbnail swaps the main preview to that image,
-// and clicking the video thumbnail again switches the preview back to the video.
-// Replace the screenshot paths with your real screenshots.
 const RELEASE_VIDEO_ID = 'bLdFe6G7OC8';
 
 type ReleaseMediaItem =
@@ -504,12 +500,12 @@ export default function HomePage() {
           </div>
 
           <div className="order-3 lg:col-span-10 flex justify-center lg:justify-end w-full">
-            <Button
+            {/* <Button
               link="/register"
               className="px-10 sm:px-14 lg:px-18 py-2 lg:py-3 rounded-md hover:scale-110 transition"
             >
               Register
-            </Button>
+            </Button> */}
           </div>
         </div>
       </section>

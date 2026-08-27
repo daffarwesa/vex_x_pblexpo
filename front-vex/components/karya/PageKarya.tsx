@@ -252,9 +252,6 @@ export default function PageKarya({ href }: Props) {
               setSearch={setSearch}
               selectedTahun={selectedTahun}
               setSelectedTahun={setSelectedTahun}
-              selectedSemester={selectedSemester}
-              setSelectedSemester={setSelectedSemester}
-              hideKategori={true}
               searchPlaceholder="Cari karya atau pameran..."
             />
           </div>
@@ -303,13 +300,8 @@ export default function PageKarya({ href }: Props) {
         <FilterSection
           search={search}
           setSearch={setSearch}
-          selectedKategori={selectedKategori}
-          setSelectedKategori={setSelectedKategori}
           selectedTahun={selectedTahun}
           setSelectedTahun={setSelectedTahun}
-          selectedSemester={selectedSemester}
-          setSelectedSemester={setSelectedSemester}
-        hideKategori={!isAdmin}
         />
       </div>
     </section>

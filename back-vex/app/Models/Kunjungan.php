@@ -4,14 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class KunjunganPameran extends Model
+class Kunjungan extends Model
 {
     public $timestamps = false;
-    protected $table = 'kunjungan_pameran';
 
-    protected $fillable = [
-        'id_pameran',
-        'waktu_kunjungan',
+    protected $table = 'kunjungan';
+
+    protected $fillable = ['id_pameran'];
+
+    protected $casts = [
+        'visited_at' => 'datetime',
     ];
 
     public function pameran()
