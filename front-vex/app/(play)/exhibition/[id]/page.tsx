@@ -235,27 +235,19 @@ const canvasRef = useRef<HTMLCanvasElement | null>(null);
       relockRetryTimer.current = null;
     }
 
-    const tryLock = () => {
-      const canvas = canvasRef.current;
-      if (!canvas?.requestPointerLock) return;
+    const canvas = canvasRef.current;
+    if (!canvas?.requestPointerLock) return;
 
-      // requestPointerLock() balikin Promise di browser modern. Kalau
-      // rejected, hampir selalu karena cooldown wajib browser (Chromium
-      // butuh ±1.1–1.3 detik setelah pointer lock terakhir dilepas sebelum
-      // mau mengunci lagi — ini pembatasan keamanan bawaan, bukan sesuatu
-      // yang bisa dilewati dari kode). Tangkap errornya biar tidak
-      // melempar SecurityError yang tidak tertangani, lalu coba sekali lagi
-      // setelah cooldown biasanya sudah lewat — supaya user biasanya tidak
-      // perlu klik manual lagi.
+    try {
       const result = canvas.requestPointerLock() as unknown;
       if (result && typeof (result as Promise<void>).catch === "function") {
         (result as Promise<void>).catch(() => {
-          relockRetryTimer.current = setTimeout(tryLock, 1300);
+          // Cooldown browser aktif atau user gesture belum ada; abaikan tanpa throw
         });
       }
-    };
-
-    tryLock();
+    } catch {
+      // Abaikan error gesture
+    }
   }, []);
 
   useEffect(() => {
@@ -503,14 +495,15 @@ const canvasRef = useRef<HTMLCanvasElement | null>(null);
               Lanjut
             </button>
             <button
-              onClick={async () => {
-                await fetch(`/api-internal/player?id=${playerId}`, { method: "DELETE" });
+              onClick={() => {
+                exitPointerLockSafe();
+                fetch(`/api-internal/player?id=${playerId}`, { method: "DELETE" }).catch(() => {});
                 sessionStorage.removeItem("playerId");
                 sessionStorage.removeItem("playerName");
-                document.cookie = "username=; path=/; max-age=0"; // ← tambah ini
-                router.back();
+                document.cookie = "username=; path=/; max-age=0";
+                window.location.href = "/pameran";
               }}
-              className="w-full h-12 rounded-xl bg-red-500 font-bold"
+              className="w-full h-12 rounded-xl bg-red-500 hover:bg-red-600 font-bold transition-colors"
             >
               Keluar
             </button>

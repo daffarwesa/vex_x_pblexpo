@@ -214,7 +214,11 @@ function ExperienceInner({
     bgmRef.current = Object.assign(new Audio(audioUrls.bgm), { loop: true, volume: 0.35 });
     footRef.current = Object.assign(new Audio(audioUrls.footstep), { loop: true, volume: 0.55 });
     jumpRef.current = Object.assign(new Audio(audioUrls.jump), { volume: 0.75 });
-    return () => { bgmRef.current?.pause(); footRef.current?.pause(); jumpRef.current?.pause(); };
+    return () => {
+      if (bgmRef.current) { bgmRef.current.pause(); bgmRef.current.src = ""; }
+      if (footRef.current) { footRef.current.pause(); footRef.current.src = ""; }
+      if (jumpRef.current) { jumpRef.current.pause(); jumpRef.current.src = ""; }
+    };
   }, [audioUrls]);
 
   useEffect(() => {
@@ -252,15 +256,24 @@ function ExperienceInner({
 
   useEffect(() => {
     let cancelled = false;
+    let failCount = 0;
 
     const load = async () => {
+      // Jika server Redis mati berulang kali, kurangi frekuensi fetch agar tidak lag
+      if (failCount > 3) return;
+
       try {
         const res = await fetch("/api-internal/player");
+        if (!res.ok) {
+          failCount++;
+          return;
+        }
         const data: RemotePlayer[] = await res.json();
-        if (cancelled) return;
+        if (cancelled || !Array.isArray(data)) return;
+        failCount = 0; // reset saat berhasil
 
         const now = Date.now();
-        const filtered = data.filter((p) => p.id !== playerId && now - p.updatedAt < 999999);
+        const filtered = data.filter((p) => p && p.id !== playerId && now - p.updatedAt < 999999);
 
         setRemotePlayers((prev) => {
           if (prev.length !== filtered.length) return filtered;
@@ -280,11 +293,13 @@ function ExperienceInner({
           }
           return prev;
         });
-      } catch { }
+      } catch {
+        failCount++;
+      }
     };
 
     load();
-    const iv = setInterval(load, 200);
+    const iv = setInterval(load, 500); // 500ms lebih stabil & hemat CPU
     return () => { cancelled = true; clearInterval(iv); };
   }, [playerId]);
 

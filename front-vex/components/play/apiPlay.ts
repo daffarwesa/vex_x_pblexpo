@@ -48,7 +48,17 @@ export async function getPlayerName() {
 }
 
 export async function deletePlayer(playerId: string) {
-    await fetch(`/api-internal/player?id=${playerId}`, { method: "DELETE" })
+    try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 2000)
+        await fetch(`/api-internal/player?id=${playerId}`, {
+            method: "DELETE",
+            signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+    } catch {
+        // Abaikan error jaringan saat delete player
+    }
 }
 
 // ── PosterViewer ──
