@@ -21,7 +21,6 @@ export default function AdminLayout({
     }
   }, [user, loading, router]);
 
-<<<<<<< HEAD
   // if (loading) {
   //   return (
   //     <div className="min-h-screen bg-secondary-color flex items-center justify-center font-poppins">
@@ -32,17 +31,6 @@ export default function AdminLayout({
   //     </div>
   //   );
   // }
-=======
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-secondary-color flex items-center justify-center font-poppins">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-4 border-main-blue border-t-transparent rounded-full animate-spin" />
-        </div>
-      </div>
-    );
-  }
->>>>>>> 4110a6752cef8622cb6a201f7833d5146f6550cb
 
   // if (!user) {
   //   return null;
