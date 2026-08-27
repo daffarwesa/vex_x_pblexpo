@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pameran;
-use App\Models\KunjunganPameran;
+use App\Models\Kunjungan;
 
 class PameranPublicController extends Controller
 {
@@ -54,9 +54,8 @@ class PameranPublicController extends Controller
             ], 404);
         }
 
-        KunjunganPameran::create([
+        Kunjungan::create([
             'id_pameran' => $pameran->id_pameran,
-            'waktu_kunjungan' => now(),
         ]);
 
         return response()->json([

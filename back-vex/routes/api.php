@@ -10,6 +10,7 @@ use App\Http\Controllers\AdminStatistikController;
 use App\Http\Controllers\ChangeEmailController;
 use App\Http\Controllers\ChangePasswordController;
 use App\Http\Controllers\GameAssetController;
+use App\Http\Controllers\KunjunganController;
 use App\Http\Controllers\PameranPublicController;
 use App\Http\Controllers\KaryaPublicController;
 
@@ -26,9 +27,6 @@ Route::get('/', function () {
 Route::post('/pameran/{slug}/kunjungan', [PameranPublicController::class, 'catatKunjungan']);
 Route::get('/pameran', [PameranPublicController::class, 'index']);
 Route::get('/pameran/{slug}', [PameranPublicController::class, 'show']);
-
-// Catat kunjungan (public, tanpa auth)
-Route::post('/kunjungan', [KunjunganController::class, 'store']);
 
 // Login admin
 Route::post('/login', [AdminController::class, 'login']);
@@ -59,10 +57,10 @@ Route::prefix('auth')->group(function () {
     Route::patch('/karya/{id_karya}/predikat', [AdminKaryaController::class, 'setPredikat']);
     Route::patch('/karya/{id_karya}/best', [AdminKaryaController::class, 'setBest']);
 
-    // Statistik kunjungan
+    // Statistik kunjungan (range by date)
     Route::get('/kunjungan/statistik', [KunjunganController::class, 'statistikRange']);
 
-    // Statistik kunjungan
+    // Statistik kunjungan (group by harian/jam)
     Route::get('/admin/statistik/kunjungan', [AdminStatistikController::class, 'kunjungan']);
 });
 

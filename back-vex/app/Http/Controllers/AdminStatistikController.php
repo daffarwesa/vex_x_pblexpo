@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\KunjunganPameran;
+use App\Models\Kunjungan;
 use Illuminate\Http\Request;
 
 class AdminStatistikController extends Controller
@@ -19,18 +19,18 @@ class AdminStatistikController extends Controller
             'tanggal_akhir' => 'nullable|date|after_or_equal:tanggal_mulai',
         ]);
 
-        $baseQuery = KunjunganPameran::query();
+        $baseQuery = Kunjungan::query();
 
         if ($request->id_pameran) {
             $baseQuery->where('id_pameran', $request->id_pameran);
         }
 
         if ($request->tanggal_mulai) {
-            $baseQuery->whereDate('waktu_kunjungan', '>=', $request->tanggal_mulai);
+            $baseQuery->whereDate('visited_at', '>=', $request->tanggal_mulai);
         }
 
         if ($request->tanggal_akhir) {
-            $baseQuery->whereDate('waktu_kunjungan', '<=', $request->tanggal_akhir);
+            $baseQuery->whereDate('visited_at', '<=', $request->tanggal_akhir);
         }
 
         $totalKeseluruhan = (clone $baseQuery)->count();
@@ -38,7 +38,7 @@ class AdminStatistikController extends Controller
         $format = $request->group_by === 'jam' ? '%Y-%m-%d %H:00' : '%Y-%m-%d';
 
         $data = (clone $baseQuery)
-            ->selectRaw("DATE_FORMAT(waktu_kunjungan, '{$format}') as periode, COUNT(*) as total_kunjungan")
+            ->selectRaw("DATE_FORMAT(visited_at, '{$format}') as periode, COUNT(*) as total_kunjungan")
             ->groupBy('periode')
             ->orderBy('periode')
             ->get();
