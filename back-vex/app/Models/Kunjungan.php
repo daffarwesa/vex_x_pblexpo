@@ -4,21 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Sponsor extends Model
+class KunjunganPameran extends Model
 {
-    public $timestamps    = false;
-    protected $table      = 'sponsor';
-    protected $primaryKey = 'id_sponsor';
+    public $timestamps = false;
+    protected $table = 'kunjungan_pameran';
 
     protected $fillable = [
         'id_pameran',
-        'nama_sponsor',
-        'poster',
-        'tahun',
-        'tipe',
+        'waktu_kunjungan',
     ];
 
-    // Relasi ke pameran
     public function pameran()
     {
         return $this->belongsTo(Pameran::class, 'id_pameran', 'id_pameran');

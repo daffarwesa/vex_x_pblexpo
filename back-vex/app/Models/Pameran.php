@@ -10,14 +10,8 @@ class Pameran extends Model
     public $timestamps = false;
     protected $table = 'pameran';
     protected $primaryKey = 'id_pameran';
-
     protected $fillable = [
-        'model_pameran',
-        'kategori_kode',
         'banner',
-        'banner_large',
-        'banner_medium',
-        'banner_small',
         'judul',
         'slug',
         'deskripsi',
@@ -41,37 +35,8 @@ class Pameran extends Model
         });
     }
 
-    // Relasi ke tabel model (aset 3D)
-    public function model3d()
-    {
-        return $this->belongsTo(ModelPameran::class, 'model_pameran', 'id_model');
-    }
-
-    // Relasi ke tabel kategori
-    public function kategori()
-    {
-        return $this->belongsTo(Kategori::class, 'kategori_kode', 'kode_kategori');
-    }
-
     public function karya()
     {
         return $this->hasMany(Karya::class, 'id_pameran', 'id_pameran');
-    }
-
-    public function suka()
-    {
-        return $this->hasManyThrough(
-            Suka::class,
-            Karya::class,
-            'id_pameran',
-            'id_karya',
-            'id_pameran',
-            'id_karya'
-        );
-    }
-
-    public function sponsor()
-    {
-        return $this->hasMany(Sponsor::class, 'id_pameran', 'id_pameran');
     }
 }

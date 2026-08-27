@@ -6,43 +6,30 @@ use Illuminate\Database\Eloquent\Model;
 
 class Karya extends Model
 {
-    public $timestamps = false;
     protected $table = 'karya';
     protected $primaryKey = 'id_karya';
+    public $timestamps = false; // migrasi tidak punya kolom created_at/updated_at
 
     protected $fillable = [
-        'id_pengguna',
-        'id_kategori',
+        'id_admin',
         'id_stan',
         'id_pameran',
+        'id_kategori',
         'judul',
         'deskripsi',
         'tautan',
         'gambar_poster',
-        'gambar_poster_large',
-        'gambar_poster_medium',
-        'gambar_poster_small',
-        'gambar_sampul',
-        'gambar_sampul_large',
-        'gambar_sampul_medium',
-        'gambar_sampul_small',
-        'is_juara',
+        'predikat',
         'is_best',
     ];
 
     protected $casts = [
-        'is_juara' => 'boolean',
         'is_best' => 'boolean',
     ];
 
-    public function pengguna()
+    public function admin()
     {
-        return $this->belongsTo(Pengguna::class, 'id_pengguna', 'id');
-    }
-
-    public function kategori()
-    {
-        return $this->belongsTo(Kategori::class, 'id_kategori', 'id_kategori');
+        return $this->belongsTo(Admin::class, 'id_admin', 'id_admin');
     }
 
     public function stan()
@@ -55,24 +42,8 @@ class Karya extends Model
         return $this->belongsTo(Pameran::class, 'id_pameran', 'id_pameran');
     }
 
-    // Log siapa & kapan menilai — BUKAN sumber is_best/is_juara (itu kolom langsung di karya)
-    public function penilaian()
+    public function kategori()
     {
-        return $this->hasMany(Penilaian::class, 'id_karya', 'id_karya');
-    }
-
-    public function komentar()
-    {
-        return $this->hasMany(Komentar::class, 'id_karya', 'id_karya');
-    }
-
-    public function suka()
-    {
-        return $this->hasMany(Suka::class, 'id_karya', 'id_karya');
-    }
-
-    public function totalSuka()
-    {
-        return $this->suka()->count();
+        return $this->belongsTo(Kategori::class, 'id_kategori', 'id_kategori');
     }
 }
