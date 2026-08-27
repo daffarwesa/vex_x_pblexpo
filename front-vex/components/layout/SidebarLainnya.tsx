@@ -16,19 +16,19 @@ type MenuGroup = {
 };
 
 const menuGroups: MenuGroup[] = [
-  {
-    label: "Tutorial",
-    items: [
-      { title: "Admin", link: "/tutorial/admin" },
-      { title: "Creator", link: "/tutorial/creator" },
-      { title: "Visitor", link: "/tutorial/visitor" },
-    ],
-  },
+  // {
+  //   label: "Tutorial",
+  //   items: [
+  //     { title: "Admin", link: "/tutorial/admin" },
+  //     { title: "Creator", link: "/tutorial/creator" },
+  //     { title: "Visitor", link: "/tutorial/visitor" },
+  //   ],
+  // },
   {
     label: "Source",
     items: [
       { title: "FAQs", link: "/faqs" },
-      { title: "Tutorial", link: "/tutorial-" },
+      // { title: "Tutorial", link: "/tutorial-" },
       { title: "Service", link: "/service" },
     ],
   },

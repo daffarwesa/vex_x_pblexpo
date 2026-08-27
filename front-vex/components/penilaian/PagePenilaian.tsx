@@ -2,13 +2,16 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { FaTrophy, FaMedal, FaStar, FaCheck, FaChevronRight, FaChevronLeft, FaSave, FaExclamationCircle } from "react-icons/fa";
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
+import { ChevronDownIcon, CheckIcon } from "@heroicons/react/20/solid";
+import { FaTrophy, FaMedal, FaStar, FaCheck, FaChevronRight, FaChevronLeft, FaSave, FaExclamationCircle, FaLayerGroup } from "react-icons/fa";
 import { Button, ButtonPutih } from "@/components/shared/ui/Button";
 import { showToast } from "@/components/shared/ui/ToastNotification";
 import {
   GetKaryaList,
   GetKategoriList,
-  BatchSavePenilaian,
+  SetPredikatKarya,
+  SetBestKarya,
   PenilaianItem,
   KategoriItem,
 } from "./apiPenilaian";
@@ -19,10 +22,8 @@ interface PagePenilaianProps {
 
 export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const [karyaList, setKaryaList] = useState<PenilaianItem[]>([]);
   const [kategoriList, setKategoriList] = useState<KategoriItem[]>([]);
@@ -124,76 +125,83 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
     return map;
   }, [karyaList]);
 
-  // Handler toggle Juara Kategori
-  const handleSelectJuaraKategori = (id_kategori: number, id_karya: number, rank: "juara1" | "juara2") => {
-    setKategoriWinners((prev) => {
-      const current = prev[id_kategori] || {};
-      const otherRank = rank === "juara1" ? "juara2" : "juara1";
+  // Handler toggle Juara Kategori (Auto Save)
+  const handleSelectJuaraKategori = async (id_kategori: number, id_karya: number, rank: "juara1" | "juara2") => {
+    const current = kategoriWinners[id_kategori] || {};
+    const otherRank = rank === "juara1" ? "juara2" : "juara1";
+    const predikatVal = rank === "juara1" ? "1" : "2";
+    const isUnselect = current[rank] === id_karya;
 
-      // Jika klik yang sudah terpilih -> batal
-      if (current[rank] === id_karya) {
+    // Optimistic UI update
+    setKategoriWinners((prev) => {
+      const prevCurrent = prev[id_kategori] || {};
+      if (isUnselect) {
         return {
           ...prev,
-          [id_kategori]: {
-            ...current,
-            [rank]: null,
-          },
+          [id_kategori]: { ...prevCurrent, [rank]: null },
         };
       }
-
-      // Jika karya ini sebelumnya terpilih sebagai rank lain di kategori yg sama -> switch
-      const newOther = current[otherRank] === id_karya ? null : current[otherRank];
-
+      const newOther = prevCurrent[otherRank] === id_karya ? null : prevCurrent[otherRank];
       return {
         ...prev,
         [id_kategori]: {
-          ...current,
+          ...prevCurrent,
           [otherRank]: newOther,
           [rank]: id_karya,
         },
       };
     });
+
+    try {
+      if (isUnselect) {
+        await SetPredikatKarya(id_karya, null);
+        showToast(`Juara ${predikatVal} dibatalkan`, "info");
+      } else {
+        // Jika sebelumnya karya lain pegang rank ini, batalkan dulu di DB
+        if (current[rank] && current[rank] !== id_karya) {
+          await SetPredikatKarya(current[rank]!, null);
+        }
+        await SetPredikatKarya(id_karya, predikatVal);
+        showToast(`Karya berhasil ditandai sebagai Juara ${predikatVal}!`, "success");
+      }
+    } catch (err) {
+      console.error("Gagal update predikat:", err);
+      showToast("Gagal memperbarui status juara di server.", "error");
+    }
   };
 
-  // Handler toggle Best Global
-  const handleSelectBest = (id_karya: number, rank: "best1" | "best2" | "best3") => {
+  // Handler toggle Best Global (Auto Save)
+  const handleSelectBest = async (id_karya: number, rank: "best1" | "best2" | "best3") => {
+    const isUnselect = bestWinners[rank] === id_karya;
+
+    // Optimistic UI update
     setBestWinners((prev) => {
-      // Jika klik yg sudah aktif -> batal
-      if (prev[rank] === id_karya) {
+      if (isUnselect) {
         return { ...prev, [rank]: null };
       }
-
-      // Jika karya ini ada di rank best lain -> bersihkan dr rank lain
       const cleaned: typeof prev = { ...prev };
       if (cleaned.best1 === id_karya) cleaned.best1 = null;
       if (cleaned.best2 === id_karya) cleaned.best2 = null;
       if (cleaned.best3 === id_karya) cleaned.best3 = null;
-
-      return {
-        ...cleaned,
-        [rank]: id_karya,
-      };
+      return { ...cleaned, [rank]: id_karya };
     });
-  };
 
-  // Simpan ke server
-  const handleSaveAll = async () => {
-    setSaving(true);
     try {
-      await BatchSavePenilaian({
-        kategoriWinners,
-        bestWinners,
-        allKaryaIds: karyaList.map((k) => k.id_karya),
-      });
-
-      showToast("Penilaian karya berhasil disimpan!", "success");
-      setShowConfirmModal(false);
-      setStep(1);
-    } catch (err: any) {
-      console.error("Gagal menyimpan penilaian:", err);
-      showToast("Terjadi kesalahan saat menyimpan penilaian.", "error");
-    } finally {
-      setSaving(false);
+      if (isUnselect) {
+        await SetBestKarya(id_karya, false);
+        showToast(`Status Best dibatalkan`, "info");
+      } else {
+        // Jika karya lama ada di rank ini, batalkan
+        if (bestWinners[rank] && bestWinners[rank] !== id_karya) {
+          await SetBestKarya(bestWinners[rank]!, false);
+        }
+        await SetBestKarya(id_karya, true);
+        const rankLabel = rank === "best1" ? "Best 1" : rank === "best2" ? "Best 2" : "Best 3";
+        showToast(`Karya berhasil ditandai sebagai ${rankLabel}!`, "success");
+      }
+    } catch (err) {
+      console.error("Gagal update Best:", err);
+      showToast("Gagal memperbarui status Best di server.", "error");
     }
   };
 
@@ -260,16 +268,6 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
               >
                 <span>2.</span> Best Global
               </button>
-              <button
-                onClick={() => setStep(3)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition ${
-                  step === 3
-                    ? "bg-white text-main-blue shadow"
-                    : "text-white/80 hover:text-white"
-                }`}
-              >
-                <span>3.</span> Ringkasan
-              </button>
             </div>
           </div>
         </div>
@@ -282,40 +280,108 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
         {/* ========================================================= */}
         {step === 1 && (
           <div className="space-y-6">
-            {/* Kategori Tabs Navigation */}
-            <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5 px-1">
-                Pilih Kategori ({totalKategoriTerisi}/{kategoriList.length} Dinilai)
-              </p>
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
-                {kategoriList.map((kat) => {
-                  const isActive = selectedKategoriTab === kat.id_kategori;
-                  const winner = kategoriWinners[kat.id_kategori];
-                  const hasWinner = Boolean(winner?.juara1 || winner?.juara2);
+            {/* Kategori Dropdown Selector */}
+            <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="w-full sm:max-w-md">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Pilih Kategori PBL
+                </label>
+                <Listbox
+                  value={selectedKategoriTab}
+                  onChange={(val) => {
+                    if (val !== null) {
+                      setSelectedKategoriTab(val);
+                      setPageForKategori(val, 1);
+                    }
+                  }}
+                >
+                  <div className="relative">
+                    <ListboxButton className="relative w-full cursor-pointer rounded-xl bg-gray-50 hover:bg-gray-100/80 py-2.5 pl-3.5 pr-10 text-left text-sm font-medium text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-main-blue/30 focus:border-main-blue transition">
+                      <div className="flex items-center gap-2 truncate">
+                        <FaLayerGroup className="text-main-blue shrink-0" size={14} />
+                        {(() => {
+                          const current = kategoriList.find((k) => k.id_kategori === selectedKategoriTab);
+                          if (!current) return <span className="text-gray-400">Pilih Kategori</span>;
+                          const winner = kategoriWinners[current.id_kategori];
+                          const hasWinner = Boolean(winner?.juara1 || winner?.juara2);
 
-                  return (
-                    <button
-                      key={kat.id_kategori}
-                      onClick={() => setSelectedKategoriTab(kat.id_kategori)}
-                      className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-2 border ${
-                        isActive
-                          ? "bg-main-blue text-white border-main-blue shadow-sm"
-                          : hasWinner
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
-                          : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
-                      }`}
+                          return (
+                            <span className="truncate flex items-center gap-2">
+                              <span className="font-bold text-main-blue">{current.kode_kategori}</span>
+                              <span className="text-gray-600">— {current.nama_kategori}</span>
+                              {hasWinner && (
+                                <span className="inline-flex items-center text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded">
+                                  ✓ Dinilai
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                        <ChevronDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                      </span>
+                    </ListboxButton>
+
+                    <ListboxOptions
+                      transition
+                      className="absolute z-20 mt-1.5 max-h-72 w-full overflow-auto rounded-xl bg-white p-1 text-sm shadow-xl ring-1 ring-black/5 focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-100"
                     >
-                      <span>{kat.kode_kategori}</span>
-                      {hasWinner && (
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            isActive ? "bg-yellow-300" : "bg-emerald-500"
-                          }`}
-                        />
-                      )}
-                    </button>
-                  );
-                })}
+                      {kategoriList.map((kat) => {
+                        const isSelected = selectedKategoriTab === kat.id_kategori;
+                        const winner = kategoriWinners[kat.id_kategori];
+                        const hasWinner = Boolean(winner?.juara1 || winner?.juara2);
+
+                        return (
+                          <ListboxOption
+                            key={kat.id_kategori}
+                            value={kat.id_kategori}
+                            className={`relative cursor-pointer select-none rounded-lg py-2 pl-3 pr-8 transition flex items-center justify-between ${
+                              isSelected
+                                ? "bg-main-blue/10 text-main-blue font-semibold"
+                                : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                                isSelected ? "bg-main-blue text-white" : "bg-gray-100 text-gray-700"
+                              }`}>
+                                {kat.kode_kategori}
+                              </span>
+                              <span className="truncate">{kat.nama_kategori}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {hasWinner && (
+                                <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2 rounded">
+                                  ✓ Dinilai
+                                </span>
+                              )}
+                              {isSelected && (
+                                <CheckIcon className="h-4 w-4 text-main-blue" aria-hidden="true" />
+                              )}
+                            </div>
+                          </ListboxOption>
+                        );
+                      })}
+                    </ListboxOptions>
+                  </div>
+                </Listbox>
+              </div>
+
+              {/* Progress Summary */}
+              <div className="flex items-center gap-3 bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200/80 self-start sm:self-auto">
+                <div className="w-9 h-9 rounded-lg bg-main-blue/10 text-main-blue flex items-center justify-center font-bold text-sm">
+                  {totalKategoriTerisi}/{kategoriList.length}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-800">Progres Kategori</p>
+                  <p className="text-[11px] text-gray-500">
+                    {totalKategoriTerisi === kategoriList.length
+                      ? "Semua kategori selesai dinilai"
+                      : `${kategoriList.length - totalKategoriTerisi} kategori belum selesai`}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -345,14 +411,29 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                           </h2>
                         </div>
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-3 text-xs">
-                            <div className="flex items-center gap-1.5 text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200">
-                              <FaMedal className="text-yellow-500" />
-                              <span>Juara 1: {winner.juara1 ? "Terpilih" : "Belum"}</span>
+                          <div className="flex items-center gap-2.5 text-xs">
+                            {/* Juara 1 Status Badge */}
+                            <div
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all ${
+                                winner.juara1
+                                  ? "bg-yellow-400 text-yellow-950 border-yellow-500 font-bold shadow-sm"
+                                  : "bg-gray-100 text-gray-400 border-gray-200 border-dashed font-medium"
+                              }`}
+                            >
+                              <FaTrophy className={winner.juara1 ? "text-yellow-950" : "text-gray-400"} />
+                              <span>Juara 1: {winner.juara1 ? "✓ Terpilih" : "Belum"}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
-                              <FaMedal className="text-slate-400" />
-                              <span>Juara 2: {winner.juara2 ? "Terpilih" : "Belum"}</span>
+
+                            {/* Juara 2 Status Badge */}
+                            <div
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all ${
+                                winner.juara2
+                                  ? "bg-slate-700 text-white border-slate-800 font-bold shadow-sm"
+                                  : "bg-gray-100 text-gray-400 border-gray-200 border-dashed font-medium"
+                              }`}
+                            >
+                              <FaMedal className={winner.juara2 ? "text-white" : "text-gray-400"} />
+                              <span>Juara 2: {winner.juara2 ? "✓ Terpilih" : "Belum"}</span>
                             </div>
                           </div>
                         </div>
@@ -442,9 +523,9 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                           "juara1"
                                         )
                                       }
-                                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition ${
+                                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition ${
                                         isJuara1
-                                          ? "bg-yellow-400 text-yellow-950 border-yellow-500 shadow-sm"
+                                          ? "bg-yellow-400 text-yellow-950 border-yellow-500 shadow-md ring-2 ring-yellow-400/40"
                                           : "bg-white text-gray-700 border-gray-300 hover:bg-yellow-50 hover:border-yellow-300"
                                       }`}
                                     >
@@ -461,13 +542,13 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                           "juara2"
                                         )
                                       }
-                                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition ${
+                                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition ${
                                         isJuara2
-                                          ? "bg-slate-300 text-slate-900 border-slate-400 shadow-sm"
-                                          : "bg-white text-gray-700 border-gray-300 hover:bg-slate-50 hover:border-slate-300"
+                                          ? "bg-slate-800 text-white border-slate-900 shadow-md ring-2 ring-slate-700/40"
+                                          : "bg-white text-gray-700 border-gray-300 hover:bg-slate-100 hover:border-slate-400"
                                       }`}
                                     >
-                                      <FaMedal className={isJuara2 ? "text-slate-900" : "text-slate-400"} />
+                                      <FaMedal className={isJuara2 ? "text-white" : "text-slate-500"} />
                                       <span>{isJuara2 ? "Juara 2 ✓" : "Pilih Juara 2"}</span>
                                     </button>
                                   </div>
@@ -517,9 +598,9 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
             <div className="flex justify-end pt-4">
               <Button
                 onClick={() => setStep(2)}
-                className="px-6 py-2.5 rounded-xl font-bold flex items-center gap-2"
+                className="px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-main-blue text-white"
               >
-                <span>Lanjut ke Best Global</span>
+                <span>Pindah ke Best Global</span>
                 <FaChevronRight size={13} />
               </Button>
             </div>
@@ -730,7 +811,7 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
             })()}
 
             {/* Nav Step */}
-            <div className="flex justify-between items-center pt-4">
+            <div className="flex justify-start items-center pt-4">
               <ButtonPutih
                 onClick={() => setStep(1)}
                 className="px-5 py-2.5 rounded-xl font-bold flex items-center gap-2"
@@ -738,192 +819,10 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                 <FaChevronLeft size={13} />
                 <span>Kembali ke Juara Kategori</span>
               </ButtonPutih>
-
-              <Button
-                onClick={() => setStep(3)}
-                className="px-6 py-2.5 rounded-xl font-bold flex items-center gap-2"
-              >
-                <span>Lihat Ringkasan & Konfirmasi</span>
-                <FaChevronRight size={13} />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================= */}
-        {/* STEP 3: RINGKASAN & KONFIRMASI PENILAIAN                  */}
-        {/* ========================================================= */}
-        {step === 3 && (
-          <div className="space-y-6">
-            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-bold text-gray-800">
-                  Ringkasan Hasil Penilaian
-                </h2>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Periksa kembali seluruh pemenang kategori dan best global sebelum disimpan.
-                </p>
-              </div>
-
-              <Button
-                onClick={() => setShowConfirmModal(true)}
-                className="px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-              >
-                <FaSave size={14} />
-                <span>Simpan Penilaian</span>
-              </Button>
-            </div>
-
-            {/* REKAP BEST GLOBAL */}
-            <div className="bg-white p-5 rounded-2xl border border-amber-200 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <FaStar className="text-amber-500 text-lg" />
-                <h3 className="font-bold text-base text-gray-800">Best Global (Top 3)</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { rank: "Best 1", id: bestWinners.best1, color: "bg-amber-400 text-amber-950 border-amber-500" },
-                  { rank: "Best 2", id: bestWinners.best2, color: "bg-amber-300 text-amber-950 border-amber-400" },
-                  { rank: "Best 3", id: bestWinners.best3, color: "bg-amber-200 text-amber-950 border-amber-300" },
-                ].map((item, idx) => {
-                  const karya = karyaList.find((k) => k.id_karya === item.id);
-                  return (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-xl border border-gray-200 bg-amber-50/30 flex items-start gap-3"
-                    >
-                      <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${item.color}`}>
-                        {item.rank}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        {karya ? (
-                          <>
-                            <p className="text-sm font-bold text-gray-800 truncate">{karya.judul}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              {kategoriList.find((k) => k.id_kategori === karya.id_kategori)?.nama_kategori}
-                            </p>
-                          </>
-                        ) : (
-                          <p className="text-xs text-gray-400 italic">Belum dipilih</p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* REKAP JUARA 1 & 2 TIAP KATEGORI */}
-            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-              <div className="flex items-center gap-2">
-                <FaTrophy className="text-yellow-500 text-lg" />
-                <h3 className="font-bold text-base text-gray-800">
-                  Juara 1 & 2 per Kategori ({kategoriList.length} Kategori)
-                </h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {kategoriList.map((kat) => {
-                  const winner = kategoriWinners[kat.id_kategori] || {};
-                  const k1 = karyaList.find((k) => k.id_karya === winner.juara1);
-                  const k2 = karyaList.find((k) => k.id_karya === winner.juara2);
-
-                  return (
-                    <div
-                      key={kat.id_kategori}
-                      className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2.5"
-                    >
-                      <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-                        <span className="text-xs font-bold text-main-blue">{kat.kode_kategori}</span>
-                        <span className="text-xs font-medium text-gray-600 truncate max-w-[200px]">
-                          {kat.nama_kategori}
-                        </span>
-                      </div>
-
-                      <div className="space-y-1.5 text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="bg-yellow-400 text-yellow-950 font-bold px-2 py-0.5 rounded text-[10px]">
-                            Juara 1
-                          </span>
-                          <span className="font-semibold text-gray-800 truncate flex-1">
-                            {k1?.judul || <span className="text-gray-400 font-normal italic">Belum dipilih</span>}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="bg-slate-300 text-slate-800 font-bold px-2 py-0.5 rounded text-[10px]">
-                            Juara 2
-                          </span>
-                          <span className="font-semibold text-gray-800 truncate flex-1">
-                            {k2?.judul || <span className="text-gray-400 font-normal italic">Belum dipilih</span>}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Bottom Nav */}
-            <div className="flex justify-between items-center pt-4">
-              <ButtonPutih
-                onClick={() => setStep(2)}
-                className="px-5 py-2.5 rounded-xl font-bold flex items-center gap-2"
-              >
-                <FaChevronLeft size={13} />
-                <span>Kembali ke Best Global</span>
-              </ButtonPutih>
-
-              <Button
-                onClick={() => setShowConfirmModal(true)}
-                className="px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
-              >
-                <FaCheck size={14} />
-                <span>Konfirmasi & Simpan</span>
-              </Button>
             </div>
           </div>
         )}
       </main>
-
-      {/* ========================================================= */}
-      {/* MODAL KONFIRMASI SIMPAN                                   */}
-      {/* ========================================================= */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-gray-100 text-center space-y-4">
-            <div className="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto text-2xl">
-              <FaTrophy />
-            </div>
-
-            <div>
-              <h3 className="text-xl font-bold text-gray-800">Simpan Hasil Penilaian?</h3>
-              <p className="text-xs text-gray-500 mt-1">
-                Data pemenang Juara 1, Juara 2 per kategori dan Best Global akan diperbarui ke database.
-              </p>
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <ButtonPutih
-                onClick={() => setShowConfirmModal(false)}
-                disabled={saving}
-                className="flex-1 py-2.5 rounded-xl font-semibold"
-              >
-                Batal
-              </ButtonPutih>
-
-              <Button
-                onClick={handleSaveAll}
-                disabled={saving}
-                className="flex-1 py-2.5 rounded-xl font-bold bg-main-blue text-white"
-              >
-                {saving ? "Menyimpan..." : "Ya, Simpan"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
