@@ -13,7 +13,7 @@ use App\Http\Controllers\PameranPublicController;
 use App\Http\Controllers\KaryaPublicController;
 use App\Http\Controllers\StatistikController;
 
-/* 
+/*
     ROUTE FALLBACK
 */
 Route::get('/', function () {
