@@ -14,7 +14,9 @@ class GameAssetController extends Controller
     // =============================
     private function resolvePameran(string $identifier): ?Pameran
     {
-        return Pameran::where('slug', $identifier)->first();
+        return is_numeric($identifier)
+            ? Pameran::find($identifier)
+            : Pameran::where('slug', $identifier)->first();
     }
 
     // ==============
@@ -26,7 +28,7 @@ class GameAssetController extends Controller
             'bgm' => asset('storage/audio/bgm.mp3'),
             'footstep' => asset('storage/audio/footstep.mp3'),
             'jump' => asset('storage/audio/jump.mp3'),
-            'player' => asset('storage/models/player.glb'),
+            'player' => url('/api/experience/player-model'),
         ]);
     }
 
@@ -39,12 +41,18 @@ class GameAssetController extends Controller
         $path = storage_path('app/public/models/' . $safeFilename);
 
         if (!file_exists($path)) {
+            $path = public_path('storage/models/' . $safeFilename);
+        }
+
+        if (!file_exists($path)) {
             return response()->json(['error' => 'File tidak ditemukan'], 404);
         }
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => 'http://localhost:8000',
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -57,12 +65,18 @@ class GameAssetController extends Controller
         $path = storage_path('app/public/models/player.glb');
 
         if (!file_exists($path)) {
+            $path = public_path('storage/models/player.glb');
+        }
+
+        if (!file_exists($path)) {
             return response()->json(['error' => 'File tidak ditemukan'], 404);
         }
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => 'http://localhost:3000',
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -83,12 +97,18 @@ class GameAssetController extends Controller
         $path = storage_path('app/public/models/hall-utama.glb');
 
         if (!file_exists($path)) {
+            $path = public_path('storage/models/hall-utama.glb');
+        }
+
+        if (!file_exists($path)) {
             return response()->json(['error' => 'File tidak ditemukan'], 404);
         }
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => 'http://localhost:8000',
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -107,7 +127,7 @@ class GameAssetController extends Controller
         return response()->json([
             // pakai identifier yang sama persis yang dikirim client (slug atau id),
             // supaya endpoint hall-model juga bisa resolve dengan cara yang sama
-            'model_hall' => "http://localhost:8000/api/experience/hall-model/{$identifier}",
+            'model_hall' => url("/api/experience/hall-model/{$identifier}"),
         ]);
     }
 
@@ -158,7 +178,7 @@ class GameAssetController extends Controller
                 'sampul' => $this->getSampulThumbnail($karya->tautan),
                 // Booth model sekarang selalu diambil dari file statis booth.glb
                 // di storage, tidak lagi bergantung pada relasi ke tabel model.
-                'model_path' => "http://localhost:8000/experience/booth-model/booth.glb",
+                'model_path' => url("/api/experience/booth-model/booth.glb"),
                 'predikat' => $karya->predikat,
                 'is_terbaik' => (bool) $karya->is_best,
             ];

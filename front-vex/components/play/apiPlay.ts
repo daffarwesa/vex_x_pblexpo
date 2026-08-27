@@ -37,7 +37,7 @@ export function getPlayerModelUrl(gameAssets?: { player?: string }) {
     if (gameAssets?.player) return gameAssets.player
 
     const base = (url.defaults.baseURL ?? "").replace(/\/api\/?$/, "")
-    return `${base}/storage/models/player.glb`
+    return `${base}/api/experience/player-model`
 }
 
 // ── page.tsx (ExhibitionPage) ──

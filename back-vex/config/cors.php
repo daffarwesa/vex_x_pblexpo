@@ -1,7 +1,12 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'storage/*', 'experience/*', 'sanctum/csrf-cookie'],
+    'paths' => [
+        'api/*',
+        'storage/*',
+        'sanctum/csrf-cookie',
+        '*',
+    ],
 
     'allowed_methods' => ['*'],
 
@@ -13,7 +18,7 @@ return [
 
     'exposed_headers' => [],
 
-    'max_age' => 86400, 
+    'max_age' => 86400,
 
     'supports_credentials' => false,
 ];
