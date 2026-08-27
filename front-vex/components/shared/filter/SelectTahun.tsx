@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react';
 import { ChevronDownIcon, XMarkIcon } from '@heroicons/react/20/solid';
-import axios from "@/lib/axios"
+import { GetPameran } from '@/components/pameran/apiPameran';
 
 export type TahunType = {
   id: number;
@@ -19,23 +19,42 @@ export default function SelectTahun({ selected, onChange }: SelectTahunProps) {
   const [tahunList, setTahunList] = useState<TahunType[]>([]);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function load() {
       try {
-        const res  = await axios.get('/api/pameran');
-        const json = res.data;
+        const res = await GetPameran();
+        const list = res.pameran || res.data || [];
 
-        const unique = [...new Set<string>(
-          (json.pameran ?? []).map((item: any) => item.date.slice(0, 4))
-        )]
-          .sort((a, b) => Number(b) - Number(a));
+        const years = (Array.isArray(list) ? list : [])
+          .map((item: any) => {
+            const raw = item.tanggal_buka || item.stats?.startDate || item.date;
+            if (!raw) return null;
 
-        setTahunList(unique.map((name, index) => ({ id: index + 1, name })));
+            // Cari 4 digit tahun (contoh: "2026-08-27" atau "27 Agustus 2026")
+            const match = String(raw).match(/\b(19\d\d|20\d\d)\b/);
+            if (match) return match[1];
+
+            const parsed = new Date(raw);
+            return !isNaN(parsed.getTime()) ? String(parsed.getFullYear()) : null;
+          })
+          .filter((y): y is string => Boolean(y));
+
+        const unique = [...new Set<string>(years)].sort((a, b) => Number(b) - Number(a));
+
+        if (isMounted) {
+          setTahunList(unique.map((name, index) => ({ id: index + 1, name })));
+        }
       } catch (err) {
         console.error('Failed Loading Year:', err);
       }
     }
 
     load();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

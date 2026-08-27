@@ -8,52 +8,86 @@ import DateRangeFilter, {
   type PresetKey,
 } from "./DateRangeFilter";
 import { StatData, generateDummyByRange } from "./mockData";
-import { GetDataKunjungan } from "./apiStatistik";
+import {
+  GetStatistikRange,
+  GetStatistikKunjungan,
+} from "./apiStatistik";
+
+// ─── Mode Tab ────────────────────────────────────────────────────────────────
+type ModeTab = "range" | "kelompok";
 
 export default function PageStatistik() {
-  const [useDummy, setUseDummy] = useState<boolean>(true); // Default true for immediate visual testing
+  const [useDummy, setUseDummy]   = useState<boolean>(true);
+  const [modeTab, setModeTab]     = useState<ModeTab>("range");
+  const [groupBy, setGroupBy]     = useState<"harian" | "jam">("harian");
+
   const [range, setRange] = useState<DateRangeValue>(() => {
     const initial = calculateDatesForPreset("last_7_days");
-    return {
-      preset: "last_7_days",
-      startDate: initial.startDate,
-      endDate: initial.endDate,
-      label: initial.label,
-    };
+    return { preset: "last_7_days", ...initial };
   });
 
-  const [data, setData] = useState<StatData[]>([]);
+  const [data, setData]       = useState<StatData[]>([]);
+  const [total, setTotal]     = useState<number>(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState<string | null>(null);
 
+  // ── Fetch ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (useDummy) {
       setLoading(true);
-      const timer = setTimeout(() => {
-        const dummy = generateDummyByRange(range.startDate, range.endDate);
-        setData(dummy);
+      setError(null);
+      const t = setTimeout(() => {
+        setData(generateDummyByRange(range.startDate, range.endDate));
+        setTotal(0);
         setLoading(false);
       }, 150);
-      return () => clearTimeout(timer);
+      return () => clearTimeout(t);
     }
 
-    async function fetchStatistik() {
+    async function fetchLive() {
       setLoading(true);
+      setError(null);
       try {
-        const res = await GetDataKunjungan(range.startDate, range.endDate);
-        setData(res || []);
-      } catch {
+        if (modeTab === "range") {
+          // ── Mode: Auto Range ──────────────────────────────────────────────
+          const rows = await GetStatistikRange(range.startDate, range.endDate);
+          setData(rows);
+          setTotal(rows.reduce((s, r) => s + r.pengunjung, 0));
+        } else {
+          // ── Mode: Kelompok (harian / jam) ─────────────────────────────────
+          const res = await GetStatistikKunjungan({
+            group_by: groupBy,
+            tanggal_mulai: range.startDate,
+            tanggal_akhir: range.endDate,
+          });
+          // Normalisasi shape ke StatData (label + pengunjung)
+          const rows: StatData[] = res.data.map((d) => ({
+            label: d.periode,
+            pengunjung: d.total_kunjungan,
+          }));
+          setData(rows);
+          setTotal(res.total_keseluruhan);
+        }
+      } catch (err: any) {
+        const msg =
+          err?.response?.data?.message ??
+          err?.message ??
+          "Gagal memuat data statistik.";
+        setError(msg);
         setData([]);
+        setTotal(0);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchStatistik();
-  }, [range.startDate, range.endDate, useDummy]);
+    fetchLive();
+  }, [range.startDate, range.endDate, useDummy, modeTab, groupBy]);
 
+  // ── Derived stats ─────────────────────────────────────────────────────────
   const totalPengunjung = useMemo(
-    () => data.reduce((s, d) => s + d.pengunjung, 0),
-    [data],
+    () => (useDummy ? data.reduce((s, d) => s + d.pengunjung, 0) : total),
+    [data, useDummy, total]
   );
 
   const averagePengunjung = useMemo(() => {
@@ -68,23 +102,18 @@ export default function PageStatistik() {
 
   const handleQuickPreset = (preset: PresetKey) => {
     const calc = calculateDatesForPreset(preset);
-    setRange({
-      preset,
-      startDate: calc.startDate,
-      endDate: calc.endDate,
-      label: calc.label,
-    });
+    setRange({ preset, ...calc });
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="w-full min-h-screen px-4 md:px-8 pt-6 pb-32 max-w-7xl mx-auto">
-      {/* HEADER & TOGGLE */}
+
+      {/* ── HEADER ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-800">
-              Visitor Statistics
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-800">Visitor Statistics</h1>
             {useDummy && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-300">
                 Demo Mode (Dummy Data)
@@ -96,9 +125,9 @@ export default function PageStatistik() {
           </p>
         </div>
 
-        {/* CONTROLS: DUMMY TOGGLE & DATE RANGE FILTER */}
+        {/* CONTROLS */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* TOGGLE DUMMY BUTTON */}
+          {/* TOGGLE DUMMY */}
           <button
             type="button"
             onClick={() => setUseDummy((prev) => !prev)}
@@ -108,28 +137,67 @@ export default function PageStatistik() {
                 : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                useDummy ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
-              }`}
-            />
+            <span className={`w-2 h-2 rounded-full ${useDummy ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
             {useDummy ? "Switch to Live API" : "Switch to Dummy Data"}
           </button>
 
-          {/* DATE RANGE FILTER DROPDOWN */}
+          {/* DATE RANGE FILTER */}
           <DateRangeFilter value={range} onChange={setRange} />
         </div>
       </div>
 
-      {/* QUICK PRESET CHIPS */}
+      {/* ── MODE TABS + GROUP BY ────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        {/* Tab: Range vs Kelompok */}
+        <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
+          {([
+            { key: "range",    label: "Auto Range" },
+            { key: "kelompok", label: "Kelompok" },
+          ] as { key: ModeTab; label: string }[]).map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setModeTab(t.key)}
+              disabled={useDummy}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                modeTab === t.key
+                  ? "bg-white text-main-blue shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Group By (hanya tampil di mode Kelompok) */}
+        {modeTab === "kelompok" && !useDummy && (
+          <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
+            {(["harian", "jam"] as const).map((g) => (
+              <button
+                key={g}
+                onClick={() => setGroupBy(g)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all capitalize ${
+                  groupBy === g
+                    ? "bg-white text-main-blue shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {g === "harian" ? "Per Hari" : "Per Jam"}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── QUICK PRESETS ─────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 scrollbar-thin">
-        <span className="text-xs font-medium text-gray-400 shrink-0">Quick Test:</span>
+        <span className="text-xs font-medium text-gray-400 shrink-0">Quick:</span>
         {[
-          { key: "latest" as PresetKey, label: "Today (Hourly)" },
-          { key: "last_7_days" as PresetKey, label: "Last 7 Days" },
-          { key: "last_1_month" as PresetKey, label: "Last 1 Month (Daily)" },
-          { key: "last_3_months" as PresetKey, label: "Last 3 Months (Weekly)" },
-          { key: "last_1_year" as PresetKey, label: "Last 1 Year (Monthly)" },
+          { key: "latest"       as PresetKey, label: "Today" },
+          { key: "last_7_days"  as PresetKey, label: "7 Hari" },
+          { key: "last_1_month" as PresetKey, label: "1 Bulan" },
+          { key: "last_3_months"as PresetKey, label: "3 Bulan" },
+          { key: "last_1_year"  as PresetKey, label: "1 Tahun" },
         ].map((item) => (
           <button
             key={item.key}
@@ -145,82 +213,89 @@ export default function PageStatistik() {
         ))}
       </div>
 
-      {/* SUMMARY CARDS */}
+      {/* ── SUMMARY CARDS ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">
-            Total Visitors
-          </p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Total Visitors</p>
           <p className="text-2xl font-bold text-main-blue mt-1">
-            {totalPengunjung.toLocaleString("en-US")}
+            {totalPengunjung.toLocaleString("id-ID")}
           </p>
-          <p className="text-xs text-gray-400 mt-1">Accumulated in this period</p>
+          <p className="text-xs text-gray-400 mt-1">Terakumulasi dalam periode ini</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">
-            Average / Point
-          </p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Rata-rata / Slot</p>
           <p className="text-2xl font-bold text-emerald-600 mt-1">
-            {averagePengunjung.toLocaleString("en-US")}
+            {averagePengunjung.toLocaleString("id-ID")}
           </p>
-          <p className="text-xs text-gray-400 mt-1">Average visitors per time slot</p>
+          <p className="text-xs text-gray-400 mt-1">Rata-rata pengunjung per titik waktu</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">
-            Peak Record
-          </p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Puncak Kunjungan</p>
           <p className="text-2xl font-bold text-purple-600 mt-1">
-            {peakPengunjung.pengunjung.toLocaleString("en-US")}
+            {peakPengunjung.pengunjung.toLocaleString("id-ID")}
           </p>
-          <p className="text-xs text-gray-400 mt-1 truncate">
-            At: {peakPengunjung.label}
-          </p>
+          <p className="text-xs text-gray-400 mt-1 truncate">Pada: {peakPengunjung.label}</p>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">
-            Active Period
-          </p>
-          <p className="text-base font-semibold text-gray-700 mt-1">
-            {range.label}
-          </p>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">Periode Aktif</p>
+          <p className="text-base font-semibold text-gray-700 mt-1">{range.label}</p>
           <p className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded mt-1 inline-block">
             {range.startDate === range.endDate
               ? range.startDate
-              : `${range.startDate} to ${range.endDate}`}
+              : `${range.startDate} → ${range.endDate}`}
           </p>
         </div>
       </div>
 
-      {/* CHART CONTAINER */}
+      {/* ── CHART ─────────────────────────────────────────────────────────── */}
       <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-gray-800">
-            Visitor Traffic Chart
-          </h2>
-          <span className="text-xs text-gray-400">
-            {data.length} data points
-          </span>
+          <div>
+            <h2 className="text-base font-semibold text-gray-800">Visitor Traffic Chart</h2>
+            {!useDummy && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                {modeTab === "range" ? "Auto-group berdasarkan rentang tanggal" : `Dikelompokkan per ${groupBy}`}
+              </p>
+            )}
+          </div>
+          <span className="text-xs text-gray-400">{data.length} data points</span>
         </div>
 
-        {loading ? (
+        {/* Error state */}
+        {error && !loading && (
+          <div className="flex items-center justify-center h-[360px]">
+            <div className="text-center">
+              <p className="text-red-500 font-medium text-sm mb-1">Gagal memuat data</p>
+              <p className="text-gray-400 text-xs">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Loading state */}
+        {loading && (
           <div className="flex items-center justify-center h-[360px] text-gray-400">
             <div className="flex flex-col items-center gap-2">
               <div className="w-8 h-8 border-4 border-main-blue border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm">Loading statistics data...</p>
+              <p className="text-sm">Memuat data statistik...</p>
             </div>
           </div>
-        ) : data.length === 0 ? (
+        )}
+
+        {/* Empty state */}
+        {!loading && !error && data.length === 0 && (
           <div className="flex items-center justify-center h-[360px] text-gray-400">
-            No visitor logs found for this date range.
+            Tidak ada data kunjungan untuk rentang tanggal ini.
           </div>
-        ) : (
+        )}
+
+        {/* Chart */}
+        {!loading && !error && data.length > 0 && (
           <StatistikChart data={data} />
         )}
       </div>
     </div>
   );
 }
-

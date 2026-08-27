@@ -11,13 +11,14 @@ export interface ProjectCard {
   bannerImage: string;
   bannerSmall?: string;
   title: string;
-  category: string;
-  likes: number;
-  karya: number;
-  date: string;
-  stats: {
-    startDate: string;
-    endDate: string | null;
+  category?: string;
+  likes?: number;
+  karya?: number;
+  date?: string;
+  year?: string | number;
+  stats?: {
+    startDate?: string;
+    endDate?: string | null;
   };
 }
 
@@ -30,15 +31,28 @@ export default function ProjectCard({ project, className }: ProjectData) {
   const [hovered, setHovered] = useState(false);
 
   const today = new Date();
-  const startDate = new Date(project.stats?.startDate);
+  const startDateStr = project.stats?.startDate || project.date;
+  const startDate = startDateStr ? new Date(startDateStr) : new Date();
+
   // endDate null → tidak ada batas tutup, cukup cek sudah dibuka
   const isOpen = project.stats?.endDate
     ? (() => {
-        const end = new Date(project.stats.endDate);
-        end.setHours(23, 59, 59, 999);
-        return today >= startDate && today <= end;
-      })()
+      const end = new Date(project.stats.endDate);
+      end.setHours(23, 59, 59, 999);
+      return today >= startDate && today <= end;
+    })()
     : today >= startDate;
+
+  // Resolusi tahun dengan fallback aman
+  const displayYear = project.year || (() => {
+    const raw = project.date || project.stats?.startDate;
+    if (!raw) return "";
+    const match = String(raw).match(/\b(19\d\d|20\d\d)\b/);
+    if (match) return match[1];
+    const d = new Date(raw);
+    return !isNaN(d.getTime()) ? String(d.getFullYear()) : "";
+  })();
+
   return (
     <div
       className={`relative overflow-hidden cursor-pointer ${className ?? ""}`}
@@ -56,9 +70,8 @@ export default function ProjectCard({ project, className }: ProjectData) {
 
         {/* OVERLAY */}
         <div
-          className={`absolute inset-0 z-10 bg-gradient-to-t from-main-blue/90 via-white/30 to-transparent transition-opacity duration-300 flex flex-col justify-end p-3 ${
-            hovered ? "opacity-100" : "opacity-0"
-          }`}
+          className={`absolute inset-0 z-10 bg-gradient-to-t from-main-blue/90 via-white/30 to-transparent transition-opacity duration-300 flex flex-col justify-end p-3 ${hovered ? "opacity-100" : "opacity-0"
+            }`}
         >
           <div className="flex items-center justify-between text-white">
             <div className="flex items-center gap-2 bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm">
@@ -83,15 +96,11 @@ export default function ProjectCard({ project, className }: ProjectData) {
 
       {/* DETAIL */}
       <div className="mt-2">
-        <h3 className="text-sm font-poppins line-clamp-2">{project.title}</h3>
+        <h3 className="text-md font-medium font-poppins line-clamp-2">{project.title}</h3>
         <div className="mt-2 flex items-center gap-3 text-xs">
-          <span className="flex items-center gap-1">
-            <FaHeart />
-            {project.likes} Likes
-          </span>
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1 rounded-full bg-main-blue py-[2px] px-[6px] text-[11px] font-bold text-white">
             <BsStars />
-            {project.karya} Karya
+            {displayYear}
           </span>
         </div>
       </div>
