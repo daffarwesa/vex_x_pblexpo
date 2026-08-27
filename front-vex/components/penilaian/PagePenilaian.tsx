@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { FaTrophy, FaMedal, FaStar, FaCheck, FaChevronRight, FaChevronLeft, FaSave, FaExclamationCircle } from "react-icons/fa";
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
+import { ChevronDownIcon, CheckIcon } from "@heroicons/react/20/solid";
+import { FaTrophy, FaMedal, FaStar, FaCheck, FaChevronRight, FaChevronLeft, FaSave, FaExclamationCircle, FaLayerGroup } from "react-icons/fa";
 import { Button, ButtonPutih } from "@/components/shared/ui/Button";
 import { showToast } from "@/components/shared/ui/ToastNotification";
 import {
@@ -282,40 +284,108 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
         {/* ========================================================= */}
         {step === 1 && (
           <div className="space-y-6">
-            {/* Kategori Tabs Navigation */}
-            <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5 px-1">
-                Pilih Kategori ({totalKategoriTerisi}/{kategoriList.length} Dinilai)
-              </p>
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
-                {kategoriList.map((kat) => {
-                  const isActive = selectedKategoriTab === kat.id_kategori;
-                  const winner = kategoriWinners[kat.id_kategori];
-                  const hasWinner = Boolean(winner?.juara1 || winner?.juara2);
+            {/* Kategori Dropdown Selector */}
+            <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="w-full sm:max-w-md">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                  Pilih Kategori PBL
+                </label>
+                <Listbox
+                  value={selectedKategoriTab}
+                  onChange={(val) => {
+                    if (val !== null) {
+                      setSelectedKategoriTab(val);
+                      setPageForKategori(val, 1);
+                    }
+                  }}
+                >
+                  <div className="relative">
+                    <ListboxButton className="relative w-full cursor-pointer rounded-xl bg-gray-50 hover:bg-gray-100/80 py-2.5 pl-3.5 pr-10 text-left text-sm font-medium text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-main-blue/30 focus:border-main-blue transition">
+                      <div className="flex items-center gap-2 truncate">
+                        <FaLayerGroup className="text-main-blue shrink-0" size={14} />
+                        {(() => {
+                          const current = kategoriList.find((k) => k.id_kategori === selectedKategoriTab);
+                          if (!current) return <span className="text-gray-400">Pilih Kategori</span>;
+                          const winner = kategoriWinners[current.id_kategori];
+                          const hasWinner = Boolean(winner?.juara1 || winner?.juara2);
 
-                  return (
-                    <button
-                      key={kat.id_kategori}
-                      onClick={() => setSelectedKategoriTab(kat.id_kategori)}
-                      className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-2 border ${
-                        isActive
-                          ? "bg-main-blue text-white border-main-blue shadow-sm"
-                          : hasWinner
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
-                          : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
-                      }`}
+                          return (
+                            <span className="truncate flex items-center gap-2">
+                              <span className="font-bold text-main-blue">{current.kode_kategori}</span>
+                              <span className="text-gray-600">— {current.nama_kategori}</span>
+                              {hasWinner && (
+                                <span className="inline-flex items-center text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded">
+                                  ✓ Dinilai
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                        <ChevronDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                      </span>
+                    </ListboxButton>
+
+                    <ListboxOptions
+                      transition
+                      className="absolute z-20 mt-1.5 max-h-72 w-full overflow-auto rounded-xl bg-white p-1 text-sm shadow-xl ring-1 ring-black/5 focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-100"
                     >
-                      <span>{kat.kode_kategori}</span>
-                      {hasWinner && (
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            isActive ? "bg-yellow-300" : "bg-emerald-500"
-                          }`}
-                        />
-                      )}
-                    </button>
-                  );
-                })}
+                      {kategoriList.map((kat) => {
+                        const isSelected = selectedKategoriTab === kat.id_kategori;
+                        const winner = kategoriWinners[kat.id_kategori];
+                        const hasWinner = Boolean(winner?.juara1 || winner?.juara2);
+
+                        return (
+                          <ListboxOption
+                            key={kat.id_kategori}
+                            value={kat.id_kategori}
+                            className={`relative cursor-pointer select-none rounded-lg py-2 pl-3 pr-8 transition flex items-center justify-between ${
+                              isSelected
+                                ? "bg-main-blue/10 text-main-blue font-semibold"
+                                : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                                isSelected ? "bg-main-blue text-white" : "bg-gray-100 text-gray-700"
+                              }`}>
+                                {kat.kode_kategori}
+                              </span>
+                              <span className="truncate">{kat.nama_kategori}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              {hasWinner && (
+                                <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2 rounded">
+                                  ✓ Dinilai
+                                </span>
+                              )}
+                              {isSelected && (
+                                <CheckIcon className="h-4 w-4 text-main-blue" aria-hidden="true" />
+                              )}
+                            </div>
+                          </ListboxOption>
+                        );
+                      })}
+                    </ListboxOptions>
+                  </div>
+                </Listbox>
+              </div>
+
+              {/* Progress Summary */}
+              <div className="flex items-center gap-3 bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200/80 self-start sm:self-auto">
+                <div className="w-9 h-9 rounded-lg bg-main-blue/10 text-main-blue flex items-center justify-center font-bold text-sm">
+                  {totalKategoriTerisi}/{kategoriList.length}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-800">Progres Kategori</p>
+                  <p className="text-[11px] text-gray-500">
+                    {totalKategoriTerisi === kategoriList.length
+                      ? "Semua kategori selesai dinilai"
+                      : `${kategoriList.length - totalKategoriTerisi} kategori belum selesai`}
+                  </p>
+                </div>
               </div>
             </div>
 
