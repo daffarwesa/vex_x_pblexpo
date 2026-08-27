@@ -72,9 +72,11 @@ class AdminKaryaController extends Controller
     // ============================
     public function store(Request $request)
     {
+        $adminId = auth('admin')->id() ?? $request->id_admin;
+
         $validated = $request->validate([
-            'id_admin'      => 'required|exists:admin,id_admin',
-            'id_stan'       => 'required|exists:stan,id_stan',
+            'id_admin'      => 'nullable|exists:admin,id_admin',
+            'id_stan'       => 'nullable|exists:stan,id_stan',
             'id_pameran'    => 'required|exists:pameran,id_pameran',
             'id_kategori'   => 'required|exists:kategori,id_kategori',
             'judul'         => 'required|string|max:255',
@@ -83,11 +85,22 @@ class AdminKaryaController extends Controller
             'gambar_poster' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
+        $finalAdminId = $adminId ?? \App\Models\Admin::first()?->id_admin;
+
+        // Jika stan tidak dikirim, otomatis buatkan/ambil stan untuk pameran ini
+        $stanId = $validated['id_stan'] ?? null;
+        if (!$stanId) {
+            $stan = \App\Models\Stan::firstOrCreate([
+                'id_pameran' => $validated['id_pameran'],
+            ]);
+            $stanId = $stan->id_stan;
+        }
+
         $path = $request->file('gambar_poster')->store('karya/poster', 'public');
 
         $karya = Karya::create([
-            'id_admin'      => $validated['id_admin'],
-            'id_stan'       => $validated['id_stan'],
+            'id_admin'      => $finalAdminId,
+            'id_stan'       => $stanId,
             'id_pameran'    => $validated['id_pameran'],
             'id_kategori'   => $validated['id_kategori'],
             'judul'         => $validated['judul'],
@@ -201,11 +214,34 @@ class AdminKaryaController extends Controller
     }
 
     // ==================================
-    // SET is_best PADA KARYA (toggle)
+    // SET is_best PADA KARYA (toggle atau rank 1,2,3)
     // ==================================
     public function setBest(Request $request, $id_karya)
     {
-        return $this->toggleStatus($request, $id_karya, 'is_best', 'best');
+        $request->validate([
+            'is_best' => 'required',
+        ]);
+
+        $karya = Karya::find($id_karya);
+
+        if (!$karya) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Karya tidak ditemukan',
+            ], 404);
+        }
+
+        $karya->update([
+            'is_best' => $request->is_best ? true : false,
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => $request->is_best
+                ? "Karya ditandai sebagai Best"
+                : "Status Best karya dibatalkan",
+            'data' => $karya,
+        ]);
     }
 
     // ==================================================

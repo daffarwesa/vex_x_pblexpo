@@ -203,19 +203,12 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
               {/* BUTTON */}
               <div className="w-full mt-6">
                 {isOpen ? (
-                  <div
-                    className="w-full"
-                    onClick={() => {
-                      url.post('/api/kunjungan', { id_pameran: pameran.id }).catch(() => { });
-                    }}
+                  <Button
+                    link={`/exhibition/${pameran.slug}`}
+                    className="w-full py-5 flex items-center justify-center rounded-md text-xl"
                   >
-                    <Button
-                      link={`/exhibition/${pameran.slug}`}
-                      className="w-full py-5 flex items-center justify-center rounded-md text-xl"
-                    >
-                      <FaPlay />
-                    </Button>
-                  </div>
+                    <FaPlay />
+                  </Button>
                 ) : (
                   <div className="w-full py-5 bg-gray-300 text-gray-500 rounded-md flex justify-center items-center text-xl cursor-not-allowed">
                     <FaPlay />

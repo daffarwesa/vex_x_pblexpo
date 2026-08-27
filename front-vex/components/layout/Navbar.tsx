@@ -42,11 +42,11 @@ export default function Navbar({ menuItems }: NavbarProps) {
       ? [
         { title: "HOMEPAGE", subtitle: "MAIN", link: "/" },
         { title: "EXHIBITION", subtitle: "3D BOOTH", link: "/admin/pameran" },
-        { title: "STATISTICS", subtitle: "ADMIN", link: "/admin/statistik" },
+        // { title: "STATISTICS", subtitle: "ADMIN", link: "/admin/statistik" },
       ]
       : (menuItems ?? defaultMenu);
 
-  /* 
+  /*
     AUTH DESKTOP BUTTON
   */
   const AuthDesktop = () => {

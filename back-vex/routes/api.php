@@ -23,10 +23,17 @@ Route::get('/', function () {
 // =============================================================================
 // ROUTE PUBLIK (Bisa diakses tanpa login)
 // =============================================================================
+Route::get('/kategori', function () {
+    return response()->json([
+        'status' => 'success',
+        'data' => \App\Models\Kategori::all(),
+    ]);
+});
 Route::get('/pameran', [PameranPublicController::class, 'index']);
 Route::get('/pameran/{slug}', [PameranPublicController::class, 'show']);
 Route::post('/pameran/{slug}/kunjungan', [PameranPublicController::class, 'catatKunjungan']);
 Route::post('/kunjungan', [StatistikController::class, 'store']);
+Route::get('/karya/{id_karya}', [KaryaPublicController::class, 'show']);
 
 // Login admin
 Route::post('/login', [AdminController::class, 'login']);
@@ -65,7 +72,14 @@ Route::middleware('auth:sanctum')->group(function () {
         // =============================
         // MANAJEMEN KARYA (Hanya Admin yang Login)
         // =============================
+        Route::get('/karya', [AdminKaryaController::class, 'index']);
+        Route::get('/karya/{id_karya}', [AdminKaryaController::class, 'show']);
+        Route::post('/karya', [AdminKaryaController::class, 'store']);
+        Route::match(['put', 'patch', 'post'], '/karya/{id_karya}', [AdminKaryaController::class, 'update']);
+        Route::delete('/karya/{id_karya}', [AdminKaryaController::class, 'destroy']);
+
         Route::get('/karya/pameran/{id_pameran}', [AdminKaryaController::class, 'getByPameran']);
+        Route::get('/karya/pameran/{id_pameran}/peringkat', [AdminKaryaController::class, 'getPeringkat']);
         Route::get('/karya/pameran/{id_pameran}/juara-best', [AdminKaryaController::class, 'getJuaraDanBest']);
         Route::patch('/karya/{id_karya}/predikat', [AdminKaryaController::class, 'setPredikat']);
         Route::patch('/karya/{id_karya}/best', [AdminKaryaController::class, 'setBest']);

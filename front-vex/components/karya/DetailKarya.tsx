@@ -10,8 +10,10 @@ import DetailAction from "@/components/karya/DetailAction";
 import {
   GetKarya,
   GetKaryaAdmin,
+  GetDetailKaryaAdmin,
   GetKaryaSemua,
   UpdateKarya,
+  UpdateKaryaAdmin,
   DeleteKarya,
   SetTerbaikRank,
   BatalkanTerbaikRank,
@@ -48,7 +50,7 @@ function validate(
   const errors: Record<string, string> = {};
 
   if (!form.pameranId) errors.pameranId = "Pameran wajib dipilih.";
-  if (!form.modelStan) errors.modelStan = "Stan wajib dipilih."; // ← FIX: cek modelStan, bukan booth
+  if (!form.category) errors.category = "Kategori wajib dipilih.";
   if (!form.title.trim()) errors.title = "Judul wajib diisi.";
   if (!form.description?.trim()) errors.description = "Deskripsi wajib diisi.";
 
@@ -64,10 +66,9 @@ function validate(
     }
   }
 
-  // Mode edit: gambar hanya wajib jika user memilih file baru
-  if (!isEdit) {
-    if (!thumbnailFile) errors.thumbnail = "Gambar sampul wajib diunggah.";
-    if (!posterFile) errors.poster = "Gambar poster wajib diunggah.";
+  // Mode edit: poster hanya wajib jika saat create awal
+  if (!isEdit && !posterFile) {
+    errors.poster = "Gambar poster wajib diunggah.";
   }
 
   return errors;
@@ -85,12 +86,11 @@ export default function DetailKarya({ id }: Props) {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  const isAdmin = user?.role === "Admin";
-  const isCreator = user?.role === "Creator";
+  const isAdmin = !!user;
+  const isCreator = false;
 
-  // Read-only untuk Admin (Admin tidak mengedit konten karya,
-  // hanya menghapus & menilai/menentukan karya terbaik)
-  const isReadOnly = isAdmin;
+  // Admin diizinkan mengedit dan menghapus karya
+  const isReadOnly = false;
 
   const [form, setForm] = useState<KaryaItem | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState("");
@@ -131,71 +131,50 @@ export default function DetailKarya({ id }: Props) {
     const load = async () => {
       try {
         const storageBase = process.env.NEXT_PUBLIC_STORAGE_URL ?? 'http://localhost:8000/storage';
-        const res = isCreator && !isAdmin
-          ? await GetKaryaSemua()
-          : isAdmin
-            ? await GetKaryaAdmin()
-            : await GetKarya();
+        const res = await GetDetailKaryaAdmin(id);
+        const item = res.data ?? res;
 
-        const raw = res.karya ?? [];
-
-        const list: KaryaItem[] = raw.map((item: any) => {
-          if (item.title && item.image !== undefined) {
-            return item;
-          }
+        if (item && item.id_karya) {
           const tanggalMulai = item.stan?.pameran?.tanggal_mulai ?? item.pameran?.tanggal_mulai ?? "";
           const bulan = tanggalMulai ? new Date(tanggalMulai).getMonth() + 1 : 0;
           const semester = bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
 
-          return {
+          const posterUrl = item.gambar_poster
+            ? item.gambar_poster.startsWith("http")
+              ? item.gambar_poster
+              : `${storageBase}/${item.gambar_poster}`
+            : "";
+
+          const found: KaryaItem = {
             id: item.id_karya,
             title: item.judul,
             description: item.deskripsi,
-            category: item.stan?.pameran?.kategori ?? item.pameran?.kategori ?? item.category ?? "",
-            image: item.gambar_poster ? `${storageBase}/${item.gambar_poster}` : item.image ?? "",
-            thumbnail: item.gambar_sampul ? `${storageBase}/${item.gambar_sampul}` : item.thumbnail ?? "",
+            category: String(item.id_kategori ?? item.category ?? ""),
+            image: posterUrl,
+            thumbnail: posterUrl,
             link: item.tautan ?? item.link ?? "",
-            year: tanggalMulai.slice(0, 4) || item.year || "",
-            semester: semester || item.semester || "",
-            booth: String(item.id_stan ?? item.booth ?? ""),
-            modelStan: item.stan?.model_stan ? String(item.stan.model_stan) : item.modelStan ?? "",
-            pameranId: item.id_pameran ?? item.pameranId,
+            year: tanggalMulai.slice(0, 4) || "",
+            semester: semester || "",
+            booth: String(item.id_stan ?? ""),
+            modelStan: item.stan?.model_stan ? String(item.stan.model_stan) : "",
+            pameranId: item.id_pameran,
             pameranTitle:
               item.stan?.pameran?.judul ??
               item.pameran?.judul ??
-              item.pameranTitle ??
               `Pameran #${item.id_pameran}`,
-            terbaikRank: item.terbaik_rank ?? item.terbaikRank ?? null,
+            terbaikRank: item.terbaik_rank ?? null,
             predikat: item.predikat ?? null,
           };
-        });
 
-        const found = list.find((item) => item.id === id);
-
-        if (found) {
           setForm(found);
-          setThumbnailPreview(found.thumbnailMedium || found.thumbnail || "");
-          setPosterPreview(found.imageLarge || found.image);
+          setPosterPreview(found.image);
 
           if (found.pameranId) {
             setCurrentPameran({
               id: found.pameranId,
-              title:
-                found.pameranTitle?.trim() || `Pameran #${found.pameranId}`,
+              title: found.pameranTitle?.trim() || `Pameran #${found.pameranId}`,
             });
           }
-
-          const siblings = list.filter(
-            (item) => item.id !== found.id && item.pameranId === found.pameranId,
-          );
-          setSiblingAwards({
-            takenRanks: siblings
-              .map((s) => s.terbaikRank)
-              .filter((r): r is TerbaikRank => !!r),
-            takenPredikat: siblings
-              .map((s) => s.predikat)
-              .filter((p): p is PredikatKarya => !!p),
-          });
         }
       } catch (err) {
         console.error("Gagal memuat karya:", err);
@@ -209,7 +188,7 @@ export default function DetailKarya({ id }: Props) {
 
   const handleChange = (field: keyof KaryaItem, value: string) => {
     if (!form || isReadOnly) return;
-    setForm({ ...form, [field]: value });
+    setForm((prev) => (prev ? { ...prev, [field]: value } : null));
     if (errors[field as string]) {
       setErrors((prev) => {
         const e = { ...prev };
@@ -248,14 +227,7 @@ export default function DetailKarya({ id }: Props) {
   };
 
   const handleSave = async () => {
-    if (!form || isReadOnly) return;
-    if (form.canEdit === false) {
-      showToast(
-        form.editMessage || "Karya tidak dapat diedit saat ini.",
-        "warning",
-      );
-      return;
-    }
+    if (!form) return;
 
     const validationErrors = validate(form, thumbnailFile, posterFile, true);
     if (Object.keys(validationErrors).length > 0) {
@@ -269,34 +241,31 @@ export default function DetailKarya({ id }: Props) {
     try {
       const formData = new FormData();
       formData.append("id_pameran", String(form.pameranId));
-      formData.append("model_stan", form.modelStan ?? ""); // kirim model_stan (id_model), bukan id_stan
+      if (form.category) formData.append("id_kategori", form.category);
       formData.append("judul", form.title.trim());
       formData.append("deskripsi", form.description?.trim() ?? "");
       formData.append("tautan", normalizeUrl(form.link ?? ""));
-      if (thumbnailFile) formData.append("gambar_sampul", thumbnailFile);
       if (posterFile) formData.append("gambar_poster", posterFile);
 
-      const result = await UpdateKarya(form.id, formData);
+      const result = await UpdateKaryaAdmin(form.id, formData);
       if (result.status !== "success") {
         throw new Error(result.message || "Gagal memperbarui karya");
       }
 
       showToast("Karya berhasil diperbarui!", "success");
-      router.push("/ketua-pbl/karya");
+      router.push("/admin/penilaian");
     } catch (err: any) {
       if (err.response?.status === 422) {
         const laravelErrors = err.response.data.errors as Record<string, string[]>;
         const mapped: Record<string, string> = {};
         if (laravelErrors.id_pameran)
           mapped.pameranId = laravelErrors.id_pameran[0];
-        if (laravelErrors.model_stan)
-          mapped.modelStan = laravelErrors.model_stan[0];
+        if (laravelErrors.id_kategori)
+          mapped.category = laravelErrors.id_kategori[0];
         if (laravelErrors.judul) mapped.title = laravelErrors.judul[0];
         if (laravelErrors.deskripsi)
           mapped.description = laravelErrors.deskripsi[0];
         if (laravelErrors.tautan) mapped.link = laravelErrors.tautan[0];
-        if (laravelErrors.gambar_sampul)
-          mapped.thumbnail = laravelErrors.gambar_sampul[0];
         if (laravelErrors.gambar_poster)
           mapped.poster = laravelErrors.gambar_poster[0];
         setErrors(mapped);
@@ -323,7 +292,7 @@ export default function DetailKarya({ id }: Props) {
         throw new Error(result.message || "Gagal menghapus karya");
       }
       showToast("Karya berhasil dihapus.", "success");
-      router.push("/admin/karya");
+      router.push("/admin/penilaian");
     } catch (err) {
       showToast("Gagal menghapus karya.", "error");
       console.error("Gagal menghapus karya:", err);
@@ -575,70 +544,51 @@ export default function DetailKarya({ id }: Props) {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-            {/* Gambar — read-only untuk Admin */}
-            <div
-              className={`space-y-3 ${
-                isReadOnly || isPameranLocked
-                  ? "pointer-events-none opacity-75"
-                  : ""
-              }`}
-            >
-              <DetailThumbnail
-                preview={thumbnailPreview}
-                onUpload={(e) => handleImageUpload(e, "thumbnail")}
-                error={errors.thumbnail}
-              />
+            {/* Gambar */}
+            <div className="space-y-3">
               <DetailPoster
                 preview={posterPreview}
                 onUpload={(e) => handleImageUpload(e, "poster")}
                 error={errors.poster}
-                readOnly={isReadOnly || isPameranLocked}
               />
             </div>
 
-            {/* Form — read-only untuk Admin */}
-            <div
-              className={
-                isReadOnly || isPameranLocked
-                  ? "pointer-events-none opacity-75"
-                  : ""
-              }
-            >
-              <DetailPreview
-                booth={form.booth ?? ""}
-                modelStan={form.modelStan ?? ""} // ← FIX: prop yang tadi hilang
-                pameranId={form.pameranId}
-                onChange={(value) => handleChange("modelStan", value)}
-                error={errors.modelStan} // ← FIX: dari errors.booth ke errors.modelStan
-                readOnly={isReadOnly || isPameranLocked}
-              />
+            {/* Form */}
+            <div>
               <DetailForm
                 form={form}
                 onChange={handleChange}
                 currentPameran={currentPameran}
                 errors={errors}
-                readOnly={isReadOnly || isPameranLocked}
               />
             </div>
           </div>
 
           {/* Action buttons */}
-          <DetailAction
-            // Admin
-            onDelete={isAdmin ? () => setShowConfirm(true) : undefined}
-            onSave={isCreator && !isPameranLocked ? handleSave : undefined}
-            // Admin: Penilaian — Peringkat 1-3 & Predikat
-            isAdmin={isAdmin}
-            currentRank={form.terbaikRank}
-            takenRanks={siblingAwards.takenRanks}
-            onSetRank={handleSetRank}
-            onCancelRank={handleCancelRank}
-            currentPredikat={form.predikat}
-            takenPredikat={siblingAwards.takenPredikat}
-            onSetPredikat={handleSetPredikat}
-            onCancelPredikat={handleCancelPredikat}
-            loading={isLoading}
-          />
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 mt-8">
+            <button
+              type="button"
+              onClick={() => router.push("/admin/penilaian")}
+              className="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium"
+            >
+              Kembali
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowConfirm(true)}
+              className="px-6 py-2.5 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 text-sm font-semibold"
+            >
+              Hapus Karya
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isLoading}
+              className="px-6 py-2.5 rounded-xl bg-main-blue text-white hover:opacity-90 disabled:opacity-50 text-sm font-bold shadow-sm"
+            >
+              {isLoading ? "Menyimpan..." : "Simpan Perubahan"}
+            </button>
+          </div>
         </div>
       </div>
     </>

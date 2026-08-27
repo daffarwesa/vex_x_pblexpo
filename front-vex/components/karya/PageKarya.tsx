@@ -18,8 +18,8 @@ interface Props {
 export default function PageKarya({ href }: Props) {
   const { user, loading: authLoading } = useAuth();
 
-  const isAdmin   = user?.role === "Admin";
-  const isCreator = user?.role === "Creator";
+  const isAdmin   = !!user;
+  const isCreator = false;
 
   const [karyaList, setKaryaList] = useState<KaryaItem[]>([]);
   const [pameranList, setPameranList] = useState<PameranItem[]>([]);

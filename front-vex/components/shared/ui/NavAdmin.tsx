@@ -8,6 +8,7 @@ import {
   FaPlus,
   FaTimes,
   FaChartBar,
+  FaTrophy,
 } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,12 +23,6 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
   const pathname = usePathname();
 
   const menuItems = [
-    // {
-    //   id: 1,
-    //   title: 'Pengguna',
-    //   icon: <FaUser size={17} />,
-    //   link: '/admin/pengguna',
-    // },
     {
       id: 2,
       title: "Exhibition",
@@ -35,16 +30,16 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
       link: "/admin/pameran",
     },
     {
-      id: 3,
-      title: 'Karya',
-      icon: <FaImage size={17} />,
-      link: '/admin/karya',
-    },
-    {
       id: 4,
       title: "Statistics",
       icon: <FaChartBar size={17} />,
       link: "/admin/statistik",
+    },
+    {
+      id: 5,
+      title: "Penilaian",
+      icon: <FaTrophy size={17} />,
+      link: "/admin/penilaian",
     },
   ];
 
