@@ -19,6 +19,8 @@ type Props = {
     >,
   ) => void;
   onSubmit: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 };
 
 export default function FormPameran({
@@ -29,6 +31,8 @@ export default function FormPameran({
   onChangeImage,
   onChange,
   onSubmit,
+  onDelete,
+  isDeleting = false,
 }: Props) {
   return (
     <div className="flex flex-col lg:flex-row gap-10">
@@ -137,12 +141,23 @@ export default function FormPameran({
           className="h-[140px]"
         />
 
-        {/* BUTTON */}
-        <div className="flex justify-end">
+        {/* BUTTONS */}
+        <div className="flex justify-end gap-3 pt-2">
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={loading || isDeleting}
+              className="px-6 py-2.5 rounded-lg border border-red-200 bg-red-50 text-red-600 font-semibold text-sm hover:bg-red-100 disabled:opacity-50 transition"
+            >
+              {isDeleting ? "Menghapus..." : "Hapus Pameran"}
+            </button>
+          )}
+
           <Button
             onClick={onSubmit}
-            disabled={loading}
-            className="px-8 py-2.5 text-white rounded-lg hover:opacity-80"
+            disabled={loading || isDeleting}
+            className="px-8 py-2.5 text-white rounded-lg hover:opacity-80 font-bold"
           >
             {loading ? "Menyimpan..." : "Simpan"}
           </Button>

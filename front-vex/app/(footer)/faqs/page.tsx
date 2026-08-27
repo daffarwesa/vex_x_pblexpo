@@ -51,7 +51,7 @@ export default function FaqsPage() {
 
       <p className="font-poppins font-light text-gray-600 max-w-2xl">
         Couldn't find the answer you're looking for? Contact us through the{" "}
-        <a href="/hubungi-kami" className="text-main-blue font-medium underline underline-offset-2">
+        <a href="/contact-us" className="text-main-blue font-medium underline underline-offset-2">
           Contact Us
         </a>{" "}
         page.

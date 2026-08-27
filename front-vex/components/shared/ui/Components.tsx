@@ -56,12 +56,12 @@ export function Card({ link, title, className, ...props }: dataCard) {
     </div>
   );
 }
-export function BestTag({ ...props }) {
-  return <Image src={bestTag} loading="eager" width={100} height={100} alt="Medalion" {...props} />;
-}
-export function FavTag({ ...props }) {
-  return <Image src={favTag} loading="eager" width={100} height={100} alt="fav-icon" {...props} />;
-}
+// export function BestTag({ ...props }) {
+//   return <Image src={bestTag} loading="eager" width={100} height={100} alt="Medalion" {...props} />;
+// }
+// export function FavTag({ ...props }) {
+//   return <Image src={favTag} loading="eager" width={100} height={100} alt="fav-icon" {...props} />;
+// }
 
 // Navbar.tsx
 export function TextNav({ link, title, subtitle, className, ...props }: LinkAkses) {

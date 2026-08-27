@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 /* 
-    ADMIN CRUD KARYA, PREDIKAT(1,2), IS_BEST
- */
+    ADMIN CRUD KARYA, PREDIKAT(1,2), IS_BEST(1,2,3,4)
+*/
 
 class AdminKaryaController extends Controller
 {
@@ -253,7 +253,7 @@ class AdminKaryaController extends Controller
             ->where('id_pameran', $id_pameran)
             ->where(function ($query) {
                 $query->whereNotNull('predikat')
-                      ->orWhere('is_best', true);
+                    ->orWhere('is_best', true);
             })
             ->when($request->filled('id_kategori'), function ($query) use ($request) {
                 $query->where('id_kategori', $request->id_kategori);

@@ -6,6 +6,11 @@ use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
+/* 
+    AUTH (LOGIN, LOGOUT, USER) 
+*/
+
+
 class AdminController extends Controller
 {
     // ==========
@@ -50,7 +55,6 @@ class AdminController extends Controller
                     'email' => $admin->email,
                 ],
             ]);
-
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'error',
