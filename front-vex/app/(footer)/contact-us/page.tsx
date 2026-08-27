@@ -1,7 +1,7 @@
 import { FaInstagram, FaYoutube, FaLinkedin } from "react-icons/fa";
 
 export const metadata = {
-  title: "Contact Us | V-EX+",
+  title: "V-EX+ | Contact us",
 };
 
 const kontak = [

@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Terms & Conditions | V-EX+",
+  title: "V-EX+ | Terms & Conditions",
 };
 
 const sections = [

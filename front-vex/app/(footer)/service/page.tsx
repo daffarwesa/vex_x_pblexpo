@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Service | V-EX+",
+  title: "V-EX+ | Service",
 };
 
 const layanan = [

@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "FAQs | V-EX+",
+  title: "V-EX+ | FAQs",
 };
 
 const faqs = [

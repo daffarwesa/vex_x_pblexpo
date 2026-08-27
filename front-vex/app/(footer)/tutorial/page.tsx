@@ -1,7 +1,7 @@
 import { FaFilePdf, FaArrowRight } from "react-icons/fa";
 
 export const metadata = {
-  title: "Tutorial | V-EX+",
+  title: "V-EX+ | Tutorial",
 };
 
 const steps = [
