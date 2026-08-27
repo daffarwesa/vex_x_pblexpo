@@ -13,7 +13,7 @@ use App\Http\Controllers\PameranPublicController;
 use App\Http\Controllers\KaryaPublicController;
 use App\Http\Controllers\StatistikController;
 
-/* 
+/*
     ROUTE FALLBACK
 */
 Route::get('/', function () {
@@ -26,6 +26,7 @@ Route::get('/', function () {
 Route::post('/pameran/{slug}/kunjungan', [PameranPublicController::class, 'catatKunjungan']);
 Route::get('/pameran', [PameranPublicController::class, 'index']);
 Route::get('/pameran/{slug}', [PameranPublicController::class, 'show']);
+Route::get('/karya/{id_karya}', [KaryaPublicController::class, 'show']);
 
 // Login admin
 Route::post('/login', [AdminController::class, 'login']);
@@ -33,7 +34,7 @@ Route::post('/login', [AdminController::class, 'login']);
 // =============================
 // ROUTE ADMIN (butuh login sebagai admin)
 // =============================
-Route::prefix('auth')->group(function () {
+Route::middleware('auth:admin')->prefix('auth')->group(function () {
     Route::post('/logout', [AdminController::class, 'logout']);
 
     // Ganti email
@@ -50,18 +51,22 @@ Route::prefix('auth')->group(function () {
     Route::match(['put', 'patch'], '/pameran/{id_pameran}', [AdminPameranController::class, 'update']);
     Route::delete('/pameran/{id_pameran}', [AdminPameranController::class, 'destroy']);
 
-    // Karya (admin-only)
+    // Karya (admin-only) — CRUD lengkap
+    Route::get('/karya', [AdminKaryaController::class, 'index']);
+    Route::get('/karya/{id_karya}', [AdminKaryaController::class, 'show']);
+    Route::post('/karya', [AdminKaryaController::class, 'store']);
+    Route::match(['put', 'patch'], '/karya/{id_karya}', [AdminKaryaController::class, 'update']);
+    Route::delete('/karya/{id_karya}', [AdminKaryaController::class, 'destroy']);
+
     Route::get('/karya/pameran/{id_pameran}', [AdminKaryaController::class, 'getByPameran']);
-    Route::get('/karya/pameran/{id_pameran}/juara-best', [AdminKaryaController::class, 'getJuaraDanBest']);
+    Route::get('/karya/pameran/{id_pameran}/peringkat', [AdminKaryaController::class, 'getPeringkat']);
     Route::patch('/karya/{id_karya}/predikat', [AdminKaryaController::class, 'setPredikat']);
     Route::patch('/karya/{id_karya}/best', [AdminKaryaController::class, 'setBest']);
 
     // =============================
     // STATISTIK KUNJUNGAN
     // =============================
-    // Auto group by range tanggal (jam / hari / minggu / bulan)
     Route::get('/statistik/range', [StatistikController::class, 'statistikRange']);
-    // Group by manual: harian atau jam
     Route::get('/statistik/kunjungan', [StatistikController::class, 'statistikKunjungan']);
 });
 
