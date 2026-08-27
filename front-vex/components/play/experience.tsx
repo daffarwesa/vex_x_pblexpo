@@ -80,7 +80,7 @@ function loadCachedTexture(
       onLoad(tex);
     },
     undefined,
-    () => {}
+    () => { }
   );
 }
 
@@ -415,6 +415,8 @@ function ExperienceInner({
         <Booth
           key={`${item.name}-${currentFloor}`}
           boothName={karya.booth_name}
+          idKarya={karya.id_karya}        // ← baru
+          idKategori={karya.id_kategori}  // ← baru
           position={item.position}
           quaternion={item.quaternion}
           poster={karya.poster}

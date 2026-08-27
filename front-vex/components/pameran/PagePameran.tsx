@@ -152,7 +152,7 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
       <main className="autoMid py-[40px]">
         {openData.length === 0 ? (
           <p className="text-gray-400 text-xl font-bold text-center py-[200px]">
-            {isAdmin ? "Belum Ada Pameran" : "Belum Ada Pameran yang Berlangsung"}
+            {isAdmin ? "No Exhibition Yet" : "No Ongoing Exhibition Yet"}
           </p>
         ) : (
           <>
