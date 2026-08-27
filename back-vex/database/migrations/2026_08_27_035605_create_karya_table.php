@@ -1,5 +1,6 @@
 <?php
 
+use Database\Seeders\KategoriSeeder;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -9,21 +10,19 @@ return new class extends Migration {
     {
         Schema::create('karya', function (Blueprint $table) {
             $table->id('id_karya');
-
-            $table->unsignedBigInteger('id_pengguna');
-            $table->unsignedBigInteger('id_kategori');
+            $table->unsignedBigInteger('id_admin');
             $table->unsignedBigInteger('id_stan');
             $table->unsignedBigInteger('id_pameran');
-            $table->foreign('id_pengguna')->references('id')->on('pengguna')->cascadeOnDelete();
-            $table->foreign('id_kategori')->references('id_kategori')->on('kategori')->cascadeOnDelete();
+            $table->unsignedBigInteger('id_kategori');
+            $table->foreign('id_admin')->references('id_admin')->on('admin')->cascadeOnDelete();
             $table->foreign('id_stan')->references('id_stan')->on('stan')->cascadeOnDelete();
             $table->foreign('id_pameran')->references('id_pameran')->on('pameran')->cascadeOnDelete();
+            $table->foreign('id_kategori')->references('id_kategori')->on('kategori')->cascadeOnDelete();
             $table->string('judul');
             $table->text('deskripsi');
             $table->string('tautan');
             $table->string('gambar_poster');
-            $table->string('gambar_sampul');
-            $table->boolean('is_juara')->default(false);
+            $table->enum('predikat', ['1', '2'])->nullable()->default(null);
             $table->boolean('is_best')->default(false);
         });
     }

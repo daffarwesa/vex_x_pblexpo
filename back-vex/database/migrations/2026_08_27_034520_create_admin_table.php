@@ -11,19 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pengguna', function (Blueprint $table) {
-            $table->id();
-
-            $table->string('nama', 255); 
+        Schema::create('admin', function (Blueprint $table) {
+            $table->id('id_admin');
+            $table->string('nama', 255);
             $table->string('email')->unique();
             $table->string('password');
-
-            $table->string('kategori_kode')->nullable();
-
-            $table->foreign('kategori_kode')->references('kode_kategori')->on('kategori')->cascadeOnDelete();
-            $table->enum('role', ['Admin', 'Creator', 'Visitor'])->default('Visitor');
-            $table->enum('status', ['Aktif', 'Tidak Aktif'])->default('Aktif');
-
             $table->string('new_email')->nullable();
             $table->string('new_email_verification_token')->nullable();
             $table->timestamp('new_email_expires_at')->nullable();
@@ -35,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pengguna');
+        Schema::dropIfExists('admin');
     }
 };

@@ -10,14 +10,9 @@ return new class extends Migration
     {
         Schema::create('pameran', function (Blueprint $table) {
             $table->id('id_pameran');
-
-            $table->unsignedBigInteger('model_pameran');
-            $table->string('kategori_kode');
-
-            $table->foreign('model_pameran')->references('id_model')->on('model')->cascadeOnDelete();
-            $table->foreign('kategori_kode')->references('kode_kategori')->on('kategori')->cascadeOnDelete();
             $table->string('banner');
             $table->string('judul');
+            $table->string('slug')->unique();
             $table->text('deskripsi');
             $table->date('tanggal_mulai_persiapan')->useCurrent();
             $table->date('tanggal_akhir_persiapan')->useCurrent();
