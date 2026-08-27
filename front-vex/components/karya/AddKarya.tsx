@@ -205,8 +205,8 @@ export default function AddKaryaPage({ onCancel, onSuccess }: AddKaryaProps) {
   return (
     <div className="w-full px-4 sm:px-6 lg:px-0 py-6 font-poppins">
       <div className="max-w-[1200px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start lg:items-stretch">
-          <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+          <div className="lg:sticky lg:top-6">
             <DetailPoster
               preview={posterPreview}
               onUpload={handleImageUpload}

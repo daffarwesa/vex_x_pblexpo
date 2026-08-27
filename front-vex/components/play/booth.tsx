@@ -1,13 +1,64 @@
-import { PrimaryMaterial, createSecondaryMaterial } from "@/components/play/boothMaterials";
+"use client";
 
-// ... (imports lain, type BoothProps — tetap sama seperti file asli kalian)
+import { useEffect, useMemo, useRef, useCallback } from "react";
+import { useGLTF } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
+import * as THREE from "three";
+import { sharedTextureLoader } from "@/components/shared/ui/LoadingManager";
+
+// Shared texture cache across all booths (and experience.tsx panels),
+// keyed by URL, so the same poster/sampul isn't downloaded/decoded twice.
+const textureCache = new Map<string, THREE.Texture>();
+
+function loadCachedTexture(
+  path: string,
+  onLoad: (tex: THREE.Texture) => void,
+  flipY = false
+) {
+  if (!path) return;
+
+  const cached = textureCache.get(path);
+  if (cached) {
+    onLoad(cached);
+    return;
+  }
+
+  // sharedTextureLoader pakai THREE.DefaultLoadingManager — sama dengan
+  // manager yang dibaca useProgress() di ExhibitionPage — sehingga texture
+  // poster/sampul ikut terhitung dalam progress bar loading.
+  sharedTextureLoader.load(
+    path,
+    (tex) => {
+      tex.flipY = flipY;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      textureCache.set(path, tex);
+      onLoad(tex);
+    },
+    undefined,
+    () => {}
+  );
+}
+
+type BoothProps = {
+  position?: [number, number, number];
+  quaternion?: [number, number, number, number];
+  boothName: string;
+  poster: string;
+  sampul: string;
+  tautan?: string;
+  modelPath: string;
+  idKarya?: any;
+  idKategori?: any;
+  cameraMode?: "first" | "third";
+  mobile?: boolean;
+  openPoster: (src: string, booth: string) => void;
+  openTautan: (url: string, booth: string) => void;
+};
 
 export default function Booth({
   position = [0, 0, 0],
   quaternion = [0, 0, 0, 1],
   boothName, poster, sampul, tautan, modelPath,
-  idKarya, idKategori,
-  cameraMode, mobile,
   openPoster, openTautan,
 }: BoothProps) {
   const gltf = useGLTF(modelPath);
@@ -16,84 +67,121 @@ export default function Booth({
 
   const posterMesh = useRef<THREE.Mesh | null>(null);
   const sampulMesh = useRef<THREE.Mesh | null>(null);
-  const posterCanvasTex = useRef<THREE.Texture | null>(null);
-  const numCanvasTex = useRef<THREE.Texture | null>(null);
 
-  // ... (useEffect traverse poster/sampul yang sudah ada — TETAP SAMA, tidak diubah) ...
-
-  /* ===================== */
-  /* WARNA KATEGORI: PRIMARY & SECONDARY */
-  /* Objek bernama "primary"/"secondary" (case-insensitive) di-warnai      */
-  /* berbeda per kategori. Keduanya adalah SHARED material dari            */
-  /* boothMaterials.ts — jangan dispose() di sini, karena instance-nya     */
-  /* dipakai bareng oleh booth lain (primary: semua booth; secondary:      */
-  /* semua booth dengan idKategori yang sama).                             */
-  /* ===================== */
   useEffect(() => {
     scene.traverse((obj: any) => {
       if (!obj.isMesh) return;
-      const name = obj.name?.toLowerCase();
-
-      if (name === "primary") {
-        obj.material = PrimaryMaterial;
-      }
-      if (name === "secondary") {
-        obj.material = createSecondaryMaterial(idKategori);
+      if (obj.name?.toLowerCase().includes("collider")) {
+        obj.visible = false;
+        obj.userData.collider = true;
       }
     });
-  }, [scene, idKategori]);
+    posterMesh.current = scene.getObjectByName("PanelPoster") as THREE.Mesh;
+    sampulMesh.current = scene.getObjectByName("PanelVideo") as THREE.Mesh;
 
-  /* ===================== */
-  /* LABEL NOMOR: OBJEK "num"                                              */
-  /* Objek bernama "num" diubah jadi plane bertekstur canvas: teks hitam    */
-  /* (id_karya) di atas background putih.                                   */
-  /* ===================== */
+    // Note: textures themselves are not disposed here since they're shared
+    // via textureCache and may be referenced by other booths/panels.
+    // Only the per-mesh material instance is disposed, in the effects below.
+  }, [scene]);
+
   useEffect(() => {
-    let numMesh: THREE.Mesh | null = null;
-    scene.traverse((obj: any) => {
-      if (obj.isMesh && obj.name?.toLowerCase() === "num") numMesh = obj;
+    if (!poster || !posterMesh.current) return;
+
+    let cancelled = false;
+
+    loadCachedTexture(poster, (tex) => {
+      if (cancelled || !posterMesh.current) return;
+      (posterMesh.current.material as THREE.Material)?.dispose?.();
+      posterMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
     });
-    if (!numMesh) return;
 
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#000000";
-    ctx.font = "bold 140px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(String(idKarya), canvas.width / 2, canvas.height / 2);
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.needsUpdate = true;
-    numCanvasTex.current?.dispose();
-    numCanvasTex.current = tex;
-
-    // Material "num" adalah instance unik per-booth (bikin baru tiap render),
-    // jadi aman & wajib di-dispose sebelum diganti.
-    ((numMesh as unknown) as THREE.Mesh).material &&
-      ((numMesh as unknown as THREE.Mesh).material as THREE.Material).dispose?.();
-    (numMesh as unknown as THREE.Mesh).material = new THREE.MeshBasicMaterial({
-      map: tex,
-      toneMapped: false,
-    });
-  }, [scene, idKarya]);
-
-  // Dispose canvas texture "num" saat komponen unmount.
-  useEffect(() => {
     return () => {
-      numCanvasTex.current?.dispose();
+      cancelled = true;
     };
-  }, []);
+  }, [poster, scene]);
 
-  // ... (sisa kode: isBlocked, handleClick, return JSX — TETAP SAMA, tidak diubah) ...
+  useEffect(() => {
+    if (!sampul || !sampulMesh.current) return;
+
+    let cancelled = false;
+
+    loadCachedTexture(sampul, (tex) => {
+      if (cancelled || !sampulMesh.current) return;
+      (sampulMesh.current.material as THREE.Material)?.dispose?.();
+      sampulMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
+    }, true);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sampul, scene]);
+
+  /* ===================== */
+  /* CLICK RANGE / OCCLUSION */
+  /* r3f pointer raycasting skips invisible meshes — dan collider dinding    */
+  /* memang di-set visible=false — jadi klik panel bawaan r3f TIDAK          */
+  /* terpengaruh tembok maupun jarak sama sekali. Di sini kita lempar ray    */
+  /* kedua secara manual dari kamera ke titik klik, khusus buat cek jarak    */
+  /* dan apakah ada collider (userData.collider) yang menghalangi.          */
+  /* ===================== */
+
+  const { camera, scene: world } = useThree();
+  const occlusionRay = useRef(new THREE.Raycaster());
+
+  const MAX_INTERACT_DISTANCE = 8;
+
+  // Cek apakah `obj` adalah bagian dari (descendant) `root`. Dipakai buat
+  // membedakan collider "milik sendiri" (rangka/pedestal booth ini, yang
+  // memang menempel/berhimpit dengan panelnya sendiri) dari collider
+  // eksternal (dinding hall, booth lain) yang benar-benar harus menghalangi.
+  const isDescendantOf = (obj: THREE.Object3D, root: THREE.Object3D) => {
+    let cur: THREE.Object3D | null = obj;
+    while (cur) {
+      if (cur === root) return true;
+      cur = cur.parent;
+    }
+    return false;
+  };
+
+  const isBlocked = useCallback(
+    (point: THREE.Vector3, distance: number) => {
+      if (distance > MAX_INTERACT_DISTANCE) return true;
+
+      const dir = point.clone().sub(camera.position).normalize();
+      occlusionRay.current.set(camera.position, dir);
+      // Berhenti sedikit sebelum titik klik supaya panel yang diklik sendiri
+      // tidak dihitung sebagai "penghalang" dirinya sendiri.
+      occlusionRay.current.far = Math.max(distance - 0.1, 0);
+      occlusionRay.current.near = 0;
+
+      const hits = occlusionRay.current
+        .intersectObjects(world.children, true)
+        .filter((h: any) => h.object?.userData?.collider && !isDescendantOf(h.object, scene));
+
+      return hits.length > 0;
+    },
+    [camera, world, scene]
+  );
+
+  const handleClick = (e: any) => {
+    const clicked = e?.object?.name;
+    if (clicked !== "PanelPoster" && clicked !== "PanelVideo") return;
+
+    // Begitu ray kena salah satu panel yang relevan, stop di sini — jangan
+    // biarkan event nembus/lanjut ke intersection lain di belakangnya.
+    // Ini yang bikin klik poster kadang malah ke-trigger sebagai klik video
+    // (dan sebaliknya) saat kedua panel berhimpit di ray yang sama.
+    e.stopPropagation();
+
+    if (isBlocked(e.point, e.distance)) return;
+
+    if (clicked === "PanelPoster" && poster) openPoster(poster, boothName);
+    if (clicked === "PanelVideo" && tautan) openTautan(tautan, boothName);
+  };
+
+  return (
+    <group position={position} quaternion={quaternionObj}>
+      <primitive object={scene} position={[0, 0, -1.2]} onClick={handleClick} />
+    </group>
+  );
 }
-
-// getKategoriColors & hashString DIHAPUS — dead code, tidak dipakai lagi
-// sejak warna kategori diambil dari KATEGORI_COLORS map di boothMaterials.ts
