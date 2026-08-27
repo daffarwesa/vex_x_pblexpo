@@ -8,7 +8,7 @@ class Karya extends Model
 {
     protected $table = 'karya';
     protected $primaryKey = 'id_karya';
-    public $timestamps = false; // migrasi tidak punya kolom created_at/updated_at
+    public $timestamps = false;
 
     protected $fillable = [
         'id_admin',

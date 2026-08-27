@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/* 
+    CRUD PAMERAN, SLUG
+*/
+
 class AdminPameranController extends Controller
 {
     // ============================

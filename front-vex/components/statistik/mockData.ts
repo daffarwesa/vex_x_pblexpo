@@ -3,6 +3,9 @@ export interface StatData {
   pengunjung: number;
 }
 
+/* 
+  DUMMNY STATISTIK DATA 
+*/
 export function generateDummyByRange(startDate: string, endDate: string): StatData[] {
   const start = new Date(startDate);
   const end = new Date(endDate);

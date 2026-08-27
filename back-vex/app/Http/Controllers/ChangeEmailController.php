@@ -8,12 +8,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
+/* 
+    CHANGE EMAIL CONTROLLER, OTP, VALIDATE
+*/
+
 class ChangeEmailController extends Controller
 {
     public function __construct(
         private OtpService $otpService
-    ) {
-    }
+    ) {}
 
     // =======================
     // KIRIM OTP KE EMAIL BARU

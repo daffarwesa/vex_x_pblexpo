@@ -14,14 +14,11 @@ class Stan extends Model
         'id_pameran',
     ];
 
-    // Relasi ke pameran
     public function pameran()
     {
         return $this->belongsTo(Pameran::class, 'id_pameran', 'id_pameran');
     }
 
-    
-    // Relasi ke karya
     public function karya()
     {
         return $this->hasMany(Karya::class, 'id_stan', 'id_stan');

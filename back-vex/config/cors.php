@@ -13,7 +13,7 @@ return [
 
     'exposed_headers' => [],
 
-    'max_age' => 86400, // Cache preflight OPTIONS selama 24 jam agar browser tidak mengirim request ganda
+    'max_age' => 86400, 
 
     'supports_credentials' => false,
 ];

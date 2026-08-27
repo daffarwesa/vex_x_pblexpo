@@ -16,6 +16,7 @@ use App\Http\Controllers\StatistikController;
 /*
     ROUTE FALLBACK
 */
+
 Route::get('/', function () {
     return view('error-api');
 });
