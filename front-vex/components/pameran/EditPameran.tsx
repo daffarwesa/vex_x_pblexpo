@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { PameranForm } from "@/types/pameran";
 import FormPameran from "./FormPameran";
-import { GetDetailPameran, UpdatePameran } from "./apiPameran";
+import { GetDetailPameran, UpdatePameran, DeletePameran, clearPameranCache } from "./apiPameran";
 import { showToast } from "@/components/shared/ui/ToastNotification";
 
 type FormErrors = Partial<Record<keyof PameranForm | "image", string>>;
@@ -77,7 +77,8 @@ export default function EditPameran() {
   const [notFound, setNotFound] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
-
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [form, setForm] = useState<PameranForm>({
     title: "",
     publishDate: "",
@@ -294,8 +295,66 @@ export default function EditPameran() {
     }
   };
 
+  const handleDeletePameran = async () => {
+    if (!slug) return;
+    try {
+      setIsDeleting(true);
+      const res = await DeletePameran(slug);
+      if (res.status === "success" || res.message) {
+        showToast("Pameran berhasil dihapus!", "success");
+        clearPameranCache();
+        setShowConfirmDelete(false);
+        router.push("/admin/pameran");
+      } else {
+        showToast(res.message || "Gagal menghapus pameran.", "error");
+      }
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Gagal menghapus pameran.", "error");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-secondary-color select-none pb-20 md:pb-30 font-poppins">
+      {/* MODAL KONFIRMASI HAPUS */}
+      {showConfirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-gray-100 text-center space-y-4">
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+              !
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-gray-800">Hapus Pameran Ini?</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Tindakan ini tidak dapat dibatalkan. Seluruh data karya dan stan yang terhubung ke pameran ini juga akan dihapus permanen.
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowConfirmDelete(false)}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold disabled:opacity-50"
+              >
+                Batal
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDeletePameran}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold shadow-md disabled:opacity-50"
+              >
+                {isDeleting ? "Menghapus..." : "Ya, Hapus"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <section className="autoMid">
         {fetching ? (
           <FormPameranSkeleton />
@@ -327,6 +386,8 @@ export default function EditPameran() {
             onChangeImage={handleImage}
             onChange={handleChange}
             onSubmit={handleSubmit}
+            onDelete={() => setShowConfirmDelete(true)}
+            isDeleting={isDeleting}
           />
         )}
       </section>
