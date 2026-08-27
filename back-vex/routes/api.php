@@ -20,49 +20,62 @@ Route::get('/', function () {
     return view('error-api');
 });
 
-// =============================
-// ROUTE PUBLIK
-// =============================
-Route::post('/pameran/{slug}/kunjungan', [PameranPublicController::class, 'catatKunjungan']);
+// =============================================================================
+// ROUTE PUBLIK (Bisa diakses tanpa login)
+// =============================================================================
 Route::get('/pameran', [PameranPublicController::class, 'index']);
 Route::get('/pameran/{slug}', [PameranPublicController::class, 'show']);
+Route::post('/pameran/{slug}/kunjungan', [PameranPublicController::class, 'catatKunjungan']);
+Route::post('/kunjungan', [StatistikController::class, 'store']);
 
 // Login admin
 Route::post('/login', [AdminController::class, 'login']);
 
-// =============================
-// ROUTE ADMIN (butuh login sebagai admin)
-// =============================
-Route::prefix('auth')->group(function () {
+// =============================================================================
+// ROUTE ADMIN (WAJIB LOGIN DENGAN TOKEN BEARER / SANCTUM)
+// Hanya admin yang sudah login yang bisa menambahkan, mengubah, atau menghapus data
+// =============================================================================
+Route::middleware('auth:sanctum')->group(function () {
+    // Current user & Logout
+    Route::get('/user', [AdminController::class, 'me']);
     Route::post('/logout', [AdminController::class, 'logout']);
 
-    // Ganti email
-    Route::prefix('change-email')->group(function () {
-        Route::post('/send', [ChangeEmailController::class, 'sendVerification']);
-        Route::post('/verify', [ChangeEmailController::class, 'verify']);
+    Route::prefix('auth')->group(function () {
+        Route::get('/user', [AdminController::class, 'me']);
+        Route::post('/logout', [AdminController::class, 'logout']);
+
+        // Ganti email
+        Route::prefix('change-email')->group(function () {
+            Route::post('/send', [ChangeEmailController::class, 'sendVerification']);
+            Route::post('/verify', [ChangeEmailController::class, 'verify']);
+        });
+
+        // Ganti kata sandi
+        Route::post('/change-password', [ChangePasswordController::class, 'changePassword']);
+
+        // =============================
+        // MANAJEMEN PAMERAN (Hanya Admin yang Login)
+        // =============================
+        Route::post('/pameran', [AdminPameranController::class, 'store']);
+        Route::post('/pameran/add', [AdminPameranController::class, 'store']);
+        Route::match(['put', 'patch', 'post'], '/pameran/{id_pameran}', [AdminPameranController::class, 'update']);
+        Route::match(['put', 'patch', 'post'], '/pameran/{id_pameran}/update', [AdminPameranController::class, 'update']);
+        Route::delete('/pameran/{id_pameran}', [AdminPameranController::class, 'destroy']);
+
+        // =============================
+        // MANAJEMEN KARYA (Hanya Admin yang Login)
+        // =============================
+        Route::get('/karya/pameran/{id_pameran}', [AdminKaryaController::class, 'getByPameran']);
+        Route::get('/karya/pameran/{id_pameran}/juara-best', [AdminKaryaController::class, 'getJuaraDanBest']);
+        Route::patch('/karya/{id_karya}/predikat', [AdminKaryaController::class, 'setPredikat']);
+        Route::patch('/karya/{id_karya}/best', [AdminKaryaController::class, 'setBest']);
+
+        // =============================
+        // STATISTIK KUNJUNGAN (Hanya Admin yang Login)
+        // =============================
+        Route::get('/statistik/range', [StatistikController::class, 'statistikRange']);
+        Route::get('/statistik/kunjungan', [StatistikController::class, 'statistikKunjungan']);
     });
-
-    // Ganti kata sandi
-    Route::post('/change-password', [ChangePasswordController::class, 'changePassword']);
-
-    // Pameran (admin-only)
-    Route::post('/pameran', [AdminPameranController::class, 'store']);
-    Route::match(['put', 'patch'], '/pameran/{id_pameran}', [AdminPameranController::class, 'update']);
-    Route::delete('/pameran/{id_pameran}', [AdminPameranController::class, 'destroy']);
-
-    // Karya (admin-only)
-    Route::get('/karya/pameran/{id_pameran}', [AdminKaryaController::class, 'getByPameran']);
-    Route::get('/karya/pameran/{id_pameran}/juara-best', [AdminKaryaController::class, 'getJuaraDanBest']);
-    Route::patch('/karya/{id_karya}/predikat', [AdminKaryaController::class, 'setPredikat']);
-    Route::patch('/karya/{id_karya}/best', [AdminKaryaController::class, 'setBest']);
-
-    // =============================
-    // STATISTIK KUNJUNGAN
-    // =============================
-    // Auto group by range tanggal (jam / hari / minggu / bulan)
-    Route::get('/statistik/range', [StatistikController::class, 'statistikRange']);
-    // Group by manual: harian atau jam
-    Route::get('/statistik/kunjungan', [StatistikController::class, 'statistikKunjungan']);
 });
 
 //-----------------------
