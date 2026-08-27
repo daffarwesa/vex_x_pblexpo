@@ -29,37 +29,26 @@ export default function Navbar({ menuItems }: NavbarProps) {
 
   const { user, logout, loading } = useAuth();
 
-  const isLogin = !!user;
+  const isLogin = Boolean(user);
 
   const defaultMenu: NavItem[] = [
     { title: "HOMEPAGE", subtitle: "MAIN", link: "/" },
-    { title: "EXHIBITON", subtitle: "3D BOOTH", link: "/pameran" },
+    { title: "EXHIBITION", subtitle: "3D BOOTH", link: "/pameran" },
   ];
 
   const resolvedMenu: NavItem[] = loading
     ? defaultMenu
-    : user?.role === "Admin"
+    : isLogin
       ? [
-          { title: "HOMEPAGE", subtitle: "MAIN", link: "/" },
-          { title: "EXHIBITION", subtitle: "3D BOOTH", link: "/admin/pameran" },
-          { title: "DASHBOARD", subtitle: "ADMIN", link: "/admin/pengguna" },
-        ]
-      : user?.role === "Creator"
-        ? [
-            { title: "HOMEPAGE", subtitle: "MAIN", link: "/" },
-            { title: "EXHIBITION", subtitle: "3D BOOTH", link: "/pameran" },
-            {
-              title: "DASHBOARD",
-              subtitle: "CREATOR",
-              link: "/ketua-pbl/karya",
-            },
-          ]
-        : (menuItems ?? defaultMenu);
+        { title: "HOMEPAGE", subtitle: "MAIN", link: "/" },
+        { title: "EXHIBITION", subtitle: "3D BOOTH", link: "/admin/pameran" },
+        { title: "STATISTICS", subtitle: "ADMIN", link: "/admin/statistik" },
+      ]
+      : (menuItems ?? defaultMenu);
 
   /* 
-    LOADING/SKELETON
+    AUTH DESKTOP BUTTON
   */
-
   const AuthDesktop = () => {
     if (loading) {
       return (
@@ -72,7 +61,7 @@ export default function Navbar({ menuItems }: NavbarProps) {
         onClick={() => setOpenProfile(true)}
         className="w-10 h-10 flex items-center justify-center rounded-full bg-main-blue text-white hover:scale-110 transition-all duration-300 shadow-md"
       >
-        <FaUser size={24} className="rounded-full" />
+        <FaUser size={20} className="rounded-full" />
       </button>
     ) : (
       <Button
@@ -94,7 +83,7 @@ export default function Navbar({ menuItems }: NavbarProps) {
         }}
         className="flex items-center justify-center gap-2 py-3 bg-main-blue text-white rounded-lg"
       >
-        <FaUser size={22} className="rounded-full" />
+        <FaUser size={20} className="rounded-full" />
         <span>Profile</span>
       </button>
     ) : (
@@ -131,7 +120,6 @@ export default function Navbar({ menuItems }: NavbarProps) {
           </div>
 
           {/* AUTH DESKTOP */}
-
           <div className="hidden lg:block">
             <AuthDesktop />
           </div>
@@ -147,9 +135,8 @@ export default function Navbar({ menuItems }: NavbarProps) {
 
         {/* MOBILE MENU */}
         <div
-          className={`lg:hidden overflow-hidden transition-all duration-300 ${
-            open ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-          }`}
+          className={`lg:hidden overflow-hidden transition-all duration-300 ${open ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+            }`}
         >
           <div className="px-4 pb-5 flex flex-col gap-4">
             {resolvedMenu.map((item, index) => (
@@ -167,14 +154,13 @@ export default function Navbar({ menuItems }: NavbarProps) {
 
       {/* PROFILE SIDEBAR */}
       <div
-        className={`fixed inset-0 z-50 transition-all duration-300 ${
-          openProfile ? "visible opacity-100" : "invisible opacity-0"
-        }`}
+        className={`fixed inset-0 z-50 transition-all duration-300 ${openProfile ? "visible opacity-100" : "invisible opacity-0"
+          }`}
       >
         {/* OVERLAY */}
         <div
           onClick={() => setOpenProfile(false)}
-          className="absolute inset-0 bg-black/40 -sm"
+          className="absolute inset-0 bg-black/40"
         />
 
         {/* DRAWER */}
@@ -192,11 +178,11 @@ export default function Navbar({ menuItems }: NavbarProps) {
 
                 <div className="overflow-hidden">
                   <p className="font-semibold text-sm sm:text-base truncate">
-                    {user?.nama || "User"}
+                    {user?.nama || "Admin"}
                   </p>
 
                   <p className="text-xs text-gray-500 truncate max-w-[180px] sm:max-w-[220px]">
-                    {user?.email || "user@mail.com"}
+                    {user?.email || "admin@example.com"}
                   </p>
                 </div>
               </div>
@@ -216,7 +202,7 @@ export default function Navbar({ menuItems }: NavbarProps) {
                 className="p-3 flex items-center gap-3 hover:bg-gray-100 transition border-b rounded-lg"
               >
                 <FaLock size={18} />
-                <span className="text-sm sm:text-base">Change Password</span>
+                <span className="text-sm sm:text-base">Ganti Kata Sandi</span>
               </Link>
 
               <Link
@@ -224,7 +210,7 @@ export default function Navbar({ menuItems }: NavbarProps) {
                 className="p-3 flex items-center gap-3 hover:bg-gray-100 transition border-b rounded-lg mt-2"
               >
                 <HiOutlineMail size={22} />
-                <span className="text-sm sm:text-base">Change Email</span>
+                <span className="text-sm sm:text-base">Ganti Email</span>
               </Link>
             </div>
 
@@ -232,15 +218,14 @@ export default function Navbar({ menuItems }: NavbarProps) {
             <div className="mt-auto pt-4 border-t">
               <button
                 onClick={() => {
-                  const yakin = confirm("Are you sure?");
+                  const yakin = confirm("Apakah Anda yakin ingin keluar?");
 
                   if (!yakin) return;
 
                   logout();
                   setOpenProfile(false);
-                  router.push("/");
                 }}
-                className="w-full p-3 flex items-center justify-center gap-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition active:scale-95 text-sm sm:text-base"
+                className="w-full p-3 flex items-center justify-center gap-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition active:scale-95 text-sm sm:text-base cursor-pointer"
               >
                 <FiLogOut />
                 Logout
