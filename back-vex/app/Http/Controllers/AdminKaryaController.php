@@ -15,9 +15,13 @@ class AdminKaryaController extends Controller
     // ============================
     // LIST SEMUA KARYA
     // ============================
-    public function index()
+    public function index(Request $request)
     {
-        $karya = Karya::with(['admin', 'stan', 'pameran', 'kategori'])->get();
+        $karya = Karya::with(['admin', 'stan', 'pameran', 'kategori'])
+            ->when($request->filled('id_kategori'), function ($query) use ($request) {
+                $query->where('id_kategori', $request->id_kategori);
+            })
+            ->get();
 
         return response()->json([
             'status' => 'success',
@@ -28,10 +32,13 @@ class AdminKaryaController extends Controller
     // ============================
     // LIST KARYA PER PAMERAN
     // ============================
-    public function getByPameran($id_pameran)
+    public function getByPameran(Request $request, $id_pameran)
     {
         $karya = Karya::with(['stan', 'kategori'])
             ->where('id_pameran', $id_pameran)
+            ->when($request->filled('id_kategori'), function ($query) use ($request) {
+                $query->where('id_kategori', $request->id_kategori);
+            })
             ->get();
 
         return response()->json([
@@ -202,9 +209,9 @@ class AdminKaryaController extends Controller
     }
 
     // ==================================================
-    // LIST KARYA YANG SUDAH JUARA/BEST (untuk halaman utama)
+    // LIST KARYA YANG SUDAH DAPAT PREDIKAT / BEST (PERINGKAT)
     // ==================================================
-    public function getJuaraDanBest($id_pameran)
+    public function getPeringkat(Request $request, $id_pameran)
     {
         $karya = Karya::with(['stan', 'kategori'])
             ->where('id_pameran', $id_pameran)
@@ -212,6 +219,10 @@ class AdminKaryaController extends Controller
                 $query->whereNotNull('predikat')
                       ->orWhere('is_best', true);
             })
+            ->when($request->filled('id_kategori'), function ($query) use ($request) {
+                $query->where('id_kategori', $request->id_kategori);
+            })
+            ->orderByRaw("CASE WHEN predikat = '1' THEN 0 WHEN predikat = '2' THEN 1 WHEN is_best = 1 THEN 2 ELSE 3 END")
             ->get();
 
         return response()->json([
