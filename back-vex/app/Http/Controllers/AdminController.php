@@ -6,10 +6,6 @@ use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
-/* 
-ADMIN LIKE PENGGUNA ONLY LOGIN & LOGOUT
-*/
-
 class AdminController extends Controller
 {
     // ==========
@@ -49,7 +45,7 @@ class AdminController extends Controller
                 'redirect' => '/admin/pameran',
                 'token' => $token,
                 'user' => [
-                    'id' => $admin->id,
+                    'id' => $admin->id_admin,
                     'nama' => $admin->nama,
                     'email' => $admin->email,
                 ],
@@ -58,9 +54,33 @@ class AdminController extends Controller
         } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Terjadi kesalahan pada server.',
+                'message' => 'Terjadi kesalahan pada server: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    // ===========
+    // GET CURRENT USER / ME
+    // ===========
+    public function me(Request $request)
+    {
+        $admin = $request->user();
+
+        if (!$admin) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'user' => [
+                'id' => $admin->id_admin,
+                'nama' => $admin->nama,
+                'email' => $admin->email,
+            ],
+        ]);
     }
 
     // ===========
@@ -68,7 +88,9 @@ class AdminController extends Controller
     // ===========
     public function logout(Request $request)
     {
-        $request->user()->tokens()->delete();
+        if ($request->user()) {
+            $request->user()->tokens()->delete();
+        }
 
         return response()->json([
             'status' => 'success',

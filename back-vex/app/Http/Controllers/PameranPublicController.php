@@ -12,20 +12,25 @@ class PameranPublicController extends Controller
     // ============================
     public function index()
     {
-        $pameran = Pameran::orderBy('tanggal_buka', 'desc')->get();
+        $pameran = Pameran::withCount('karya')
+            ->orderBy('tanggal_buka', 'desc')
+            ->get();
 
         return response()->json([
             'status' => 'success',
             'data' => $pameran,
+            'pameran' => $pameran,
         ]);
     }
 
     // ============================
-    // DETAIL PAMERAN VIA SLUG (publik)
+    // DETAIL PAMERAN VIA SLUG / ID (publik)
     // ============================
     public function show($slug)
     {
-        $pameran = Pameran::with('karya')->where('slug', $slug)->first();
+        $pameran = is_numeric($slug)
+            ? Pameran::with(['karya', 'karya.stan', 'karya.kategori'])->withCount('karya')->find($slug)
+            : Pameran::with(['karya', 'karya.stan', 'karya.kategori'])->withCount('karya')->where('slug', $slug)->first();
 
         if (!$pameran) {
             return response()->json([
@@ -37,6 +42,7 @@ class PameranPublicController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => $pameran,
+            'pameran' => $pameran,
         ]);
     }
 
@@ -45,7 +51,9 @@ class PameranPublicController extends Controller
     // ==========================================
     public function catatKunjungan($slug)
     {
-        $pameran = Pameran::where('slug', $slug)->first();
+        $pameran = is_numeric($slug)
+            ? Pameran::find($slug)
+            : Pameran::where('slug', $slug)->first();
 
         if (!$pameran) {
             return response()->json([

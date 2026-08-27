@@ -15,6 +15,29 @@ class AdminPameranController extends Controller
     // ============================
     public function store(Request $request)
     {
+        // Normalisasi input jika dikirim dengan format alternatif
+        if (!$request->has('judul') && $request->has('title')) {
+            $request->merge(['judul' => $request->input('title')]);
+        }
+        if (!$request->has('deskripsi') && $request->has('description')) {
+            $request->merge(['deskripsi' => $request->input('description')]);
+        }
+        if (!$request->has('tanggal_mulai_persiapan') && $request->has('prepare_start')) {
+            $request->merge(['tanggal_mulai_persiapan' => $request->input('prepare_start')]);
+        } elseif (!$request->has('tanggal_mulai_persiapan') && $request->has('prepareStart')) {
+            $request->merge(['tanggal_mulai_persiapan' => $request->input('prepareStart')]);
+        }
+        if (!$request->has('tanggal_akhir_persiapan') && $request->has('prepare_end')) {
+            $request->merge(['tanggal_akhir_persiapan' => $request->input('prepare_end')]);
+        } elseif (!$request->has('tanggal_akhir_persiapan') && $request->has('prepareEnd')) {
+            $request->merge(['tanggal_akhir_persiapan' => $request->input('prepareEnd')]);
+        }
+        if (!$request->has('tanggal_buka') && $request->has('open_date')) {
+            $request->merge(['tanggal_buka' => $request->input('open_date')]);
+        } elseif (!$request->has('tanggal_buka') && $request->has('publishDate')) {
+            $request->merge(['tanggal_buka' => $request->input('publishDate')]);
+        }
+
         $request->validate([
             'banner' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
             'judul' => 'required|string|max:255',
@@ -40,6 +63,7 @@ class AdminPameranController extends Controller
             'status' => 'success',
             'message' => 'Pameran berhasil dibuat',
             'data' => $pameran,
+            'pameran' => $pameran,
         ], 201);
     }
 
@@ -48,13 +72,38 @@ class AdminPameranController extends Controller
     // ============================
     public function update(Request $request, $id_pameran)
     {
-        $pameran = Pameran::find($id_pameran);
+        $pameran = is_numeric($id_pameran)
+            ? Pameran::find($id_pameran)
+            : Pameran::where('slug', $id_pameran)->first();
 
         if (!$pameran) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Pameran tidak ditemukan',
             ], 404);
+        }
+
+        // Normalisasi input
+        if (!$request->has('judul') && $request->has('title')) {
+            $request->merge(['judul' => $request->input('title')]);
+        }
+        if (!$request->has('deskripsi') && $request->has('description')) {
+            $request->merge(['deskripsi' => $request->input('description')]);
+        }
+        if (!$request->has('tanggal_mulai_persiapan') && $request->has('prepare_start')) {
+            $request->merge(['tanggal_mulai_persiapan' => $request->input('prepare_start')]);
+        } elseif (!$request->has('tanggal_mulai_persiapan') && $request->has('prepareStart')) {
+            $request->merge(['tanggal_mulai_persiapan' => $request->input('prepareStart')]);
+        }
+        if (!$request->has('tanggal_akhir_persiapan') && $request->has('prepare_end')) {
+            $request->merge(['tanggal_akhir_persiapan' => $request->input('prepare_end')]);
+        } elseif (!$request->has('tanggal_akhir_persiapan') && $request->has('prepareEnd')) {
+            $request->merge(['tanggal_akhir_persiapan' => $request->input('prepareEnd')]);
+        }
+        if (!$request->has('tanggal_buka') && $request->has('open_date')) {
+            $request->merge(['tanggal_buka' => $request->input('open_date')]);
+        } elseif (!$request->has('tanggal_buka') && $request->has('publishDate')) {
+            $request->merge(['tanggal_buka' => $request->input('publishDate')]);
         }
 
         $request->validate([
@@ -92,6 +141,7 @@ class AdminPameranController extends Controller
             'status' => 'success',
             'message' => 'Pameran berhasil diperbarui',
             'data' => $pameran,
+            'pameran' => $pameran,
         ]);
     }
 
@@ -100,7 +150,9 @@ class AdminPameranController extends Controller
     // ============================
     public function destroy($id_pameran)
     {
-        $pameran = Pameran::find($id_pameran);
+        $pameran = is_numeric($id_pameran)
+            ? Pameran::find($id_pameran)
+            : Pameran::where('slug', $id_pameran)->first();
 
         if (!$pameran) {
             return response()->json([
