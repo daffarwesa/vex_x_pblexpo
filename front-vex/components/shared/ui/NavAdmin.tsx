@@ -37,7 +37,7 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
     },
     {
       id: 5,
-      title: "Penilaian",
+      title: "Ratings",
       icon: <FaTrophy size={17} />,
       link: "/admin/penilaian",
     },
@@ -98,7 +98,7 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
 
         {/* BUTTON */}
         <div className="group relative flex h-10 w-10 items-center justify-center">
-          <Tooltip>Tambah</Tooltip>
+          <Tooltip>Add</Tooltip>
 
           <motion.button
             onClick={onAddClick}

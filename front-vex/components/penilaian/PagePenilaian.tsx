@@ -2,9 +2,24 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+} from "@headlessui/react";
 import { ChevronDownIcon, CheckIcon } from "@heroicons/react/20/solid";
-import { FaTrophy, FaMedal, FaStar, FaCheck, FaChevronRight, FaChevronLeft, FaSave, FaExclamationCircle, FaLayerGroup } from "react-icons/fa";
+import {
+  FaTrophy,
+  FaMedal,
+  FaStar,
+  FaCheck,
+  FaChevronRight,
+  FaChevronLeft,
+  FaSave,
+  FaExclamationCircle,
+  FaLayerGroup,
+} from "react-icons/fa";
 import { Button, ButtonPutih } from "@/components/shared/ui/Button";
 import { showToast } from "@/components/shared/ui/ToastNotification";
 import {
@@ -40,14 +55,19 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
     best3?: number | null;
   }>({});
 
-  const [selectedKategoriTab, setSelectedKategoriTab] = useState<number | null>(null);
+  const [selectedKategoriTab, setSelectedKategoriTab] = useState<number | null>(
+    null,
+  );
 
   // Pagination State (Grid 3x3 = 9 items per page)
   const ITEMS_PER_PAGE = 9;
-  const [pagePerKategori, setPagePerKategori] = useState<Record<number, number>>({});
+  const [pagePerKategori, setPagePerKategori] = useState<
+    Record<number, number>
+  >({});
   const [pageBest, setPageBest] = useState<number>(1);
 
-  const getCurrentPage = (id_kategori: number) => pagePerKategori[id_kategori] || 1;
+  const getCurrentPage = (id_kategori: number) =>
+    pagePerKategori[id_kategori] || 1;
   const setPageForKategori = (id_kategori: number, page: number) => {
     setPagePerKategori((prev) => ({ ...prev, [id_kategori]: page }));
   };
@@ -72,8 +92,15 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
         }
 
         // Init winners dari data existing di DB
-        const initialKategoriWinners: Record<number, { juara1?: number | null; juara2?: number | null }> = {};
-        const initialBestWinners: { best1?: number | null; best2?: number | null; best3?: number | null } = {};
+        const initialKategoriWinners: Record<
+          number,
+          { juara1?: number | null; juara2?: number | null }
+        > = {};
+        const initialBestWinners: {
+          best1?: number | null;
+          best2?: number | null;
+          best3?: number | null;
+        } = {};
 
         karyaRes.forEach((k) => {
           if (k.id_kategori) {
@@ -88,9 +115,12 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
           }
 
           if (k.is_best) {
-            if (!initialBestWinners.best1) initialBestWinners.best1 = k.id_karya;
-            else if (!initialBestWinners.best2) initialBestWinners.best2 = k.id_karya;
-            else if (!initialBestWinners.best3) initialBestWinners.best3 = k.id_karya;
+            if (!initialBestWinners.best1)
+              initialBestWinners.best1 = k.id_karya;
+            else if (!initialBestWinners.best2)
+              initialBestWinners.best2 = k.id_karya;
+            else if (!initialBestWinners.best3)
+              initialBestWinners.best3 = k.id_karya;
           }
         });
 
@@ -111,7 +141,8 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
   const getPosterSrc = (karya: PenilaianItem) => {
     if (!karya.gambar_poster) return "/images/placeholder-karya.jpg";
     if (karya.gambar_poster.startsWith("http")) return karya.gambar_poster;
-    const base = process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://localhost:8000/storage";
+    const base =
+      process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://localhost:8000/storage";
     return `${base}/${karya.gambar_poster}`;
   };
 
@@ -126,7 +157,11 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
   }, [karyaList]);
 
   // Handler toggle Juara Kategori (Auto Save)
-  const handleSelectJuaraKategori = async (id_kategori: number, id_karya: number, rank: "juara1" | "juara2") => {
+  const handleSelectJuaraKategori = async (
+    id_kategori: number,
+    id_karya: number,
+    rank: "juara1" | "juara2",
+  ) => {
     const current = kategoriWinners[id_kategori] || {};
     const otherRank = rank === "juara1" ? "juara2" : "juara1";
     const predikatVal = rank === "juara1" ? "1" : "2";
@@ -141,7 +176,8 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
           [id_kategori]: { ...prevCurrent, [rank]: null },
         };
       }
-      const newOther = prevCurrent[otherRank] === id_karya ? null : prevCurrent[otherRank];
+      const newOther =
+        prevCurrent[otherRank] === id_karya ? null : prevCurrent[otherRank];
       return {
         ...prev,
         [id_kategori]: {
@@ -162,7 +198,10 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
           await SetPredikatKarya(current[rank]!, null);
         }
         await SetPredikatKarya(id_karya, predikatVal);
-        showToast(`Karya berhasil ditandai sebagai Juara ${predikatVal}!`, "success");
+        showToast(
+          `Karya berhasil ditandai sebagai Juara ${predikatVal}!`,
+          "success",
+        );
       }
     } catch (err) {
       console.error("Gagal update predikat:", err);
@@ -171,7 +210,10 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
   };
 
   // Handler toggle Best Global (Auto Save)
-  const handleSelectBest = async (id_karya: number, rank: "best1" | "best2" | "best3") => {
+  const handleSelectBest = async (
+    id_karya: number,
+    rank: "best1" | "best2" | "best3",
+  ) => {
     const isUnselect = bestWinners[rank] === id_karya;
 
     // Optimistic UI update
@@ -196,7 +238,8 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
           await SetBestKarya(bestWinners[rank]!, false);
         }
         await SetBestKarya(id_karya, true);
-        const rankLabel = rank === "best1" ? "Best 1" : rank === "best2" ? "Best 2" : "Best 3";
+        const rankLabel =
+          rank === "best1" ? "Best 1" : rank === "best2" ? "Best 2" : "Best 3";
         showToast(`Karya berhasil ditandai sebagai ${rankLabel}!`, "success");
       }
     } catch (err) {
@@ -218,13 +261,10 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-secondary-color font-poppins pb-24">
-        <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-10">
-          <div className="max-w-[1200px] mx-auto px-4 text-center text-white">
-            <h1 className="text-2xl md:text-3xl font-bold">Penilaian Karya</h1>
-            <p className="text-white/80 text-sm mt-2">Memuat daftar karya dan kategori...</p>
-          </div>
+        <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-16">
+        
         </section>
-        <div className="max-w-[1200px] mx-auto px-4 py-12 flex justify-center">
+        <div className="max-w-[1200px] mx-auto px-4 py-[300px] flex justify-center">
           <div className="w-10 h-10 border-4 border-main-blue border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
@@ -239,10 +279,13 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl md:text-3xl font-bold">Penilaian Karya PBL</h1>
+                <h1 className="text-2xl md:text-3xl font-bold">
+                  Penilaian Karya PBL
+                </h1>
               </div>
               <p className="text-white/80 text-xs md:text-sm mt-1">
-                Tentukan Juara 1 & 2 untuk setiap kategori serta 3 Karya Best Global.
+                Tentukan Juara 1 & 2 untuk setiap kategori serta 3 Karya Best
+                Global.
               </p>
             </div>
 
@@ -298,17 +341,33 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                   <div className="relative">
                     <ListboxButton className="relative w-full cursor-pointer rounded-xl bg-gray-50 hover:bg-gray-100/80 py-2.5 pl-3.5 pr-10 text-left text-sm font-medium text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-main-blue/30 focus:border-main-blue transition">
                       <div className="flex items-center gap-2 truncate">
-                        <FaLayerGroup className="text-main-blue shrink-0" size={14} />
+                        <FaLayerGroup
+                          className="text-main-blue shrink-0"
+                          size={14}
+                        />
                         {(() => {
-                          const current = kategoriList.find((k) => k.id_kategori === selectedKategoriTab);
-                          if (!current) return <span className="text-gray-400">Pilih Kategori</span>;
+                          const current = kategoriList.find(
+                            (k) => k.id_kategori === selectedKategoriTab,
+                          );
+                          if (!current)
+                            return (
+                              <span className="text-gray-400">
+                                Pilih Kategori
+                              </span>
+                            );
                           const winner = kategoriWinners[current.id_kategori];
-                          const hasWinner = Boolean(winner?.juara1 || winner?.juara2);
+                          const hasWinner = Boolean(
+                            winner?.juara1 || winner?.juara2,
+                          );
 
                           return (
                             <span className="truncate flex items-center gap-2">
-                              <span className="font-bold text-main-blue">{current.kode_kategori}</span>
-                              <span className="text-gray-600">— {current.nama_kategori}</span>
+                              <span className="font-bold text-main-blue">
+                                {current.kode_kategori}
+                              </span>
+                              <span className="text-gray-600">
+                                — {current.nama_kategori}
+                              </span>
                               {hasWinner && (
                                 <span className="inline-flex items-center text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded">
                                   ✓ Dinilai
@@ -319,7 +378,10 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                         })()}
                       </div>
                       <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <ChevronDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <ChevronDownIcon
+                          className="h-5 w-5 text-gray-400"
+                          aria-hidden="true"
+                        />
                       </span>
                     </ListboxButton>
 
@@ -328,9 +390,12 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                       className="absolute z-20 mt-1.5 max-h-72 w-full overflow-auto rounded-xl bg-white p-1 text-sm shadow-xl ring-1 ring-black/5 focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-100"
                     >
                       {kategoriList.map((kat) => {
-                        const isSelected = selectedKategoriTab === kat.id_kategori;
+                        const isSelected =
+                          selectedKategoriTab === kat.id_kategori;
                         const winner = kategoriWinners[kat.id_kategori];
-                        const hasWinner = Boolean(winner?.juara1 || winner?.juara2);
+                        const hasWinner = Boolean(
+                          winner?.juara1 || winner?.juara2,
+                        );
 
                         return (
                           <ListboxOption
@@ -343,12 +408,18 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                             }`}
                           >
                             <div className="flex items-center gap-2 truncate">
-                              <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                                isSelected ? "bg-main-blue text-white" : "bg-gray-100 text-gray-700"
-                              }`}>
+                              <span
+                                className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+                                  isSelected
+                                    ? "bg-main-blue text-white"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}
+                              >
                                 {kat.kode_kategori}
                               </span>
-                              <span className="truncate">{kat.nama_kategori}</span>
+                              <span className="truncate">
+                                {kat.nama_kategori}
+                              </span>
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0">
@@ -358,7 +429,10 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                 </span>
                               )}
                               {isSelected && (
-                                <CheckIcon className="h-4 w-4 text-main-blue" aria-hidden="true" />
+                                <CheckIcon
+                                  className="h-4 w-4 text-main-blue"
+                                  aria-hidden="true"
+                                />
                               )}
                             </div>
                           </ListboxOption>
@@ -375,7 +449,9 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                   {totalKategoriTerisi}/{kategoriList.length}
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-gray-800">Progres Kategori</p>
+                  <p className="text-xs font-bold text-gray-800">
+                    Progres Kategori
+                  </p>
                   <p className="text-[11px] text-gray-500">
                     {totalKategoriTerisi === kategoriList.length
                       ? "Semua kategori selesai dinilai"
@@ -389,15 +465,22 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
             {selectedKategoriTab && (
               <div>
                 {(() => {
-                  const currentKat = kategoriList.find((k) => k.id_kategori === selectedKategoriTab);
-                  const allKaryasInKat = karyaByKategori[selectedKategoriTab] || [];
+                  const currentKat = kategoriList.find(
+                    (k) => k.id_kategori === selectedKategoriTab,
+                  );
+                  const allKaryasInKat =
+                    karyaByKategori[selectedKategoriTab] || [];
                   const winner = kategoriWinners[selectedKategoriTab] || {};
 
                   // Paginasi 3x3 (9 items per page)
                   const currentPage = getCurrentPage(selectedKategoriTab);
-                  const totalPages = Math.ceil(allKaryasInKat.length / ITEMS_PER_PAGE) || 1;
+                  const totalPages =
+                    Math.ceil(allKaryasInKat.length / ITEMS_PER_PAGE) || 1;
                   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-                  const currentKaryas = allKaryasInKat.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+                  const currentKaryas = allKaryasInKat.slice(
+                    startIndex,
+                    startIndex + ITEMS_PER_PAGE,
+                  );
 
                   return (
                     <div className="space-y-4">
@@ -420,8 +503,17 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                   : "bg-gray-100 text-gray-400 border-gray-200 border-dashed font-medium"
                               }`}
                             >
-                              <FaTrophy className={winner.juara1 ? "text-yellow-950" : "text-gray-400"} />
-                              <span>Juara 1: {winner.juara1 ? "✓ Terpilih" : "Belum"}</span>
+                              <FaTrophy
+                                className={
+                                  winner.juara1
+                                    ? "text-yellow-950"
+                                    : "text-gray-400"
+                                }
+                              />
+                              <span>
+                                Juara 1:{" "}
+                                {winner.juara1 ? "✓ Terpilih" : "Belum"}
+                              </span>
                             </div>
 
                             {/* Juara 2 Status Badge */}
@@ -432,8 +524,15 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                   : "bg-gray-100 text-gray-400 border-gray-200 border-dashed font-medium"
                               }`}
                             >
-                              <FaMedal className={winner.juara2 ? "text-white" : "text-gray-400"} />
-                              <span>Juara 2: {winner.juara2 ? "✓ Terpilih" : "Belum"}</span>
+                              <FaMedal
+                                className={
+                                  winner.juara2 ? "text-white" : "text-gray-400"
+                                }
+                              />
+                              <span>
+                                Juara 2:{" "}
+                                {winner.juara2 ? "✓ Terpilih" : "Belum"}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -469,13 +568,17 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                     isJuara1
                                       ? "border-yellow-400 shadow-md ring-2 ring-yellow-400/30"
                                       : isJuara2
-                                      ? "border-slate-400 shadow-md ring-2 ring-slate-400/30"
-                                      : "border-gray-200 hover:border-main-blue hover:shadow-md"
+                                        ? "border-slate-400 shadow-md ring-2 ring-slate-400/30"
+                                        : "border-gray-200 hover:border-main-blue hover:shadow-md"
                                   }`}
                                 >
                                   {/* Area Klik untuk Edit Karya */}
                                   <div
-                                    onClick={() => router.push(`/admin/karya/${karya.id_karya}`)}
+                                    onClick={() =>
+                                      router.push(
+                                        `/admin/karya/${karya.id_karya}`,
+                                      )
+                                    }
                                     className="cursor-pointer"
                                     title="Klik untuk melihat detail / edit karya"
                                   >
@@ -507,7 +610,8 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                         {karya.judul}
                                       </h3>
                                       <p className="text-xs text-gray-400 mt-1 line-clamp-2">
-                                        {karya.deskripsi || "Tidak ada deskripsi"}
+                                        {karya.deskripsi ||
+                                          "Tidak ada deskripsi"}
                                       </p>
                                     </div>
                                   </div>
@@ -520,7 +624,7 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                         handleSelectJuaraKategori(
                                           selectedKategoriTab,
                                           karya.id_karya,
-                                          "juara1"
+                                          "juara1",
                                         )
                                       }
                                       className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition ${
@@ -529,8 +633,18 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                           : "bg-white text-gray-700 border-gray-300 hover:bg-yellow-50 hover:border-yellow-300"
                                       }`}
                                     >
-                                      <FaTrophy className={isJuara1 ? "text-yellow-950" : "text-yellow-500"} />
-                                      <span>{isJuara1 ? "Juara 1 ✓" : "Pilih Juara 1"}</span>
+                                      <FaTrophy
+                                        className={
+                                          isJuara1
+                                            ? "text-yellow-950"
+                                            : "text-yellow-500"
+                                        }
+                                      />
+                                      <span>
+                                        {isJuara1
+                                          ? "Juara 1 ✓"
+                                          : "Pilih Juara 1"}
+                                      </span>
                                     </button>
 
                                     <button
@@ -539,7 +653,7 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                         handleSelectJuaraKategori(
                                           selectedKategoriTab,
                                           karya.id_karya,
-                                          "juara2"
+                                          "juara2",
                                         )
                                       }
                                       className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition ${
@@ -548,8 +662,18 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                           : "bg-white text-gray-700 border-gray-300 hover:bg-slate-100 hover:border-slate-400"
                                       }`}
                                     >
-                                      <FaMedal className={isJuara2 ? "text-white" : "text-slate-500"} />
-                                      <span>{isJuara2 ? "Juara 2 ✓" : "Pilih Juara 2"}</span>
+                                      <FaMedal
+                                        className={
+                                          isJuara2
+                                            ? "text-white"
+                                            : "text-slate-500"
+                                        }
+                                      />
+                                      <span>
+                                        {isJuara2
+                                          ? "Juara 2 ✓"
+                                          : "Pilih Juara 2"}
+                                      </span>
                                     </button>
                                   </div>
                                 </div>
@@ -561,12 +685,22 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                           {totalPages > 1 && (
                             <div className="flex items-center justify-between bg-white px-4 py-3 rounded-2xl border border-gray-200 shadow-sm">
                               <p className="text-xs text-gray-500">
-                                Menampilkan {startIndex + 1} - {Math.min(startIndex + ITEMS_PER_PAGE, allKaryasInKat.length)} dari {allKaryasInKat.length} karya
+                                Menampilkan {startIndex + 1} -{" "}
+                                {Math.min(
+                                  startIndex + ITEMS_PER_PAGE,
+                                  allKaryasInKat.length,
+                                )}{" "}
+                                dari {allKaryasInKat.length} karya
                               </p>
                               <div className="flex items-center gap-2">
                                 <button
                                   type="button"
-                                  onClick={() => setPageForKategori(selectedKategoriTab, Math.max(1, currentPage - 1))}
+                                  onClick={() =>
+                                    setPageForKategori(
+                                      selectedKategoriTab,
+                                      Math.max(1, currentPage - 1),
+                                    )
+                                  }
                                   disabled={currentPage === 1}
                                   className="p-2 rounded-xl border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
                                 >
@@ -577,7 +711,12 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                                 </span>
                                 <button
                                   type="button"
-                                  onClick={() => setPageForKategori(selectedKategoriTab, Math.min(totalPages, currentPage + 1))}
+                                  onClick={() =>
+                                    setPageForKategori(
+                                      selectedKategoriTab,
+                                      Math.min(totalPages, currentPage + 1),
+                                    )
+                                  }
                                   disabled={currentPage === totalPages}
                                   className="p-2 rounded-xl border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
                                 >
@@ -634,7 +773,8 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                       : "bg-gray-50 text-gray-400 border-gray-200"
                   }`}
                 >
-                  <FaStar className="text-amber-500" /> Best 1: {bestWinners.best1 ? "✓" : "Belum"}
+                  <FaStar className="text-amber-500" /> Best 1:{" "}
+                  {bestWinners.best1 ? "✓" : "Belum"}
                 </div>
                 <div
                   className={`px-3 py-1.5 rounded-xl border flex items-center gap-1.5 ${
@@ -643,7 +783,8 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                       : "bg-gray-50 text-gray-400 border-gray-200"
                   }`}
                 >
-                  <FaStar className="text-amber-500" /> Best 2: {bestWinners.best2 ? "✓" : "Belum"}
+                  <FaStar className="text-amber-500" /> Best 2:{" "}
+                  {bestWinners.best2 ? "✓" : "Belum"}
                 </div>
                 <div
                   className={`px-3 py-1.5 rounded-xl border flex items-center gap-1.5 ${
@@ -652,16 +793,21 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                       : "bg-gray-50 text-gray-400 border-gray-200"
                   }`}
                 >
-                  <FaStar className="text-amber-500" /> Best 3: {bestWinners.best3 ? "✓" : "Belum"}
+                  <FaStar className="text-amber-500" /> Best 3:{" "}
+                  {bestWinners.best3 ? "✓" : "Belum"}
                 </div>
               </div>
             </div>
 
             {/* Grid Semua Karya with Pagination 3x3 */}
             {(() => {
-              const totalPagesBest = Math.ceil(karyaList.length / ITEMS_PER_PAGE) || 1;
+              const totalPagesBest =
+                Math.ceil(karyaList.length / ITEMS_PER_PAGE) || 1;
               const startIndexBest = (pageBest - 1) * ITEMS_PER_PAGE;
-              const currentBestKaryas = karyaList.slice(startIndexBest, startIndexBest + ITEMS_PER_PAGE);
+              const currentBestKaryas = karyaList.slice(
+                startIndexBest,
+                startIndexBest + ITEMS_PER_PAGE,
+              );
 
               return (
                 <div className="space-y-4">
@@ -672,7 +818,9 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                       const isBest3 = bestWinners.best3 === karya.id_karya;
                       const isAnyBest = isBest1 || isBest2 || isBest3;
 
-                      const kat = kategoriList.find((k) => k.id_kategori === karya.id_kategori);
+                      const kat = kategoriList.find(
+                        (k) => k.id_kategori === karya.id_kategori,
+                      );
 
                       return (
                         <div
@@ -685,7 +833,9 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                         >
                           {/* Area Klik untuk Edit Karya */}
                           <div
-                            onClick={() => router.push(`/admin/karya/${karya.id_karya}`)}
+                            onClick={() =>
+                              router.push(`/admin/karya/${karya.id_karya}`)
+                            }
                             className="cursor-pointer"
                             title="Klik untuk melihat detail / edit karya"
                           >
@@ -735,40 +885,61 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                           <div className="p-4 pt-0 grid grid-cols-3 gap-1.5">
                             <button
                               type="button"
-                              onClick={() => handleSelectBest(karya.id_karya, "best1")}
+                              onClick={() =>
+                                handleSelectBest(karya.id_karya, "best1")
+                              }
                               className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 border transition ${
                                 isBest1
                                   ? "bg-amber-400 text-amber-950 border-amber-500 font-bold shadow-sm"
                                   : "bg-white text-gray-700 border-gray-300 hover:bg-amber-50"
                               }`}
                             >
-                              <FaStar size={10} className={isBest1 ? "text-amber-950" : "text-amber-500"} />
+                              <FaStar
+                                size={10}
+                                className={
+                                  isBest1 ? "text-amber-950" : "text-amber-500"
+                                }
+                              />
                               <span>Best 1</span>
                             </button>
 
                             <button
                               type="button"
-                              onClick={() => handleSelectBest(karya.id_karya, "best2")}
+                              onClick={() =>
+                                handleSelectBest(karya.id_karya, "best2")
+                              }
                               className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 border transition ${
                                 isBest2
                                   ? "bg-amber-300 text-amber-950 border-amber-400 font-bold shadow-sm"
                                   : "bg-white text-gray-700 border-gray-300 hover:bg-amber-50"
                               }`}
                             >
-                              <FaStar size={10} className={isBest2 ? "text-amber-950" : "text-amber-500"} />
+                              <FaStar
+                                size={10}
+                                className={
+                                  isBest2 ? "text-amber-950" : "text-amber-500"
+                                }
+                              />
                               <span>Best 2</span>
                             </button>
 
                             <button
                               type="button"
-                              onClick={() => handleSelectBest(karya.id_karya, "best3")}
+                              onClick={() =>
+                                handleSelectBest(karya.id_karya, "best3")
+                              }
                               className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 border transition ${
                                 isBest3
                                   ? "bg-amber-200 text-amber-950 border-amber-300 font-bold shadow-sm"
                                   : "bg-white text-gray-700 border-gray-300 hover:bg-amber-50"
                               }`}
                             >
-                              <FaStar size={10} className={isBest3 ? "text-amber-950" : "text-amber-500"} />
+                              <FaStar
+                                size={10}
+                                className={
+                                  isBest3 ? "text-amber-950" : "text-amber-500"
+                                }
+                              />
                               <span>Best 3</span>
                             </button>
                           </div>
@@ -781,12 +952,19 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                   {totalPagesBest > 1 && (
                     <div className="flex items-center justify-between bg-white px-4 py-3 rounded-2xl border border-gray-200 shadow-sm">
                       <p className="text-xs text-gray-500">
-                        Menampilkan {startIndexBest + 1} - {Math.min(startIndexBest + ITEMS_PER_PAGE, karyaList.length)} dari {karyaList.length} karya
+                        Menampilkan {startIndexBest + 1} -{" "}
+                        {Math.min(
+                          startIndexBest + ITEMS_PER_PAGE,
+                          karyaList.length,
+                        )}{" "}
+                        dari {karyaList.length} karya
                       </p>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => setPageBest((prev) => Math.max(1, prev - 1))}
+                          onClick={() =>
+                            setPageBest((prev) => Math.max(1, prev - 1))
+                          }
                           disabled={pageBest === 1}
                           className="p-2 rounded-xl border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
                         >
@@ -797,7 +975,11 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
                         </span>
                         <button
                           type="button"
-                          onClick={() => setPageBest((prev) => Math.min(totalPagesBest, prev + 1))}
+                          onClick={() =>
+                            setPageBest((prev) =>
+                              Math.min(totalPagesBest, prev + 1),
+                            )
+                          }
                           disabled={pageBest === totalPagesBest}
                           className="p-2 rounded-xl border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
                         >

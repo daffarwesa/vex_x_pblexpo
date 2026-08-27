@@ -46,7 +46,7 @@ class AdminController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Berhasil masuk ke akun',
+                'message' => 'Success to login the account',
                 'redirect' => '/admin/pameran',
                 'token' => $token,
                 'user' => [

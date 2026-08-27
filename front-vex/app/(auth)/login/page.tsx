@@ -208,7 +208,7 @@ export default function LoginPage() {
               type="submit"
               className="w-full py-3 border-2 rounded-lg text-lg font-bold"
             >
-              {isLoading ? "Loading..." : "Masuk"}
+              {isLoading ? "Loading..." : "Login"}
             </Button>
           </div>
         </form>

@@ -258,14 +258,14 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
           {/* STATS */}
           <div className="mt-8 py-4 border-y">
             <div className="hidden md:flex justify-between divide-x">
-              <Stat title="Total Karya" value={stats?.karya ?? 0} />
-              <Stat title="Tanggal Buka" value={stats?.startDate || date} />
-              <Stat title="Kategori" value={stats?.studyLevel || "Umum"} />
+              <Stat title="Total Project" value={stats?.karya ?? 0} />
+              <Stat title="Opening Date" value={stats?.startDate || date} />
+              <Stat title="Category" value={stats?.studyLevel || "Umum"} />
             </div>
             <div className="md:hidden space-y-3">
-              <Row title="Total Karya" value={stats?.karya ?? 0} />
-              <Row title="Tanggal Buka" value={stats?.startDate || date} />
-              <Row title="Kategori" value={stats?.studyLevel || "Umum"} />
+              <Row title="Total Project" value={stats?.karya ?? 0} />
+              <Row title="Opening Date" value={stats?.startDate || date} />
+              <Row title="Category" value={stats?.studyLevel || "Umum"} />
             </div>
           </div>
         </div>
