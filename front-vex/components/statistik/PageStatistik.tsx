@@ -140,9 +140,6 @@ export default function PageStatistik() {
             <span className={`w-2 h-2 rounded-full ${useDummy ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
             {useDummy ? "Switch to Live API" : "Switch to Dummy Data"}
           </button>
-
-          {/* DATE RANGE FILTER */}
-          <DateRangeFilter value={range} onChange={setRange} />
         </div>
       </div>
 
