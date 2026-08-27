@@ -12,7 +12,7 @@ import {
   FaLockOpen,
 } from "react-icons/fa";
 import { HiPencilAlt } from "react-icons/hi";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "../shared/ui/Button";
 import { Pameran } from "@/types/pameran";
 import { GetDetailPameran } from "./apiPameran";
@@ -22,7 +22,34 @@ interface Status {
   isLogin?: boolean;
 }
 
+function DetailPameranSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-50 font-poppins text-gray-800 animate-pulse">
+      <div className="hidden md:block w-full h-[60vh] bg-gray-200" />
+      <div className="autoMid relative z-10 py-6 md:py-8">
+        <div className="flex flex-col md:flex-row gap-8">
+          <div className="w-full md:w-[55%] lg:w-[100%] h-[200px] md:h-[280px] lg:h-[340px] bg-gray-200 rounded-lg" />
+          <div className="w-full flex flex-col justify-between gap-4">
+            <div className="space-y-3">
+              <div className="h-9 w-3/4 bg-gray-200 rounded-md" />
+              <div className="h-4 w-1/2 bg-gray-200 rounded-md" />
+              <div className="h-4 w-1/3 bg-gray-200 rounded-md" />
+            </div>
+            <div className="h-14 w-full bg-gray-200 rounded-md" />
+          </div>
+        </div>
+        <div className="mt-10 space-y-3">
+          <div className="h-5 w-32 bg-gray-200 rounded" />
+          <div className="h-4 w-full bg-gray-200 rounded" />
+          <div className="h-4 w-5/6 bg-gray-200 rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PageDetailPameran({ isLogin = false }: Status) {
+  const router = useRouter();
   const params = useParams();
   const slug = Array.isArray(params?.slug) ? params.slug[0] : params?.slug;
   const [pameran, setPameran] = useState<Pameran | null>(null);
@@ -35,13 +62,15 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
     async function load() {
       try {
         const data = await GetDetailPameran(slug as string);
+        const item = data.pameran ?? data.data;
 
-        if (data.status !== "success")
-          throw new Error(data.message ?? "Pameran tidak ditemukan");
+        if (!item) {
+          throw new Error("Pameran tidak ditemukan");
+        }
 
-        setPameran(data.pameran);
+        setPameran(item);
       } catch (err: any) {
-        setError(err.message);
+        setError(err.message ?? "Gagal memuat data pameran");
       } finally {
         setLoading(false);
       }
@@ -51,18 +80,28 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
   }, [slug]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-400">
-        <p className="text-gray-400 text-xl font-bold text-center py-[300px]">
-          Loading a simple creature
-        </p>
-      </div>
-    );
+    return <DetailPameranSkeleton />;
   }
+
   if (error || !pameran) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-500">
-        {error ?? "Pameran tidak ditemukan."}
+      <div className="min-h-screen bg-secondary-color flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+            !
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Pameran Tidak Ditemukan</h2>
+          <p className="text-sm text-gray-500 mb-6">
+            {error ?? "Data pameran yang Anda cari tidak tersedia."}
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/pameran")}
+            className="w-full py-2.5 bg-main-blue text-white rounded-lg font-medium hover:opacity-90 transition"
+          >
+            Kembali ke Daftar Pameran
+          </button>
+        </div>
       </div>
     );
   }
@@ -78,15 +117,15 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
   } = pameran;
 
   const today = new Date();
-  const openDate = new Date(stats.startDate);
-  const isOpen = stats.endDate
+  const openDate = new Date(stats?.startDate || date);
+  const isOpen = stats?.endDate
     ? today >= openDate &&
-      today <=
-        (() => {
-          const d = new Date(stats.endDate);
-          d.setHours(23, 59, 59, 999);
-          return d;
-        })()
+    today <=
+    (() => {
+      const d = new Date(stats.endDate);
+      d.setHours(23, 59, 59, 999);
+      return d;
+    })()
     : today >= openDate;
 
   return (
@@ -154,7 +193,7 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
                   <h1 className="text-4xl font-extrabold uppercase">{title}</h1>
                   <StatusBadge isOpen={isOpen} />
                 </div>
-                <p className="text-gray-500 mt-2">{subtitle}</p>
+                {/* <p className="text-gray-500 mt-2">{subtitle}</p> */}
                 <div className="flex items-center gap-2 mt-3">
                   <FaRegCalendarAlt className="text-main-blue" />
                   <span>{date}</span>
@@ -162,18 +201,23 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
               </div>
 
               {/* BUTTON */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="w-full mt-6">
                 {isOpen ? (
-                  <div onClick={() => { url.post('/api/kunjungan', { id_pameran: pameran.id }).catch(() => {}); }}>
+                  <div
+                    className="w-full"
+                    onClick={() => {
+                      url.post('/api/kunjungan', { id_pameran: pameran.id }).catch(() => { });
+                    }}
+                  >
                     <Button
                       link={`/exhibition/${pameran.slug}`}
-                      className="w-full sm:w-auto min-w-[100%] py-5 px-38 flex items-center justify-center rounded-md"
+                      className="w-full py-5 flex items-center justify-center rounded-md text-xl"
                     >
                       <FaPlay />
                     </Button>
                   </div>
                 ) : (
-                  <div className="w-full sm:w-auto min-w-[100%] py-5 px-38 bg-gray-300 text-gray-500 rounded-md flex justify-center items-center">
+                  <div className="w-full py-5 bg-gray-300 text-gray-500 rounded-md flex justify-center items-center text-xl cursor-not-allowed">
                     <FaPlay />
                   </div>
                 )}
@@ -184,7 +228,7 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
           {/* DESCRIPTION */}
           <div className="mt-10">
             <div className="space-y-6 text-gray-600 leading-relaxed">
-              {description.map((section: any, index: number) => (
+              {description && Array.isArray(description) && description.map((section: any, index: number) => (
                 <div key={index}>
                   <h3 className="font-semibold text-gray-800 mb-1">
                     {section.title}
@@ -221,16 +265,14 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
           {/* STATS */}
           <div className="mt-8 py-4 border-y">
             <div className="hidden md:flex justify-between divide-x">
-              <Stat title="Total Suka" value={stats.likes} />
-              <Stat title="Total Karya" value={stats.karya} />
-              <Stat title="Tanggal Buka" value={stats.startDate} />
-              <Stat title="Kategori" value={stats.studyLevel} />
+              <Stat title="Total Karya" value={stats?.karya ?? 0} />
+              <Stat title="Tanggal Buka" value={stats?.startDate || date} />
+              <Stat title="Kategori" value={stats?.studyLevel || "Umum"} />
             </div>
             <div className="md:hidden space-y-3">
-              <Row title="Total Suka" value={stats.likes} />
-              <Row title="Total Karya" value={stats.karya} />
-              <Row title="Tanggal Buka" value={stats.startDate} />
-              <Row title="Kategori" value={stats.studyLevel} />
+              <Row title="Total Karya" value={stats?.karya ?? 0} />
+              <Row title="Tanggal Buka" value={stats?.startDate || date} />
+              <Row title="Kategori" value={stats?.studyLevel || "Umum"} />
             </div>
           </div>
         </div>
@@ -260,9 +302,8 @@ function Row({ title, value }: { title: string; value: any }) {
 function StatusBadge({ isOpen }: { isOpen: boolean }) {
   return (
     <div
-      className={`flex items-center gap-1.5 w-8 h-8 px-2.5 py-1 rounded-full text-white text-xs font-semibold ${
-        isOpen ? "bg-green-500" : "bg-red-500"
-      }`}
+      className={`flex items-center gap-1.5 w-8 h-8 px-2.5 py-1 rounded-full text-white text-xs font-semibold ${isOpen ? "bg-green-500" : "bg-red-500"
+        }`}
     >
       {isOpen ? <FaLockOpen size={12} /> : <FaLock size={12} />}
     </div>

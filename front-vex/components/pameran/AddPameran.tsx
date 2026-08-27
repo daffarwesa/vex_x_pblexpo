@@ -43,30 +43,17 @@ export default function AddPameran() {
     if (errors.image) setErrors((prev) => ({ ...prev, image: "" }));
   };
 
-  const resetForm = () => {
-    setForm({
-      title: "",
-      publishDate: "",
-      prepareStart: "",
-      prepareEnd: "",
-      description: "",
-      image: null,
-    });
-    setPreview(null);
-    setErrors({});
-  };
-
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!form.image) newErrors.image = "Thumbnail must be uploaded";
-    if (!form.title) newErrors.title = "Exhibition title is required";
-    if (!form.publishDate) newErrors.publishDate = "Opening date is required";
+    if (!form.image) newErrors.image = "Thumbnail wajib diunggah";
+    if (!form.title) newErrors.title = "Judul pameran wajib diisi";
+    if (!form.publishDate) newErrors.publishDate = "Tanggal buka pameran wajib diisi";
     if (!form.prepareStart)
-      newErrors.prepareStart = "Preparation start date is required";
+      newErrors.prepareStart = "Tanggal mulai persiapan wajib diisi";
     if (!form.prepareEnd)
-      newErrors.prepareEnd = "Preparation end date is required";
-    if (!form.description) newErrors.description = "Description is required";
+      newErrors.prepareEnd = "Tanggal akhir persiapan wajib diisi";
+    if (!form.description) newErrors.description = "Deskripsi wajib diisi";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -74,7 +61,7 @@ export default function AddPameran() {
 
   const handleSubmit = async () => {
     if (!validate()) {
-      showToast("Fill all the field.", "warning");
+      showToast("Harap lengkapi semua kolom yang wajib diisi.", "warning");
       return;
     }
 
@@ -82,65 +69,78 @@ export default function AddPameran() {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("title", form.title);
-      formData.append("prepare_start", form.prepareStart);
-      formData.append("prepare_end", form.prepareEnd);
-      formData.append("open_date", form.publishDate);
-      formData.append("description", form.description);
-      if (form.image) formData.append("banner", form.image);
+      formData.append("judul", form.title);
+      formData.append("deskripsi", form.description);
+      formData.append("tanggal_mulai_persiapan", form.prepareStart);
+      formData.append("tanggal_akhir_persiapan", form.prepareEnd);
+      formData.append("tanggal_buka", form.publishDate);
+      if (form.image) {
+        formData.append("banner", form.image);
+      }
 
       const data = await PostPameran(formData);
 
-      if (data.status === "success") {
-        showToast("Exhibition has been added!", "success");
-        const newSlug = data.pameran?.slug;
-        router.push(`/admin/pameran/detail/${newSlug}`);
+      if (data.status === "success" || data.data || data.pameran) {
+        showToast("Pameran berhasil ditambahkan!", "success");
+        const newSlug = data.pameran?.slug ?? data.data?.slug;
+        if (newSlug) {
+          router.push(`/admin/pameran/detail/${newSlug}`);
+        } else {
+          router.push(`/admin/pameran`);
+        }
       } else {
-        showToast("Failed make exhibition.", "error");
+        showToast("Gagal membuat pameran.", "error");
       }
     } catch (error: any) {
       if (error.response) {
         const status = error.response.status;
-        const data = error.response.data;
+        const resData = error.response.data;
 
         if (status === 422) {
-          const laravelErrors = data.errors as Record<string, string[]>;
+          const laravelErrors = resData.errors as Record<string, string[]>;
           const fieldMap: Record<string, keyof FormErrors> = {
+            judul: "title",
             title: "title",
+            tanggal_mulai_persiapan: "prepareStart",
             prepare_start: "prepareStart",
+            tanggal_akhir_persiapan: "prepareEnd",
             prepare_end: "prepareEnd",
+            tanggal_buka: "publishDate",
             open_date: "publishDate",
+            deskripsi: "description",
             description: "description",
             banner: "image",
           };
 
           const mappedErrors: FormErrors = {};
-          Object.entries(laravelErrors).forEach(([key, messages]) => {
-            const fieldKey = fieldMap[key];
-            if (fieldKey) mappedErrors[fieldKey] = messages[0];
-          });
+          if (laravelErrors) {
+            Object.entries(laravelErrors).forEach(([key, messages]) => {
+              const fieldKey = fieldMap[key];
+              if (fieldKey) mappedErrors[fieldKey] = messages[0];
+            });
+          }
 
           setErrors(mappedErrors);
-          showToast("Please review the entered data.", "error");
+          showToast("Harap periksa kembali data yang dimasukkan.", "error");
         } else if (status === 404) {
           showToast(
-            data.message ?? "The requested data was not found.",
+            resData.message ?? "Data tidak ditemukan.",
             "error",
           );
         } else if (status === 500) {
           showToast(
-            data.message ?? "An internal server error occurred.",
+            resData.message ?? "Terjadi kesalahan pada server.",
             "error",
           );
         } else {
           showToast(
-            `Error ${status}: ${data.message ?? "An unexpected error occurred."}`,
+            `Error ${status}: ${resData.message ?? "Terjadi kesalahan."}`,
             "error",
           );
         }
       } else {
         showToast(
-          "Unable to connect to the server. Please try again later.",
+          "Tidak dapat terhubung ke server. Silakan coba lagi.",
           "error",
         );
       }

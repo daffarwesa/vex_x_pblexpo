@@ -41,10 +41,9 @@ export default function FormPameran({
         <label
           htmlFor="file"
           className={`cursor-pointer h-[220px] md:h-[320px] w-full flex items-center justify-center bg-gray-50 border-2 border-dashed rounded-xl mt-2 overflow-hidden transition-all duration-200
-            ${
-              errors.image
-                ? "border-red-400 bg-red-50 hover:border-red-500"
-                : "border-gray-300 hover:border-main-blue hover:bg-blue-50"
+            ${errors.image
+              ? "border-red-400 bg-red-50 hover:border-red-500"
+              : "border-gray-300 hover:border-main-blue hover:bg-blue-50"
             }`}
         >
           {preview ? (

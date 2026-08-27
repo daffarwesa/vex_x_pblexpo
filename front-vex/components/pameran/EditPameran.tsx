@@ -9,6 +9,64 @@ import { showToast } from "@/components/shared/ui/ToastNotification";
 
 type FormErrors = Partial<Record<keyof PameranForm | "image", string>>;
 
+// ─── SKELETON COMPONENT UNTUK FORM EDIT PAMERAN ─────────────────────────────
+function FormPameranSkeleton() {
+  return (
+    <div className="flex flex-col lg:flex-row gap-10 animate-pulse">
+      {/* LEFT - THUMBNAIL SKELETON */}
+      <div className="w-full lg:w-[62%]">
+        <div className="h-6 w-32 bg-gray-200 rounded-md mt-10 mb-2" />
+        <div className="h-[220px] md:h-[320px] w-full bg-gray-200 border-2 border-dashed border-gray-300 rounded-xl mt-2 flex flex-col items-center justify-center gap-2">
+          <div className="w-12 h-12 rounded-full bg-gray-300" />
+          <div className="h-4 w-28 bg-gray-300 rounded" />
+        </div>
+        <div className="h-3 w-48 bg-gray-200 rounded mt-2" />
+      </div>
+
+      {/* RIGHT - FIELDS SKELETON */}
+      <div className="w-full lg:w-[60%] mt-10 flex flex-col gap-4">
+        {/* Title skeleton */}
+        <div>
+          <div className="h-4 w-28 bg-gray-200 rounded mb-2" />
+          <div className="h-11 w-full bg-gray-200 rounded-lg" />
+        </div>
+
+        {/* Date skeleton */}
+        <div>
+          <div className="h-4 w-36 bg-gray-200 rounded mb-2" />
+          <div className="h-11 w-full bg-gray-200 rounded-lg" />
+        </div>
+
+        {/* Prepare Dates skeleton */}
+        <div>
+          <div className="h-4 w-32 bg-gray-200 rounded mb-2" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1.5">
+            <div>
+              <div className="h-3 w-16 bg-gray-200 rounded mb-1" />
+              <div className="h-11 w-full bg-gray-200 rounded-lg" />
+            </div>
+            <div>
+              <div className="h-3 w-16 bg-gray-200 rounded mb-1" />
+              <div className="h-11 w-full bg-gray-200 rounded-lg" />
+            </div>
+          </div>
+        </div>
+
+        {/* Description skeleton */}
+        <div>
+          <div className="h-4 w-24 bg-gray-200 rounded mb-2" />
+          <div className="h-[140px] w-full bg-gray-200 rounded-lg" />
+        </div>
+
+        {/* Button skeleton */}
+        <div className="flex justify-end pt-2">
+          <div className="h-10 w-28 bg-gray-300 rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EditPameran() {
   const params = useParams();
   const router = useRouter();
@@ -48,46 +106,24 @@ export default function EditPameran() {
         setFetching(true);
 
         const res = await GetDetailPameran(slug);
+        const p = res.pameran ?? res.data;
 
-        if (res.status !== "success" || !res.pameran) {
+        if (!p) {
           setNotFound(true);
           return;
         }
 
-        const p = res.pameran;
-
         setForm({
-          title: p.title || "",
-          publishDate: toInputDate(p.stats?.startDate),
-          prepareStart: toInputDate(p.stats?.prepareStartDate),
-          prepareEnd: toInputDate(p.stats?.prepareEndDate),
-          description: p.description?.[0]?.content || "",
+          title: p.title || p.judul || "",
+          publishDate: toInputDate(p.stats?.startDate || p.tanggal_buka),
+          prepareStart: toInputDate(p.stats?.prepareStartDate || p.tanggal_mulai_persiapan),
+          prepareEnd: toInputDate(p.stats?.prepareEndDate || p.tanggal_akhir_persiapan),
+          description: p.description?.[0]?.content || p.deskripsi || "",
           image: null,
         });
 
-        // Helper untuk memastikan format URL gambar preview valid
-        const rawBanner = p.bannerLarge || p.bannerImage || "";
-
-        let bannerPreview: string | null = null;
-
-        if (rawBanner) {
-          if (
-            rawBanner.startsWith("http://") ||
-            rawBanner.startsWith("https://")
-          ) {
-            try {
-              bannerPreview = new URL(rawBanner).pathname;
-            } catch {
-              bannerPreview = rawBanner.replace(/^https?:\/\/[^/]+/, "");
-            }
-          } else if (!rawBanner.startsWith("/")) {
-            bannerPreview = `/storage/${rawBanner}`;
-          } else {
-            bannerPreview = rawBanner;
-          }
-        }
-
-        setPreview(bannerPreview);
+        const rawBanner = p.bannerImage || p.banner || "";
+        setPreview(rawBanner);
       } catch (err) {
         console.error(err);
         setNotFound(true);
@@ -143,23 +179,23 @@ export default function EditPameran() {
     const newErrors: FormErrors = {};
 
     if (!form.title) {
-      newErrors.title = "Exhibition title is required";
+      newErrors.title = "Judul pameran wajib diisi";
     }
 
     if (!form.publishDate) {
-      newErrors.publishDate = "Opening date is required";
+      newErrors.publishDate = "Tanggal buka pameran wajib diisi";
     }
 
     if (!form.prepareStart) {
-      newErrors.prepareStart = "Preparation start date is required";
+      newErrors.prepareStart = "Tanggal mulai persiapan wajib diisi";
     }
 
     if (!form.prepareEnd) {
-      newErrors.prepareEnd = "Preparation end date is required";
+      newErrors.prepareEnd = "Tanggal akhir persiapan wajib diisi";
     }
 
     if (!form.description) {
-      newErrors.description = "Description is required";
+      newErrors.description = "Deskripsi wajib diisi";
     }
 
     setErrors(newErrors);
@@ -169,12 +205,12 @@ export default function EditPameran() {
 
   const handleSubmit = async () => {
     if (!slug) {
-      showToast("Exhibition slug was not found.", "error");
+      showToast("Slug pameran tidak ditemukan.", "error");
       return;
     }
 
     if (!validate()) {
-      showToast("Please complete all required fields.", "warning");
+      showToast("Harap lengkapi semua kolom yang wajib diisi.", "warning");
       return;
     }
 
@@ -182,15 +218,10 @@ export default function EditPameran() {
       setLoading(true);
 
       const formData = new FormData();
-
       formData.append("judul", form.title);
-
       formData.append("tanggal_mulai_persiapan", form.prepareStart);
-
       formData.append("tanggal_akhir_persiapan", form.prepareEnd);
-
       formData.append("tanggal_buka", form.publishDate);
-
       formData.append("deskripsi", form.description);
 
       if (form.image) {
@@ -199,28 +230,32 @@ export default function EditPameran() {
 
       const data = await UpdatePameran(slug, formData);
 
-      if (data.status === "success") {
-        showToast("Exhibition updated successfully!", "success");
-
-        router.push(`/admin/pameran/detail/${slug}`);
+      if (data.status === "success" || data.data || data.pameran) {
+        showToast("Pameran berhasil diperbarui!", "success");
+        const updatedSlug = data.pameran?.slug ?? data.data?.slug ?? slug;
+        router.push(`/admin/pameran/detail/${updatedSlug}`);
       } else {
-        showToast("Failed to update exhibition.", "error");
+        showToast("Gagal memperbarui pameran.", "error");
       }
     } catch (error: any) {
       if (error.response) {
         const status = error.response.status;
-
-        const data = error.response.data;
+        const resData = error.response.data;
 
         if (status === 422) {
-          const laravelErrors = data.errors as Record<string, string[]>;
+          const laravelErrors = resData.errors as Record<string, string[]>;
 
           const fieldMap: Record<string, keyof FormErrors> = {
             judul: "title",
+            title: "title",
             tanggal_mulai_persiapan: "prepareStart",
+            prepare_start: "prepareStart",
             tanggal_akhir_persiapan: "prepareEnd",
+            prepare_end: "prepareEnd",
             tanggal_buka: "publishDate",
+            open_date: "publishDate",
             deskripsi: "description",
+            description: "description",
             banner: "image",
           };
 
@@ -237,63 +272,63 @@ export default function EditPameran() {
           }
 
           setErrors(mappedErrors);
-
-          showToast("Please review the entered data.", "error");
+          showToast("Harap periksa kembali data yang dimasukkan.", "error");
         } else if (status === 404) {
           showToast(
-            data.message ?? "The requested data was not found.",
+            resData.message ?? "Data tidak ditemukan.",
             "error",
           );
         } else if (status === 500) {
-          showToast("An internal server error occurred.", "error");
+          showToast("Terjadi kesalahan pada server.", "error");
         } else {
-          showToast(`An error occurred (${status}).`, "error");
+          showToast(`Terjadi kesalahan (${status}).`, "error");
         }
-
-        console.error("STATUS:", status);
-
-        console.error("DATA:", JSON.stringify(data, null, 2));
       } else {
         showToast(
-          "Unable to connect to the server. Please try again later.",
+          "Tidak dapat terhubung ke server. Silakan coba lagi.",
           "error",
         );
-
-        console.error(error);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  if (fetching) {
-    return (
-      <div className="min-h-screen bg-secondary-color flex items-center justify-center">
-        <p className="text-white">Loading exhibition data...</p>
-      </div>
-    );
-  }
-
-  if (notFound) {
-    return (
-      <div className="min-h-screen bg-secondary-color flex items-center justify-center">
-        <p className="text-white">Exhibition data not found.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-secondary-color select-none pb-20 md:pb-30">
+    <div className="min-h-screen bg-secondary-color select-none pb-20 md:pb-30 font-poppins">
       <section className="autoMid">
-        <FormPameran
-          form={form}
-          preview={preview}
-          loading={loading}
-          errors={errors}
-          onChangeImage={handleImage}
-          onChange={handleChange}
-          onSubmit={handleSubmit}
-        />
+        {fetching ? (
+          <FormPameranSkeleton />
+        ) : notFound ? (
+          <div className="min-h-[50vh] flex flex-col items-center justify-center p-4">
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-md w-full text-center">
+              <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                !
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Pameran Tidak Ditemukan</h2>
+              <p className="text-sm text-gray-500 mb-6">
+                Data pameran yang Anda cari tidak tersedia atau telah dihapus.
+              </p>
+              <button
+                type="button"
+                onClick={() => router.push("/admin/pameran")}
+                className="w-full py-2.5 bg-main-blue text-white rounded-lg font-medium hover:opacity-90 transition"
+              >
+                Kembali ke Daftar Pameran
+              </button>
+            </div>
+          </div>
+        ) : (
+          <FormPameran
+            form={form}
+            preview={preview}
+            loading={loading}
+            errors={errors}
+            onChangeImage={handleImage}
+            onChange={handleChange}
+            onSubmit={handleSubmit}
+          />
+        )}
       </section>
     </div>
   );
