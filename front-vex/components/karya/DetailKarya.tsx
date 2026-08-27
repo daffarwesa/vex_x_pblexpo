@@ -545,7 +545,7 @@ export default function DetailKarya({ id }: Props) {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
             {/* Gambar */}
-            <div className="space-y-3">
+            <div className="lg:sticky lg:top-6">
               <DetailPoster
                 preview={posterPreview}
                 onUpload={(e) => handleImageUpload(e, "poster")}
