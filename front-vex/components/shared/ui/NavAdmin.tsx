@@ -34,12 +34,12 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
       icon: <FaBook size={17} />,
       link: "/admin/pameran",
     },
-    // {
-    //   id: 3,
-    //   title: 'Karya',
-    //   icon: <FaImage size={17} />,
-    //   link: '/admin/karya',
-    // },
+    {
+      id: 3,
+      title: 'Karya',
+      icon: <FaImage size={17} />,
+      link: '/admin/karya',
+    },
     {
       id: 4,
       title: "Statistics",
