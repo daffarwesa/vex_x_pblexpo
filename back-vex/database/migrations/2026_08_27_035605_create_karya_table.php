@@ -23,7 +23,7 @@ return new class extends Migration {
             $table->string('tautan');
             $table->string('gambar_poster');
             $table->enum('predikat', ['1', '2'])->nullable()->default(null);
-            $table->boolean('is_best')->default(false);
+            $table->enum('is_best', ['1', '2','3'])->nullable()->default(null);
         });
     }
 

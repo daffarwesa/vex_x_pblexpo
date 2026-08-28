@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 /* 
-    ADMIN CRUD KARYA, PREDIKAT(1,2), IS_BEST(1,2,3,4)
+    ADMIN CRUD KARYA, PREDIKAT(1,2), IS_BEST(1,2,3)
 */
 
 class AdminKaryaController extends Controller
@@ -216,33 +216,33 @@ class AdminKaryaController extends Controller
     // ==================================
     // SET is_best PADA KARYA (toggle atau rank 1,2,3)
     // ==================================
-    public function setBest(Request $request, $id_karya)
-    {
-        $request->validate([
-            'is_best' => 'required',
-        ]);
+ public function setBest(Request $request, $id_karya)
+{
+    $request->validate([
+        'is_best' => 'nullable|in:1,2,3',
+    ]);
 
-        $karya = Karya::find($id_karya);
+    $karya = Karya::find($id_karya);
 
-        if (!$karya) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Karya tidak ditemukan',
-            ], 404);
-        }
-
-        $karya->update([
-            'is_best' => $request->is_best ? true : false,
-        ]);
-
+    if (!$karya) {
         return response()->json([
-            'status' => 'success',
-            'message' => $request->is_best
-                ? "Karya ditandai sebagai Best"
-                : "Status Best karya dibatalkan",
-            'data' => $karya,
-        ]);
+            'status' => 'error',
+            'message' => 'Karya tidak ditemukan',
+        ], 404);
     }
+
+    $karya->update([
+        'is_best' => $request->is_best, // null, '1', '2', atau '3'
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => $request->is_best
+            ? "Karya ditandai sebagai Best peringkat {$request->is_best}"
+            : "Status Best karya dibatalkan",
+        'data' => $karya,
+    ]);
+}
 
     // ==================================================
     // LIST KARYA YANG SUDAH DAPAT PREDIKAT / BEST (PERINGKAT)
