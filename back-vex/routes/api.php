@@ -35,6 +35,7 @@ Route::get('/pameran/{slug}', [PameranPublicController::class, 'show']);
 Route::post('/pameran/{slug}/kunjungan', [PameranPublicController::class, 'catatKunjungan']);
 Route::post('/kunjungan', [StatistikController::class, 'store']);
 Route::get('/karya/{id_karya}', [KaryaPublicController::class, 'show']);
+Route::get('/karya/predikat/{predikat}', [KaryaPublicController::class, 'getByPredikat']);
 
 // Login admin
 Route::post('/login', [AdminController::class, 'login']);
@@ -81,7 +82,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/karya/pameran/{id_pameran}', [AdminKaryaController::class, 'getByPameran']);
         Route::get('/karya/pameran/{id_pameran}/peringkat', [AdminKaryaController::class, 'getPeringkat']);
-        Route::get('/karya/pameran/{id_pameran}/juara-best', [AdminKaryaController::class, 'getJuaraDanBest']);
         Route::patch('/karya/{id_karya}/predikat', [AdminKaryaController::class, 'setPredikat']);
         Route::patch('/karya/{id_karya}/best', [AdminKaryaController::class, 'setBest']);
 

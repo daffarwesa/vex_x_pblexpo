@@ -1,13 +1,40 @@
 import url from "@/lib/axios";
 
 // REVISI UNTUK KONSEP PENILAIAN TERBARU
+// predikat '1' = Juara 1 (Best Work), predikat '2' = Juara 2 (Favorite Work)
 
-export async function GetKaryaTerbaikAktif() {
-  const res = await url.get("/api/public/karya/terbaik");
+export interface KaryaPredikatItem {
+  id_karya: number;
+  judul: string;
+  deskripsi: string;
+  tautan: string;
+  gambar_poster: string;
+  predikat: "1" | "2" | null;
+  id_kategori: number;
+  id_pameran: number;
+  kategori?: {
+    id_kategori: number;
+    kode_kategori: string;
+    nama_kategori: string;
+  };
+  pameran?: {
+    id_pameran: number;
+    judul: string;
+    slug: string;
+  };
+}
+
+interface KaryaPredikatResponse {
+  status: string;
+  data: KaryaPredikatItem[];
+}
+
+export async function GetKaryaTerbaikAktif(): Promise<KaryaPredikatResponse> {
+  const res = await url.get("/api/karya/predikat/1");
   return res.data;
 }
 
-export async function GetKaryaFavoritAktif() {
-  const res = await url.get("/api/public/karya/favorit");
+export async function GetKaryaFavoritAktif(): Promise<KaryaPredikatResponse> {
+  const res = await url.get("/api/karya/predikat/2");
   return res.data;
 }

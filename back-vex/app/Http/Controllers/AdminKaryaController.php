@@ -214,66 +214,12 @@ class AdminKaryaController extends Controller
     }
 
     // ==================================
-    // SET is_best PADA KARYA (toggle atau rank 1,2,3)
+    // SET is_best PADA KARYA (rank 1,2,3 / batal)
     // ==================================
- public function setBest(Request $request, $id_karya)
-{
-    $request->validate([
-        'is_best' => 'nullable|in:1,2,3',
-    ]);
-
-    $karya = Karya::find($id_karya);
-
-    if (!$karya) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Karya tidak ditemukan',
-        ], 404);
-    }
-
-    $karya->update([
-        'is_best' => $request->is_best, // null, '1', '2', atau '3'
-    ]);
-
-    return response()->json([
-        'status' => 'success',
-        'message' => $request->is_best
-            ? "Karya ditandai sebagai Best peringkat {$request->is_best}"
-            : "Status Best karya dibatalkan",
-        'data' => $karya,
-    ]);
-}
-
-    // ==================================================
-    // LIST KARYA YANG SUDAH DAPAT PREDIKAT / BEST (PERINGKAT)
-    // ==================================================
-    public function getPeringkat(Request $request, $id_pameran)
-    {
-        $karya = Karya::with(['stan', 'kategori'])
-            ->where('id_pameran', $id_pameran)
-            ->where(function ($query) {
-                $query->whereNotNull('predikat')
-                    ->orWhere('is_best', true);
-            })
-            ->when($request->filled('id_kategori'), function ($query) use ($request) {
-                $query->where('id_kategori', $request->id_kategori);
-            })
-            ->orderByRaw("CASE WHEN predikat = '1' THEN 0 WHEN predikat = '2' THEN 1 WHEN is_best = 1 THEN 2 ELSE 3 END")
-            ->get();
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $karya,
-        ]);
-    }
-
-    // ==================================================
-    // HELPER: TOGGLE STATUS BOOLEAN PADA KARYA
-    // ==================================================
-    private function toggleStatus(Request $request, $id_karya, string $field, string $label)
+    public function setBest(Request $request, $id_karya)
     {
         $request->validate([
-            $field => 'required|boolean',
+            'is_best' => 'nullable|in:1,2,3',
         ]);
 
         $karya = Karya::find($id_karya);
@@ -286,14 +232,64 @@ class AdminKaryaController extends Controller
         }
 
         $karya->update([
-            $field => $request->$field,
+            'is_best' => $request->is_best, // null, '1', '2', atau '3'
         ]);
 
         return response()->json([
             'status' => 'success',
-            'message' => $request->$field
-                ? "Karya ditandai sebagai {$label}"
-                : "Status {$label} karya dibatalkan",
+            'message' => $request->is_best
+                ? "Karya ditandai sebagai Best peringkat {$request->is_best}"
+                : "Status Best karya dibatalkan",
+            'data' => $karya,
+        ]);
+    }
+
+    // ==================================================
+    // LIST KARYA YANG SUDAH PUNYA PREDIKAT (JUARA 1 / JUARA 2)
+    // ==================================================
+    public function getPredikat(Request $request, $id_pameran)
+    {
+        $karya = Karya::with(['stan', 'kategori'])
+            ->where('id_pameran', $id_pameran)
+            ->whereIn('predikat', ['1', '2'])
+            ->when($request->filled('id_kategori'), function ($query) use ($request) {
+                $query->where('id_kategori', $request->id_kategori);
+            })
+            ->orderByRaw("CASE WHEN predikat = '1' THEN 0 WHEN predikat = '2' THEN 1 ELSE 2 END")
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $karya,
+        ]);
+    }
+
+    // ==================================================
+    // LIST KARYA YANG SUDAH DAPAT PREDIKAT / BEST (SEMUA PERINGKAT)
+    // ==================================================
+    public function getPeringkat(Request $request, $id_pameran)
+    {
+        $karya = Karya::with(['stan', 'kategori'])
+            ->where('id_pameran', $id_pameran)
+            ->where(function ($query) {
+                $query->whereNotNull('predikat')
+                    ->orWhereNotNull('is_best');
+            })
+            ->when($request->filled('id_kategori'), function ($query) use ($request) {
+                $query->where('id_kategori', $request->id_kategori);
+            })
+            ->orderByRaw("
+                CASE WHEN predikat = '1' THEN 0
+                     WHEN predikat = '2' THEN 1
+                     WHEN is_best = '1' THEN 2
+                     WHEN is_best = '2' THEN 3
+                     WHEN is_best = '3' THEN 4
+                     ELSE 5 END
+            ")
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
             'data' => $karya,
         ]);
     }

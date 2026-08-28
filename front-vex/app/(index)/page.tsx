@@ -13,7 +13,7 @@ import {
 import { FaStar } from "react-icons/fa";
 // best & favorite work
 import { useEffect, useRef, useState } from "react";
-// import { GetKaryaTerbaikAktif, GetKaryaFavoritAktif } from "./api";
+import { GetKaryaTerbaikAktif, GetKaryaFavoritAktif, KaryaPredikatItem } from "./api";
 
 const RELEASE_VIDEO_ID = "bLdFe6G7OC8";
 
@@ -44,6 +44,27 @@ const collaborators = [
   { src: "/image/logo-collab-4.svg", alt: "Collaborator 4" },
 ];
 
+// Ubah data karya dari API (KaryaPredikatItem) menjadi bentuk yang dipakai Carousel
+function mapKaryaToCarouselItem(karya: KaryaPredikatItem): CarouselKaryaItem {
+  const base =
+    process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://localhost:8000/storage";
+  let poster = "/image/BGSection3.png";
+
+  if (karya.gambar_poster) {
+    poster =
+      karya.gambar_poster.startsWith("http") || karya.gambar_poster.startsWith("/")
+        ? karya.gambar_poster
+        : `${base}/${karya.gambar_poster}`;
+  }
+
+  return {
+    id: karya.id_karya,
+    title: karya.judul,
+    poster,
+    banner: poster,
+  };
+}
+
 export default function HomePage() {
   const [bestWork, setBestWork] = useState<CarouselKaryaItem[]>([]);
   const [favoriteWork, setFavoriteWork] = useState<CarouselKaryaItem[]>([]);
@@ -52,7 +73,7 @@ export default function HomePage() {
   const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isFirstRender = useRef(true);
-  const tutorialLink = "/tutorial";
+  // const tutorialLink = "/tutorial";
 
   const goToPrevMedia = () =>
     setActiveMediaIndex(
@@ -113,19 +134,24 @@ export default function HomePage() {
     });
   }, [activeMediaIndex]);
 
-  // useEffect(() => {
-  //   GetKaryaTerbaikAktif()
-  //     .then((data) => {
-  //       if (data.status === "success") setBestWork(data.karya);
-  //     })
-  //     .catch((err) => console.error("Failed to fetch best work:", err));
+  // Fetch karya Juara 1 (Best Work) & Juara 2 (Favorite Work) untuk carousel landing page
+  useEffect(() => {
+    GetKaryaTerbaikAktif()
+      .then((data) => {
+        if (data.status === "success") {
+          setBestWork(data.data.map(mapKaryaToCarouselItem));
+        }
+      })
+      .catch((err) => console.error("Failed to fetch best work:", err));
 
-  //   GetKaryaFavoritAktif()
-  //     .then((data) => {
-  //       if (data.status === "success") setFavoriteWork(data.karya);
-  //     })
-  //     .catch((err) => console.error("Failed to fetch favorite work:", err));
-  // }, []);
+    GetKaryaFavoritAktif()
+      .then((data) => {
+        if (data.status === "success") {
+          setFavoriteWork(data.data.map(mapKaryaToCarouselItem));
+        }
+      })
+      .catch((err) => console.error("Failed to fetch favorite work:", err));
+  }, []);
 
   return (
     <div className="flex flex-col w-full bg-secondary-color select-none">
@@ -356,13 +382,13 @@ export default function HomePage() {
                 </p>
               </div>
             </div>
-
+{/* 
             <Button
               link={tutorialLink}
               className="w-[60%] px-10 py-2 rounded-md hover:scale-102 duration-500 !bg-[#F5811F] hover:!bg-[#DD6E10]"
             >
               Tutorial
-            </Button>
+            </Button> */}
           </div>
         </div>
       </section>
