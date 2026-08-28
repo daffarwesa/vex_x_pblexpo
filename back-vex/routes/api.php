@@ -101,7 +101,7 @@ Route::prefix('experience')->group(function () {
     Route::get('/game-assets', [GameAssetController::class, 'index']);
     Route::get('/3d-models/{id}', [GameAssetController::class, 'get3DModel']);
     Route::get('/hall-model/{modelId}', [GameAssetController::class, 'serveHallModel']);
-    Route::get('/player-model', [GameAssetController::class, 'servePlayerModel']);
     Route::get('/booth-model/{filename}', [GameAssetController::class, 'serveBoothModel']);
     Route::get('/karya/pameran/{id_pameran}', [GameAssetController::class, 'karyaByPameran']);
+    Route::get('/proxy-image', [GameAssetController::class, 'proxyImage']); // ← baru
 });

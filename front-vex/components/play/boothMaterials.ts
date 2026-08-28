@@ -1,17 +1,17 @@
 import * as THREE from "three";
 
 /* ============================================================= */
-/* PRIMARY MATERIAL                                               */
-/* Shader toon-style (hard threshold, bukan gradient) — SAMA untuk */
-/* semua booth apapun kategorinya. Dibuat SEKALI di module-level   */
-/* (bukan di dalam komponen) supaya semua booth share instance     */
-/* material yang sama persis, hemat memory & konsisten.            */
+/* TOON SHADER — dipakai bareng oleh Primary, Secondary, dan Hall  */
 /* ============================================================= */
 
 const toonVertexShader = `
   varying vec3 vNormal;
   void main() {
-    vNormal = normalize(normalMatrix * normal);
+    // World-space normal (BUKAN normalMatrix, yang relatif ke kamera).
+    // lightDirection uniform juga world-space, jadi keduanya harus di
+    // space yang sama supaya arah cahaya tidak ikut berubah saat kamera
+    // muter/geser.
+    vNormal = normalize(mat3(modelMatrix) * normal);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -29,39 +29,72 @@ const toonFragmentShader = `
   }
 `;
 
+const DEFAULT_LIGHT_DIR = new THREE.Vector3(0.5, 0.8, 0.3).normalize();
+const SHADE_FACTOR = 0.35; // seberapa gelap sisi "shadow" — 0 = hitam total, 1 = sama kayak colorHigh
+
+// Factory generic: bikin (atau ambil dari cache) toon material dari 1 warna hex.
+// colorLow otomatis dihitung sebagai versi gelap dari colorHigh.
+const toonMaterialCache = new Map<string, THREE.ShaderMaterial>();
+
+function createToonMaterial(hex: string): THREE.ShaderMaterial {
+  const cached = toonMaterialCache.get(hex);
+  if (cached) return cached;
+
+  const colorHigh = new THREE.Color(hex);
+  const colorLow = colorHigh.clone().multiplyScalar(SHADE_FACTOR);
+
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      lightDirection: { value: DEFAULT_LIGHT_DIR.clone() },
+      colorLow: { value: colorLow },
+      colorHigh: { value: colorHigh },
+      threshold: { value: 0.0 },
+    },
+    vertexShader: toonVertexShader,
+    fragmentShader: toonFragmentShader,
+    side: THREE.DoubleSide,
+  });
+
+  toonMaterialCache.set(hex, material);
+  return material;
+}
+
+/* ============================================================= */
+/* PRIMARY MATERIAL — hitam/putih, sama untuk semua booth          */
+/* ============================================================= */
+
 export const PrimaryMaterial = new THREE.ShaderMaterial({
   uniforms: {
-    lightDirection: { value: new THREE.Vector3(0.5, 0.8, 0.3).normalize() },
-    colorLow: { value: new THREE.Color(0x000000) }, // hitam
-    colorHigh: { value: new THREE.Color(0xffffff) }, // putih
+    lightDirection: { value: DEFAULT_LIGHT_DIR.clone() },
+    colorLow: { value: new THREE.Color(0x000000) },
+    colorHigh: { value: new THREE.Color(0xffffff) },
     threshold: { value: 0.0 },
   },
   vertexShader: toonVertexShader,
   fragmentShader: toonFragmentShader,
+  side: THREE.DoubleSide,
 });
 
 /* ============================================================= */
-/* SECONDARY COLORS — per id_kategori                             */
-/* Sesuai tabel kategori di database. Kalau nambah/ubah kategori   */
-/* di database, tinggal update map ini juga.                       */
+/* SECONDARY COLORS — per id_kategori (booth)                     */
 /* ============================================================= */
 
 export const KATEGORI_COLORS: Record<number, string> = {
-  1: "#00BCD4",  // IOT - Internet of Things
-  2: "#3F51B5",  // WEB - Aplikasi Berbasis Web dan Mobile
-  3: "#E91E63",  // ANV - Animasi dan Videografi
-  4: "#4CAF50",  // JCS - Jaringan dan Cybersecurity
-  5: "#FF9800",  // OTO - Sistem Otomasi
-  6: "#9C27B0",  // RAI - Robotics and Artificial Intelligence
-  7: "#795548",  // TTG - Teknologi Tepat Guna
-  8: "#607D8B",  // PRF - Proses Fabrikasi / Manufacturing
-  9: "#8BC34A",  // PDF - Produk Fabrikasi / Manufacturing
-  10: "#FFC107", // KDS - Konsep Desain
-  11: "#F44336", // LJU - Layanan dan Jasa Usaha
-  12: "#009688", // KTI - Karya Tulis Ilmiah
+  1: "#00BCD4",  // IOT
+  2: "#3F51B5",  // WEB
+  3: "#E91E63",  // ANV
+  4: "#4CAF50",  // JCS
+  5: "#FF9800",  // OTO
+  6: "#9C27B0",  // RAI
+  7: "#795548",  // TTG
+  8: "#607D8B",  // PRF
+  9: "#8BC34A",  // PDF
+  10: "#FFC107", // KDS
+  11: "#F44336", // LJU
+  12: "#009688", // KTI
 };
 
-const DEFAULT_SECONDARY_COLOR = "#9E9E9E"; // abu-abu, fallback kalau id_kategori nggak ada di map
+const DEFAULT_SECONDARY_COLOR = "#9E9E9E";
 
 export function getSecondaryColor(idKategori: number | string | null | undefined): THREE.Color {
   const key = Number(idKategori);
@@ -69,45 +102,33 @@ export function getSecondaryColor(idKategori: number | string | null | undefined
   return new THREE.Color(hex);
 }
 
-/* ============================================================= */
-/* SECONDARY MATERIAL (toon) — per id_kategori                    */
-/* Sama teknik hard-threshold-nya kayak PrimaryMaterial, tapi      */
-/* colorHigh = warna kategori asli, colorLow = versi gelapnya.     */
-/* Di-cache per id_kategori: booth dengan kategori sama SHARE satu */
-/* instance material yang sama (bukan bikin baru tiap dipanggil).  */
-/*                                                                  */
-/* PENTING: karena instance-nya shared, JANGAN dispose() material  */
-/* ini dari komponen Booth. Kalau di-dispose, semua booth lain yang */
-/* pakai kategori sama ikut rusak (GPU resource-nya hilang).       */
-/* ============================================================= */
-
-const SHADE_FACTOR = 0.35; // seberapa gelap sisi "shadow"-nya (0 = hitam total, 1 = sama kayak colorHigh)
-
-const secondaryMaterialCache = new Map<string, THREE.ShaderMaterial>();
-
+// PENTING: instance-nya shared per kategori (lewat cache di createToonMaterial).
+// JANGAN dispose() material ini dari komponen Booth — booth lain kategori
+// sama ikut kena kalau di-dispose.
 export function createSecondaryMaterial(
   idKategori: number | string | null | undefined
 ): THREE.ShaderMaterial {
   const key = Number(idKategori);
-  const cacheKey = KATEGORI_COLORS[key] ? String(key) : "default";
+  const hex = KATEGORI_COLORS[key] ?? DEFAULT_SECONDARY_COLOR;
+  return createToonMaterial(hex);
+}
 
-  const cached = secondaryMaterialCache.get(cacheKey);
-  if (cached) return cached;
+/* ============================================================= */
+/* HALL COLORS — objek "white" / "blue" / "red" / "maroon" di hall-utama.glb */
+/* Sama teknik toon-nya, warna fix (bukan per-kategori).           */
+/* ============================================================= */
 
-  const colorHigh = getSecondaryColor(idKategori);
-  const colorLow = colorHigh.clone().multiplyScalar(SHADE_FACTOR);
+export const HALL_COLORS: Record<string, string> = {
+  white: "#FFFFFF",
+  blue: "#2196F3",
+  red: "#B71C1C",
+  maroon: "#B71C1C", // alias — kalau di glb namanya "maroon" bukan "red"
+};
 
-  const material = new THREE.ShaderMaterial({
-    uniforms: {
-      lightDirection: { value: (PrimaryMaterial.uniforms.lightDirection.value as THREE.Vector3).clone() },
-      colorLow: { value: colorLow },
-      colorHigh: { value: colorHigh },
-      threshold: { value: 0.0 },
-    },
-    vertexShader: toonVertexShader,
-    fragmentShader: toonFragmentShader,
-  });
-
-  secondaryMaterialCache.set(cacheKey, material);
-  return material;
+// Cache otomatis lewat createToonMaterial — tiap nama warna cukup 1 instance,
+// dipakai bareng-bareng oleh semua objek hall dengan nama itu.
+export function getHallMaterial(name: string): THREE.ShaderMaterial | null {
+  const hex = HALL_COLORS[name.toLowerCase()];
+  if (!hex) return null;
+  return createToonMaterial(hex);
 }
