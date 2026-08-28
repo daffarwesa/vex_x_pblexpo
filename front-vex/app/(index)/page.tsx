@@ -3,6 +3,7 @@
 import { Card } from '@/components/shared/ui/Components';
 import { Button } from '@/components/shared/ui/Button';
 import Carousel, { CarouselKaryaItem } from '@/components/shared/ui/Carousel';
+import BestOfSelector, { BestOfCategoryItem } from '@/components/shared/ui/BestOfSelector';
 // icons
 import {
   BiCube,
@@ -13,7 +14,13 @@ import {
 import { FaStar } from "react-icons/fa";
 // best & favorite work
 import { useEffect, useRef, useState } from "react";
-import { GetKaryaTerbaikAktif, GetKaryaFavoritAktif, KaryaPredikatItem } from "./api";
+import {
+  GetKaryaTerbaikAktif,
+  GetKaryaFavoritAktif,
+  GetKaryaBestOfAktif,
+  KaryaPredikatItem,
+  KaryaBestOfItem,
+} from "./api";
 
 const RELEASE_VIDEO_ID = "bLdFe6G7OC8";
 
@@ -38,11 +45,18 @@ const releaseMedia: ReleaseMediaItem[] = [
 // Logos shown in the "In Collaboration With" strip. Replace src with your real
 // partner/collaborator logo paths.
 const collaborators = [
-  { src: "/image/logo-collab-1.svg", alt: "Collaborator 1" },
-  { src: "/image/logo-collab-2.svg", alt: "Collaborator 2" },
-  { src: "/image/logo-collab-3.svg", alt: "Collaborator 3" },
-  { src: "/image/logo-collab-4.svg", alt: "Collaborator 4" },
+  { src: "/image/logo-collab-1.png", alt: "Collaborator 1" },
+  { src: "/image/logo-collab-2.png", alt: "Collaborator 2" },
+  { src: "/image/logo-collab-3.png", alt: "Collaborator 3" },
+  { src: "/image/logo-collab-4.png", alt: "Collaborator 4" },
 ];
+
+// is_best: 1 = Innovation, 2 = Design, 3 = System
+const BEST_OF_LABELS: Record<1 | 2 | 3, string> = {
+  1: "Innovation",
+  2: "Design",
+  3: "System",
+};
 
 // Ubah data karya dari API (KaryaPredikatItem) menjadi bentuk yang dipakai Carousel
 function mapKaryaToCarouselItem(karya: KaryaPredikatItem): CarouselKaryaItem {
@@ -65,9 +79,31 @@ function mapKaryaToCarouselItem(karya: KaryaPredikatItem): CarouselKaryaItem {
   };
 }
 
+// Ubah data karya (is_best) dari API menjadi bentuk yang dipakai BestOfSelector
+function mapKaryaToBestOf(karya: KaryaBestOfItem, label: string): BestOfCategoryItem {
+  const base =
+    process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://localhost:8000/storage";
+  let image = "/image/BGSection3.png";
+
+  if (karya.gambar_poster) {
+    image =
+      karya.gambar_poster.startsWith("http") || karya.gambar_poster.startsWith("/")
+        ? karya.gambar_poster
+        : `${base}/${karya.gambar_poster}`;
+  }
+
+  return {
+    label,
+    title: karya.judul,
+    description: karya.deskripsi,
+    image,
+  };
+}
+
 export default function HomePage() {
   const [bestWork, setBestWork] = useState<CarouselKaryaItem[]>([]);
   const [favoriteWork, setFavoriteWork] = useState<CarouselKaryaItem[]>([]);
+  const [bestOfCategories, setBestOfCategories] = useState<BestOfCategoryItem[]>([]);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const activeMedia = releaseMedia[activeMediaIndex];
   const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -153,6 +189,31 @@ export default function HomePage() {
       .catch((err) => console.error("Failed to fetch favorite work:", err));
   }, []);
 
+  // Fetch karya "Best Of" (is_best: 1 = Innovation, 2 = Design, 3 = System)
+  useEffect(() => {
+    Promise.all([
+      GetKaryaBestOfAktif(1),
+      GetKaryaBestOfAktif(2),
+      GetKaryaBestOfAktif(3),
+    ])
+      .then(([innovation, design, system]) => {
+        const items: BestOfCategoryItem[] = [];
+
+        if (innovation.status === "success" && innovation.data[0]) {
+          items.push(mapKaryaToBestOf(innovation.data[0], BEST_OF_LABELS[1]));
+        }
+        if (design.status === "success" && design.data[0]) {
+          items.push(mapKaryaToBestOf(design.data[0], BEST_OF_LABELS[2]));
+        }
+        if (system.status === "success" && system.data[0]) {
+          items.push(mapKaryaToBestOf(system.data[0], BEST_OF_LABELS[3]));
+        }
+
+        setBestOfCategories(items);
+      })
+      .catch((err) => console.error("Failed to fetch best of categories:", err));
+  }, []);
+
   return (
     <div className="flex flex-col w-full bg-secondary-color select-none">
       {/* SECTION 1 - Hero (full-image background, artwork already contains the wordmark) */}
@@ -175,9 +236,6 @@ export default function HomePage() {
       {/* SECTION 1.5 - In Collaboration With (logo strip) */}
       <section className="bg-[#3612C7] w-full">
         <div className="autoMid py-14 sm:py-16 lg:py-20 flex flex-col items-center gap-6 sm:gap-8">
-          <p className="font-poppins font-light text-white/70 text-sm sm:text-base tracking-[0.2em] uppercase">
-            In Collaboration With
-          </p>
 
           <div className="grid grid-cols-4 gap-6 sm:gap-12 lg:gap-20 items-center w-full max-w-4xl">
             {collaborators.map((logo, i) => (
@@ -186,7 +244,7 @@ export default function HomePage() {
                 key={i}
                 src={logo.src}
                 alt={logo.alt}
-                className="w-full h-10 sm:h-16 lg:h-20 object-contain brightness-0 invert opacity-70 hover:opacity-100 transition-opacity duration-300"
+                className="w-full h-10 sm:h-16 lg:h-20 object-contain opacity-90 hover:opacity-100 transition-opacity duration-300"
               />
             ))}
           </div>
@@ -382,7 +440,7 @@ export default function HomePage() {
                 </p>
               </div>
             </div>
-{/* 
+            {/* 
             <Button
               link={tutorialLink}
               className="w-[60%] px-10 py-2 rounded-md hover:scale-102 duration-500 !bg-[#F5811F] hover:!bg-[#DD6E10]"
@@ -421,6 +479,38 @@ export default function HomePage() {
               className="w-full aspect-[4/3] object-cover rounded-xl h-full"
             />
           </div>
+        </div>
+      </section>
+
+      {/* SECTION 5.5 - Best Of */}
+      <section className="bg-white w-full">
+        <div
+          className="
+      autoMid
+      py-[68px]
+      px-4
+      sm:px-6
+      lg:px-0
+      flex
+      flex-col
+      items-center
+      gap-8
+      sm:gap-10
+      min-h-[780px]
+      sm:min-h-[850px]
+      md:min-h-[930px]
+    "
+        >
+          <div className="text-main-blue text-center">
+            <p className="font-poppins font-thin text-4xl lg:text-5xl leading-none">
+              BEST
+            </p>
+            <p className="font-tilt-wrap font-bold text-4xl lg:text-5xl leading-none">
+              OF
+            </p>
+          </div>
+
+          <BestOfSelector data={bestOfCategories} />
         </div>
       </section>
 
