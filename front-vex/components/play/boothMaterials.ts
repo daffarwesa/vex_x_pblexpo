@@ -29,8 +29,8 @@ const toonFragmentShader = `
   }
 `;
 
-const DEFAULT_LIGHT_DIR = new THREE.Vector3(0.5, 0.8, 0.3).normalize();
-const SHADE_FACTOR = 0.35; // seberapa gelap sisi "shadow" — 0 = hitam total, 1 = sama kayak colorHigh
+const DEFAULT_LIGHT_DIR = new THREE.Vector3(1, 0.8, 0.3).normalize();
+const SHADE_FACTOR = 0.9; // seberapa gelap sisi "shadow" — 0 = hitam total, 1 = sama kayak colorHigh
 
 // Factory generic: bikin (atau ambil dari cache) toon material dari 1 warna hex.
 // colorLow otomatis dihitung sebagai versi gelap dari colorHigh.
@@ -66,7 +66,7 @@ function createToonMaterial(hex: string): THREE.ShaderMaterial {
 export const PrimaryMaterial = new THREE.ShaderMaterial({
   uniforms: {
     lightDirection: { value: DEFAULT_LIGHT_DIR.clone() },
-    colorLow: { value: new THREE.Color(0x000000) },
+    colorLow: { value: new THREE.Color(0xf0f0f0) },
     colorHigh: { value: new THREE.Color(0xffffff) },
     threshold: { value: 0.0 },
   },
@@ -121,8 +121,8 @@ export function createSecondaryMaterial(
 export const HALL_COLORS: Record<string, string> = {
   white: "#FFFFFF",
   blue: "#2196F3",
-  red: "#B71C1C",
-  maroon: "#B71C1C", // alias — kalau di glb namanya "maroon" bukan "red"
+  red: "#ff0000",
+  maroon: "#ff0000", // alias — kalau di glb namanya "maroon" bukan "red"
 };
 
 // Cache otomatis lewat createToonMaterial — tiap nama warna cukup 1 instance,

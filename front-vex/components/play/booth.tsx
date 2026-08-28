@@ -51,7 +51,7 @@ function toProxiedUrl(url: string): string {
 // ternyata tidak sama dengan arah depan yang dimaksud objek boothpointsN
 // di hall-utama.glb. Kalau booth masih menghadap arah salah, ubah angka
 // ini (coba 90, -90, atau 0) sampai orientasinya pas.
-const BOOTH_YAW_OFFSET_DEG = 180;
+const BOOTH_YAW_OFFSET_DEG = 90;
 const boothYawOffsetQuat = new THREE.Quaternion().setFromAxisAngle(
   new THREE.Vector3(0, 1, 0),
   THREE.MathUtils.degToRad(BOOTH_YAW_OFFSET_DEG)
