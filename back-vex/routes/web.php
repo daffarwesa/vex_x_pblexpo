@@ -9,11 +9,11 @@ use App\Http\Controllers\PenggunaController;
 */
 
 Route::get('/', function () {
-    return response()->json([
-        'app' => 'Virtual Exhibition API',
-        'status' => 'Online',
-        'message' => 'Backend is ready to connect with Next.js'
-    ]);
+    // return response()->json([
+    //     // 'app' => 'Virtual Exhibition API',
+    //     // 'status' => 'Online',
+    //     // 'message' => 'Backend is ready to connect with Next.js'
+    // ]);
 });
 
 // Tambahkan rute fallback ini di paling bawah file web.php

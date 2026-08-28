@@ -13,7 +13,7 @@ import {
 import { FaStar } from "react-icons/fa";
 // best & favorite work
 import { useEffect, useRef, useState } from "react";
-import { GetKaryaTerbaikAktif, GetKaryaFavoritAktif } from "./api";
+// import { GetKaryaTerbaikAktif, GetKaryaFavoritAktif } from "./api";
 
 const RELEASE_VIDEO_ID = "bLdFe6G7OC8";
 
@@ -52,7 +52,7 @@ export default function HomePage() {
   const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isFirstRender = useRef(true);
-  const tutorialLink = "/tutorial/umum";
+  const tutorialLink = "/tutorial";
 
   const goToPrevMedia = () =>
     setActiveMediaIndex(
@@ -113,19 +113,19 @@ export default function HomePage() {
     });
   }, [activeMediaIndex]);
 
-  useEffect(() => {
-    GetKaryaTerbaikAktif()
-      .then((data) => {
-        if (data.status === "success") setBestWork(data.karya);
-      })
-      .catch((err) => console.error("Failed to fetch best work:", err));
+  // useEffect(() => {
+  //   GetKaryaTerbaikAktif()
+  //     .then((data) => {
+  //       if (data.status === "success") setBestWork(data.karya);
+  //     })
+  //     .catch((err) => console.error("Failed to fetch best work:", err));
 
-    GetKaryaFavoritAktif()
-      .then((data) => {
-        if (data.status === "success") setFavoriteWork(data.karya);
-      })
-      .catch((err) => console.error("Failed to fetch favorite work:", err));
-  }, []);
+  //   GetKaryaFavoritAktif()
+  //     .then((data) => {
+  //       if (data.status === "success") setFavoriteWork(data.karya);
+  //     })
+  //     .catch((err) => console.error("Failed to fetch favorite work:", err));
+  // }, []);
 
   return (
     <div className="flex flex-col w-full bg-secondary-color select-none">
@@ -332,12 +332,12 @@ export default function HomePage() {
               </div>
             </div>
 
-            <Button
+            {/* <Button
               link={tutorialLink}
               className="w-[50%] px-10 lg:px-18 py-2 lg:py-3 rounded-md hover:scale-102 duration-500 !bg-[#F5811F] hover:!bg-[#DD6E10]"
             >
               Tutorial
-            </Button>
+            </Button> */}
           </div>
 
           {/* Mobile only: description + button, after the image */}

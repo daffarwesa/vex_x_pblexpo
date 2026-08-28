@@ -28,7 +28,7 @@ const menuGroups: MenuGroup[] = [
     label: "Source",
     items: [
       { title: "FAQs", link: "/faqs" },
-      // { title: "Tutorial", link: "/tutorial-" },
+      // { title: "Tutorial", link: "/tutorial" },
       { title: "Service", link: "/service" },
     ],
   },
