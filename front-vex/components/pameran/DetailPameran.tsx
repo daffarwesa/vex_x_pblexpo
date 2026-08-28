@@ -260,12 +260,10 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
             <div className="hidden md:flex justify-between divide-x">
               <Stat title="Total Project" value={stats?.karya ?? 0} />
               <Stat title="Opening Date" value={stats?.startDate || date} />
-              <Stat title="Category" value={stats?.studyLevel || "Umum"} />
             </div>
             <div className="md:hidden space-y-3">
               <Row title="Total Project" value={stats?.karya ?? 0} />
               <Row title="Opening Date" value={stats?.startDate || date} />
-              <Row title="Category" value={stats?.studyLevel || "Umum"} />
             </div>
           </div>
         </div>

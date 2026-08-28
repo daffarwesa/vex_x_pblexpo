@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { motion, Transition } from "framer-motion";
 import Link from "next/link";
+import { FaArrowLeft } from "react-icons/fa";
 // KOMPONEN
 import { Logo } from "@/components/shared/ui/Components";
 import { Button, ButtonPutih } from "@/components/shared/ui/Button";
@@ -156,7 +157,7 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 1 }}
         className={cn(
-          "flex flex-col items-center",
+          "flex flex-col items-center relative",
           "z-10 w-full max-w-md p-8",
           "scale-90 rounded-2xl shadow-2xl",
           "bg-white border border-gray-100",
@@ -203,13 +204,21 @@ export default function LoginPage() {
             onToggle={() => setShowPassword((prev) => !prev)}
           />
 
-          <div className="w-full mt-10 pb-6">
+          <div className="w-full mt-8 flex flex-col gap-3 pb-2">
             <Button
               type="submit"
-              className="w-full py-3 border-2 rounded-lg text-lg font-bold"
+              className="w-full py-3 border-2 rounded-xl text-lg font-bold"
             >
               {isLoading ? "Loading..." : "Login"}
             </Button>
+
+            <ButtonPutih
+              link="/"
+              className="w-full py-3 border-2 border-gray-200 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+            >
+              <FaArrowLeft size={14} />
+              <span>Kembali ke Beranda</span>
+            </ButtonPutih>
           </div>
         </form>
       </motion.div>

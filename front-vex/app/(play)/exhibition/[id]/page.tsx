@@ -13,6 +13,7 @@ import {
   useParams,
   useRouter,
 } from "next/navigation";
+import Cookies from "js-cookie";
 
 import { Canvas } from "@react-three/fiber";
 import { useProgress } from "@react-three/drei";
@@ -486,7 +487,8 @@ export default function ExhibitionPage() {
                 sessionStorage.removeItem("playerId");
                 sessionStorage.removeItem("playerName");
                 document.cookie = "username=; path=/; max-age=0";
-                window.location.href = "/pameran";
+                const isAdmin = Cookies.get("is_admin_logged_in") === "true" || !!localStorage.getItem("token");
+                window.location.href = isAdmin ? "/admin/pameran" : "/pameran";
               }}
               className="w-full h-12 rounded-xl bg-red-500 hover:bg-red-600 font-bold transition-colors"
             >

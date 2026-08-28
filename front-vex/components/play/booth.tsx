@@ -170,8 +170,8 @@ export default function Booth({
     numCanvasTex.current?.dispose();
     numCanvasTex.current = tex;
 
-    (numMesh.material as THREE.Material)?.dispose?.();
-    numMesh.material = new THREE.MeshBasicMaterial({
+    ((numMesh as any).material as THREE.Material)?.dispose?.();
+    (numMesh as any).material = new THREE.MeshBasicMaterial({
       map: tex,
       toneMapped: false,
       side: THREE.DoubleSide,
