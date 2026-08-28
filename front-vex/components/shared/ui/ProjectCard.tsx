@@ -37,29 +37,31 @@ export default function ProjectCard({ project, className }: ProjectData) {
   // endDate null → tidak ada batas tutup, cukup cek sudah dibuka
   const isOpen = project.stats?.endDate
     ? (() => {
-      const end = new Date(project.stats.endDate);
-      end.setHours(23, 59, 59, 999);
-      return today >= startDate && today <= end;
-    })()
+        const end = new Date(project.stats.endDate);
+        end.setHours(23, 59, 59, 999);
+        return today >= startDate && today <= end;
+      })()
     : today >= startDate;
 
   // Resolusi tahun dengan fallback aman
-  const displayYear = project.year || (() => {
-    const raw = project.date || project.stats?.startDate;
-    if (!raw) return "";
-    const match = String(raw).match(/\b(19\d\d|20\d\d)\b/);
-    if (match) return match[1];
-    const d = new Date(raw);
-    return !isNaN(d.getTime()) ? String(d.getFullYear()) : "";
-  })();
+  const displayYear =
+    project.year ||
+    (() => {
+      const raw = project.date || project.stats?.startDate;
+      if (!raw) return "";
+      const match = String(raw).match(/\b(19\d\d|20\d\d)\b/);
+      if (match) return match[1];
+      const d = new Date(raw);
+      return !isNaN(d.getTime()) ? String(d.getFullYear()) : "";
+    })();
 
   return (
     <div
-      className={`relative overflow-hidden cursor-pointer ${className ?? ""}`}
+      className={`relative overflow-hidden cursor-pointer rounded-lg border border-gray-200 bg-white p-2 shadow-md hover:shadow-lg transition-shadow duration-300 ${className ?? ""}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div className="relative aspect-video w-full overflow-hidden rounded-sm shadow-[0px_1px_3px_rgba(0,0,0,1)]">
+      <div className="relative aspect-video w-full overflow-hidden rounded-sm">
         <Image
           src={project.bannerSmall || project.bannerImage}
           alt={project.title}
@@ -70,8 +72,9 @@ export default function ProjectCard({ project, className }: ProjectData) {
 
         {/* OVERLAY */}
         <div
-          className={`absolute inset-0 z-10 bg-gradient-to-t from-main-blue/90 via-white/30 to-transparent transition-opacity duration-300 flex flex-col justify-end p-3 ${hovered ? "opacity-100" : "opacity-0"
-            }`}
+          className={`absolute inset-0 z-10 bg-gradient-to-t from-main-blue/90 via-white/30 to-transparent transition-opacity duration-300 flex flex-col justify-end p-3 ${
+            hovered ? "opacity-100" : "opacity-0"
+          }`}
         >
           <div className="flex items-center justify-between text-white">
             <div className="flex items-center gap-2 bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm">
@@ -96,10 +99,12 @@ export default function ProjectCard({ project, className }: ProjectData) {
 
       {/* DETAIL */}
       <div className="mt-2">
-        <h3 className="text-md font-medium font-poppins line-clamp-2">{project.title}</h3>
-        <div className="mt-2 flex items-center gap-3 text-xs">
-          <span className="flex items-center gap-1 rounded-full bg-main-blue py-[2px] px-[6px] text-[11px] font-bold text-white">
-            <BsStars />
+        <h3 className="text-md font-medium font-poppins line-clamp-2">
+          {project.title}
+        </h3>
+        <div className="mt-2 flex items-center gap-1.5 text-xs">
+          <FaCalendar className="text-gray-400 text-[13px]" />
+          <span className="text-gray-500 font-semibold text-[12px]">
             {displayYear}
           </span>
         </div>
