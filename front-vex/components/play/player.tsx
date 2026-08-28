@@ -89,7 +89,7 @@ export default function Player({
   /* PLAYER */
   /* ===================== */
 
-  const position = useRef(new THREE.Vector3(0, 20, -8));
+  const position = useRef(new THREE.Vector3(330, 10, 14));
   const velocityY = useRef(0);
   const grounded = useRef(false);
 
@@ -97,7 +97,7 @@ export default function Player({
   /* SETTINGS */
   /* ===================== */
 
-  const MOVE_SPEED = 6;
+  const MOVE_SPEED = 10;
   const GRAVITY = 24;
   const JUMP_FORCE = 10;
   // Tinggi kamera/mata dari lantai (dipakai buat first-person DAN sebagai
