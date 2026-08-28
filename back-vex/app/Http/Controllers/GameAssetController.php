@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use App\Models\Karya;
 use App\Models\Pameran;
 
@@ -287,5 +288,28 @@ class GameAssetController extends Controller
         }
 
         return "https://img.youtube.com/vi/{$videoId}/hqdefault.jpg";
+    }
+
+
+    public function proxyImage(Request $request)
+    {
+        $url = $request->query('url');
+
+        // Cuma izinkan proxy untuk Google Drive, biar nggak disalahgunakan
+        // jadi open proxy untuk situs sembarangan.
+        if (!$url || !str_starts_with($url, 'https://drive.google.com/')) {
+            abort(400, 'URL tidak valid');
+        }
+
+        $response = Http::timeout(10)->get($url);
+
+        if (!$response->successful()) {
+            abort(502, 'Gagal mengambil gambar');
+        }
+
+        return response($response->body(), 200)
+            ->header('Content-Type', $response->header('Content-Type', 'image/jpeg'))
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Cache-Control', 'public, max-age=86400');
     }
 }

@@ -9,6 +9,7 @@ import Booth from "./booth";
 import Player from "./player";
 import CameraSwitcher from "./cameraSwitcher";
 import { sharedTextureLoader } from "@/components/shared/ui/LoadingManager";
+import { getHallMaterial } from "@/components/play/boothMaterials";
 
 import { getHallModel, getKaryaList, getPameranFolder, getGameAssets, getPlayerModelUrl } from "@/components/play/apiPlay";
 
@@ -194,6 +195,19 @@ function ExperienceInner({
   const { scene } = useGLTF(hallModel);
 
   /* ===================== */
+  /* HALL MATERIALS: WHITE / BLUE / RED / MAROON                          */
+  /* Objek di hall-utama.glb dengan nama-nama warna ini diberi toon        */
+  /* shader material yang sama tekniknya dengan Primary/Secondary booth.   */
+  /* ===================== */
+  useEffect(() => {
+    scene.traverse((obj: any) => {
+      if (!obj.isMesh) return;
+      const mat = getHallMaterial(obj.name?.toLowerCase() || "");
+      if (mat) obj.material = mat;
+    });
+  }, [scene]);
+
+  /* ===================== */
   /* AUDIO + PLAYER MODEL  */
   /* ===================== */
 
@@ -319,6 +333,7 @@ function ExperienceInner({
     scene.traverse((obj: any) => {
       if (!obj.isMesh) return;
       const name = obj.name?.toLowerCase() || "";
+
       if (name.startsWith("paneldisplay")) {
         const num = parseInt(name.replace("paneldisplay", "")[1]);
         if (!isNaN(num)) loadTextureSafe(`/prodi/${folder}/${num}.png`, (tex) => {
@@ -333,17 +348,16 @@ function ExperienceInner({
         });
       }
       if (name.startsWith("panelposter")) {
-        const rest = name.replace("panelposter", "");
-        const zone = rest[0];
-        const slot = parseInt(rest.slice(1));
-        const slotIndex = (slot - 1) % 6;
+        // Sama seperti booth: ambil angka di akhir nama objek
+        // ("panelposter12" -> 12) dan cocokkan langsung ke id_stan.
+        const match = name.match(/(\d+)$/);
+        const stanNumber = match ? parseInt(match[1], 10) : null;
+        if (stanNumber == null) return;
 
-        const karyaInZone = karyaList
-          .filter((k) => (k.kelas ?? "").toLowerCase() === zone)
-          .sort((a, b) => a.id_karya - b.id_karya);
-
-        const floorOffset = (currentFloor - 1) * 6;
-        const karya = karyaInZone[floorOffset + slotIndex] ?? null;
+        const karya = karyaList.find((k) => {
+          const kStanNumber = parseInt(String(k.id_stan).replace(/\D/g, ""), 10);
+          return kStanNumber === stanNumber;
+        }) ?? null;
 
         if (karya?.poster) {
           loadTextureSafe(karya.poster, (tex) => {
@@ -352,9 +366,8 @@ function ExperienceInner({
           }, true);
         }
       }
-
     });
-  }, [scene, folder, loadTextureSafe, karyaList, currentFloor]);
+  }, [scene, folder, loadTextureSafe, karyaList]); // ← currentFloor sudah dihapus dari deps
 
   /* ===================== */
   /* BOOTH POINTS          */
@@ -366,11 +379,22 @@ function ExperienceInner({
     scene.traverse((obj: any) => {
       const lower = obj.name?.toLowerCase() || "";
       if (lower.startsWith("booth")) {
+        // Ambil angka di akhir nama objek, mis. "boothpoints12" -> 12,
+        // "boothpoints144" -> 144. Ini yang dicocokkan ke id_stan.
+        const match = lower.match(/(\d+)$/);
+        const stanNumber = match ? parseInt(match[1], 10) : null;
+        if (stanNumber == null) return;
+
         const pos = new THREE.Vector3();
         const quat = new THREE.Quaternion();
         obj.getWorldPosition(pos);
         obj.getWorldQuaternion(quat);
-        result.push({ name: obj.name, position: [pos.x, pos.y, pos.z], quaternion: [quat.x, quat.y, quat.z, quat.w] });
+        result.push({
+          name: obj.name,
+          stanNumber,
+          position: [pos.x, pos.y, pos.z],
+          quaternion: [quat.x, quat.y, quat.z, quat.w],
+        });
         obj.visible = false;
         obj.raycast = () => null;
       }
@@ -384,29 +408,24 @@ function ExperienceInner({
 
   /* ===================== */
   /* BOOTH MATCHING        */
-  /* Zone: kelas A=zone a, B=zone b, etc.
-     Slot: ordered by id_karya within zone, 6 per floor
+  /* Sekarang 1:1 — boothpointsN di hall dicocokkan langsung ke karya yang  */
+  /* id_stan-nya = N. Tidak ada lagi konsep zona/lantai untuk booth, karena */
+  /* semua 144 titik sudah ada sekaligus di satu scene.                    */
   /* ===================== */
 
   const visibleBooths = useMemo(() => {
-    return boothPoints.map((item) => {
-      const nameLower = item.name.toLowerCase(); // "bootha1"
-      const zone = nameLower.replace("booth", "")[0];     // "a"
-      const slot = parseInt(nameLower.replace("booth", "").slice(1)); // 1-6
+    return boothPoints
+      .map((item) => {
+        const karya = karyaList.find((k) => {
+          // id_stan dari API formatnya "Stan 1", "Stan 12", dst — ambil angkanya saja.
+          const stanNumber = parseInt(String(k.id_stan).replace(/\D/g, ""), 10);
+          return stanNumber === item.stanNumber;
+        }) ?? null;
 
-      // Filter karya by zone (kelas field from pengguna)
-      const karyaInZone = karyaList
-        .filter((k) => (k.kelas ?? "").toLowerCase() === zone)
-        .sort((a, b) => a.id_karya - b.id_karya);
-
-      // Slot index within this floor
-      const floorOffset = (currentFloor - 1) * 6;
-      const targetIndex = floorOffset + (slot - 1);
-      const karya = karyaInZone[targetIndex] ?? null;
-
-      return { item, karya };
-    }).filter(({ karya }) => karya && karya.model_path);
-  }, [boothPoints, karyaList, currentFloor]);
+        return { item, karya };
+      })
+      .filter(({ karya }) => karya && karya.model_path);
+  }, [boothPoints, karyaList]);
 
   // Preload booth GLTF models as soon as we know which ones are needed,
   // so switching floors doesn't stall on model parsing.
@@ -428,10 +447,10 @@ function ExperienceInner({
 
       {visibleBooths.map(({ item, karya }) => (
         <Booth
-          key={`${item.name}-${currentFloor}`}
+          key={item.name}
           boothName={karya.booth_name}
-          idKarya={karya.id_karya}        // ← baru
-          idKategori={karya.id_kategori}  // ← baru
+          idKarya={karya.id_karya}
+          idKategori={karya.id_kategori}
           position={item.position}
           quaternion={item.quaternion}
           poster={karya.poster}
