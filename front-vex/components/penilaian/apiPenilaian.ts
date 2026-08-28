@@ -1,5 +1,7 @@
 import url from "@/lib/axios";
 
+export type BestRank = "1" | "2" | "3" | null;
+
 export interface PenilaianItem {
   id_karya: number;
   judul: string;
@@ -7,8 +9,7 @@ export interface PenilaianItem {
   tautan: string;
   gambar_poster: string;
   predikat: "1" | "2" | null;
-  is_best: boolean;
-  best_rank?: 1 | 2 | 3 | null;
+  is_best: BestRank;
   id_kategori: number;
   id_pameran: number;
   kategori?: {
@@ -49,8 +50,8 @@ export async function SetPredikatKarya(id_karya: number, predikat: "1" | "2" | n
   return res.data;
 }
 
-// Update Best karya
-export async function SetBestKarya(id_karya: number, is_best: boolean) {
+// Update Best karya (sesuai enum('1','2','3') nullable di DB)
+export async function SetBestKarya(id_karya: number, is_best: BestRank) {
   const res = await url.patch(`/api/auth/karya/${id_karya}/best`, {
     is_best,
   });
@@ -67,20 +68,20 @@ export async function BatchSavePenilaian(payload: {
 
   // Map karya to predikat & best
   const predikatMap: Record<number, "1" | "2" | null> = {};
-  const bestSet = new Set<number>();
+  const bestMap: Record<number, BestRank> = {};
 
   Object.values(payload.kategoriWinners).forEach((winner) => {
     if (winner.juara1) predikatMap[winner.juara1] = "1";
     if (winner.juara2) predikatMap[winner.juara2] = "2";
   });
 
-  if (payload.bestWinners.best1) bestSet.add(payload.bestWinners.best1);
-  if (payload.bestWinners.best2) bestSet.add(payload.bestWinners.best2);
-  if (payload.bestWinners.best3) bestSet.add(payload.bestWinners.best3);
+  if (payload.bestWinners.best1) bestMap[payload.bestWinners.best1] = "1";
+  if (payload.bestWinners.best2) bestMap[payload.bestWinners.best2] = "2";
+  if (payload.bestWinners.best3) bestMap[payload.bestWinners.best3] = "3";
 
   for (const id of payload.allKaryaIds) {
     const targetPredikat = predikatMap[id] ?? null;
-    const targetBest = bestSet.has(id);
+    const targetBest = bestMap[id] ?? null;
 
     promises.push(SetPredikatKarya(id, targetPredikat));
     promises.push(SetBestKarya(id, targetBest));

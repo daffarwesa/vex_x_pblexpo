@@ -114,13 +114,12 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
             }
           }
 
-          if (k.is_best) {
-            if (!initialBestWinners.best1)
-              initialBestWinners.best1 = k.id_karya;
-            else if (!initialBestWinners.best2)
-              initialBestWinners.best2 = k.id_karya;
-            else if (!initialBestWinners.best3)
-              initialBestWinners.best3 = k.id_karya;
+          if (k.is_best === "1") {
+            initialBestWinners.best1 = k.id_karya;
+          } else if (k.is_best === "2") {
+            initialBestWinners.best2 = k.id_karya;
+          } else if (k.is_best === "3") {
+            initialBestWinners.best3 = k.id_karya;
           }
         });
 
@@ -210,43 +209,44 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
   };
 
   // Handler toggle Best Global (Auto Save)
-  const handleSelectBest = async (
-    id_karya: number,
-    rank: "best1" | "best2" | "best3",
-  ) => {
-    const isUnselect = bestWinners[rank] === id_karya;
+const handleSelectBest = async (
+  id_karya: number,
+  rank: "best1" | "best2" | "best3",
+) => {
+  const rankValue = rank === "best1" ? "1" : rank === "best2" ? "2" : "3";
+  const isUnselect = bestWinners[rank] === id_karya;
 
-    // Optimistic UI update
-    setBestWinners((prev) => {
-      if (isUnselect) {
-        return { ...prev, [rank]: null };
-      }
-      const cleaned: typeof prev = { ...prev };
-      if (cleaned.best1 === id_karya) cleaned.best1 = null;
-      if (cleaned.best2 === id_karya) cleaned.best2 = null;
-      if (cleaned.best3 === id_karya) cleaned.best3 = null;
-      return { ...cleaned, [rank]: id_karya };
-    });
-
-    try {
-      if (isUnselect) {
-        await SetBestKarya(id_karya, false);
-        showToast(`Status Best dibatalkan`, "info");
-      } else {
-        // Jika karya lama ada di rank ini, batalkan
-        if (bestWinners[rank] && bestWinners[rank] !== id_karya) {
-          await SetBestKarya(bestWinners[rank]!, false);
-        }
-        await SetBestKarya(id_karya, true);
-        const rankLabel =
-          rank === "best1" ? "Best 1" : rank === "best2" ? "Best 2" : "Best 3";
-        showToast(`Karya berhasil ditandai sebagai ${rankLabel}!`, "success");
-      }
-    } catch (err) {
-      console.error("Gagal update Best:", err);
-      showToast("Gagal memperbarui status Best di server.", "error");
+  // Optimistic UI update
+  setBestWinners((prev) => {
+    if (isUnselect) {
+      return { ...prev, [rank]: null };
     }
-  };
+    const cleaned: typeof prev = { ...prev };
+    if (cleaned.best1 === id_karya) cleaned.best1 = null;
+    if (cleaned.best2 === id_karya) cleaned.best2 = null;
+    if (cleaned.best3 === id_karya) cleaned.best3 = null;
+    return { ...cleaned, [rank]: id_karya };
+  });
+
+  try {
+    if (isUnselect) {
+      await SetBestKarya(id_karya, null);
+      showToast(`Status Best dibatalkan`, "info");
+    } else {
+      // Jika karya lama ada di rank ini, batalkan
+      if (bestWinners[rank] && bestWinners[rank] !== id_karya) {
+        await SetBestKarya(bestWinners[rank]!, null);
+      }
+      await SetBestKarya(id_karya, rankValue);
+      const rankLabel =
+        rank === "best1" ? "Best 1" : rank === "best2" ? "Best 2" : "Best 3";
+      showToast(`Karya berhasil ditandai sebagai ${rankLabel}!`, "success");
+    }
+  } catch (err) {
+    console.error("Gagal update Best:", err);
+    showToast("Gagal memperbarui status Best di server.", "error");
+  }
+};
 
   // Hitung total kategori terisi
   const totalKategoriTerisi = useMemo(() => {
@@ -261,9 +261,7 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
   if (loading) {
     return (
       <div className="min-h-screen bg-secondary-color font-poppins pb-24">
-        <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-16">
-        
-        </section>
+        <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-16"></section>
         <div className="max-w-[1200px] mx-auto px-4 py-[300px] flex justify-center">
           <div className="w-10 h-10 border-4 border-main-blue border-t-transparent rounded-full animate-spin" />
         </div>
