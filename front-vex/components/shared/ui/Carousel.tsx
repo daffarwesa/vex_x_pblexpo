@@ -4,7 +4,10 @@ import React, { useCallback } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import Image from "next/image";
-import { BiSolidRightArrow, BiSolidLeftArrow } from "react-icons/bi";
+import {
+  BiSolidRightArrow,
+  BiSolidLeftArrow,
+} from "react-icons/bi";
 
 /* ===================== */
 /* TYPE */
@@ -13,26 +16,144 @@ import { BiSolidRightArrow, BiSolidLeftArrow } from "react-icons/bi";
 export interface CarouselKaryaItem {
   id: number | string;
   title: string;
+
   banner?: string;
   bannerLarge?: string;
+
   poster: string;
+
   posterMedium?: string;
 }
 
 interface CarouselProps {
-  data: CarouselKaryaItem[]; // data dari API backend atau props
+  data: CarouselKaryaItem[];
   className?: string;
+}
+
+/* ===================== */
+/* GOOGLE DRIVE HELPERS */
+/* ===================== */
+
+/**
+ * Extract FILE_ID from common Google Drive URLs.
+ *
+ * Supported:
+ *
+ * https://drive.google.com/file/d/FILE_ID/view
+ * https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+ * https://drive.google.com/open?id=FILE_ID
+ * https://drive.google.com/uc?id=FILE_ID&export=view
+ */
+function extractDriveFileId(url: string): string | null {
+  if (!url) return null;
+
+  const patterns = [
+    /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
+
+function isGoogleDriveLink(url: string): boolean {
+  return (
+    typeof url === "string" &&
+    /(^|:\/\/)(drive|docs)\.google\.com/.test(url)
+  );
+}
+
+/**
+ * Converts a Google Drive sharing URL
+ * into Google's embeddable preview URL.
+ */
+function getGoogleDrivePreviewUrl(url: string): string | null {
+  const fileId = extractDriveFileId(url);
+
+  if (!fileId) return null;
+
+  return `https://drive.google.com/file/d/${fileId}/preview`;
+}
+
+/* ===================== */
+/* MEDIA */
+/* ===================== */
+
+function CarouselMedia({
+  src,
+  alt,
+  priority = false,
+}: {
+  src: string;
+  alt: string;
+  priority?: boolean;
+}) {
+  const drivePreviewUrl = isGoogleDriveLink(src)
+    ? getGoogleDrivePreviewUrl(src)
+    : null;
+
+  /**
+   * GOOGLE DRIVE
+   */
+  if (drivePreviewUrl) {
+    return (
+      <iframe
+        src={drivePreviewUrl}
+        title={alt}
+        loading={priority ? "eager" : "lazy"}
+        allow="autoplay"
+        className="absolute inset-0 w-full h-full border-0"
+        style={{
+          pointerEvents: "none",
+        }}
+      />
+    );
+  }
+
+  /**
+   * NORMAL IMAGE
+   */
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      className="object-cover transition-transform duration-700 group-hover:scale-105"
+      priority={priority}
+      sizes="(max-width: 768px) 100vw, 400px"
+      unoptimized={
+        typeof src === "string" &&
+        (src.startsWith("http://") ||
+          src.startsWith("https://"))
+      }
+    />
+  );
 }
 
 /* ===================== */
 /* COMPONENT */
 /* ===================== */
 
-export default function Carousel({ data, className }: CarouselProps) {
-  const hasMultipleItems = Boolean(data && data.length > 1);
+export default function Carousel({
+  data,
+  className,
+}: CarouselProps) {
+  const hasMultipleItems = Boolean(
+    data && data.length > 1,
+  );
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
-    { loop: hasMultipleItems },
+    {
+      loop: hasMultipleItems,
+    },
     hasMultipleItems
       ? [
           Autoplay({
@@ -40,7 +161,7 @@ export default function Carousel({ data, className }: CarouselProps) {
             stopOnInteraction: false,
           }),
         ]
-      : []
+      : [],
   );
 
   const scrollPrev = useCallback(() => {
@@ -58,15 +179,27 @@ export default function Carousel({ data, className }: CarouselProps) {
           className || ""
         }`}
       >
-        <span className="font-poppins text-gray-500 font-semibold">No Projects Yet</span>
-        <span className="text-xs text-gray-400 mt-1">Belum ada karya yang dipilih</span>
+        <span className="font-poppins text-gray-500 font-semibold">
+          No Projects Yet
+        </span>
+
+        <span className="text-xs text-gray-400 mt-1">
+          Belum ada karya yang dipilih
+        </span>
       </div>
     );
   }
 
   return (
-    <div className={`relative group w-full h-full ${className || ""}`}>
+    <div
+      className={`relative group w-full h-full ${
+        className || ""
+      }`}
+    >
+      {/* ===================== */}
       {/* CAROUSEL */}
+      {/* ===================== */}
+
       <div
         className="w-full h-full overflow-hidden rounded-xl shadow-lg border border-gray-100 bg-gray-100"
         ref={emblaRef}
@@ -92,22 +225,21 @@ export default function Carousel({ data, className }: CarouselProps) {
                   aspect-[3/4]
                 "
               >
-                {/* POSTER / IMAGE */}
-                <Image
+                {/* ===================== */}
+                {/* POSTER / IMAGE / DRIVE */}
+                {/* ===================== */}
+
+                <CarouselMedia
                   src={imageSrc}
                   alt={item.title || "Karya"}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
                   priority={index === 0}
-                  sizes="(max-width: 768px) 100vw, 400px"
-                  unoptimized={
-                    typeof imageSrc === "string" &&
-                    (imageSrc.startsWith("http://") || imageSrc.startsWith("https://"))
-                  }
                 />
 
-                {/* GRADIENT OVERLAY & TITLE */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-5 md:p-6">
+                {/* ===================== */}
+                {/* GRADIENT OVERLAY */}
+                {/* ===================== */}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-5 md:p-6 pointer-events-none">
                   <p className="text-white font-semibold text-lg md:text-xl line-clamp-2 drop-shadow-md">
                     {item.title}
                   </p>
@@ -118,7 +250,10 @@ export default function Carousel({ data, className }: CarouselProps) {
         </div>
       </div>
 
+      {/* ===================== */}
       {/* PREV / NEXT BUTTONS */}
+      {/* ===================== */}
+
       {hasMultipleItems && (
         <>
           <button

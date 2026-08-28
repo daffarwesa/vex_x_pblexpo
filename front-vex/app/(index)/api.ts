@@ -38,3 +38,21 @@ export async function GetKaryaFavoritAktif(): Promise<KaryaPredikatResponse> {
   const res = await url.get("/api/karya/predikat/2");
   return res.data;
 }
+
+// is_best: 1 = Innovation, 2 = Design, 3 = System
+export interface KaryaBestOfItem extends Omit<KaryaPredikatItem, "predikat"> {
+  is_best: 1 | 2 | 3 | null;
+}
+
+interface KaryaBestOfResponse {
+  status: string;
+  data: KaryaBestOfItem[];
+}
+
+export async function GetKaryaBestOfAktif(
+  isBest: 1 | 2 | 3
+): Promise<KaryaBestOfResponse> {
+  // sesuaikan path ini dengan route backend kamu untuk kolom is_best
+  const res = await url.get(`/api/karya/best/${isBest}`);
+  return res.data;
+}
