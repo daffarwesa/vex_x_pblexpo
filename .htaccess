@@ -28,8 +28,8 @@ Options -Indexes
     # Block htaccess itself
     RewriteRule ^\.htaccess$ - [F,L]
 
-    # Block config files
-    RewriteRule \.(ini|log|sh|sql|bak|old|backup|swp|dist)$ - [F,L]
+    # Block config and dump files
+    RewriteRule \.(ini|log|sh|sql|bak|old|backup|swp|dist|rdb)$ - [F,L]
 
     # Block vendor access
     RewriteRule ^vendor/ - [F,L]
@@ -50,9 +50,11 @@ Options -Indexes
     Require all denied
 </FilesMatch>
 
-# Extra security headers
+# Production Security Headers
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "SAMEORIGIN"
-    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" env=HTTPS
 </IfModule>

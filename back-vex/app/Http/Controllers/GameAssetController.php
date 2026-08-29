@@ -233,4 +233,54 @@ class GameAssetController extends Controller
 
         return "https://img.youtube.com/vi/{$videoId}/hqdefault.jpg";
     }
+
+
+    public function proxyImage(Request $request)
+    {
+        $url = $request->query('url');
+
+        // Cuma izinkan proxy untuk Google Drive, biar nggak disalahgunakan
+        // jadi open proxy untuk situs sembarangan.
+        if (!$url || !str_starts_with($url, 'https://drive.google.com/')) {
+            abort(400, 'URL tidak valid');
+        }
+
+        // Nonaktifkan redirect — mencegah SSRF via redirect dari Google Drive
+        // ke URL internal atau URL yang tidak diharapkan.
+        $response = Http::timeout(10)
+            ->withOptions(['allow_redirects' => false])
+            ->get($url);
+
+        // Tolak jika server mengembalikan redirect (3xx)
+        if ($response->redirect()) {
+            abort(400, 'Redirect tidak diizinkan');
+        }
+
+        if (!$response->successful()) {
+            abort(502, 'Gagal mengambil gambar');
+        }
+
+        // Batasi ukuran response — cegah memory exhaustion dari file besar
+        $contentLength = (int) $response->header('Content-Length');
+        $maxSize       = 10 * 1024 * 1024; // 10 MB
+        if ($contentLength > $maxSize) {
+            abort(413, 'File terlalu besar (maks 10 MB)');
+        }
+
+        $contentType = $response->header('Content-Type');
+
+        if (!$contentType || !str_starts_with($contentType, 'image/')) {
+            abort(415, 'File bukan gambar');
+        }
+
+        // Validasi ulang ukuran body yang sebenarnya diterima
+        $body = $response->body();
+        if (strlen($body) > $maxSize) {
+            abort(413, 'File terlalu besar (maks 10 MB)');
+        }
+
+        return response($body, 200)
+            ->header('Content-Type', $contentType)
+            ->header('Cache-Control', 'public, max-age=86400');
+    }
 }

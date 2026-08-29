@@ -21,7 +21,7 @@ class ChangeEmailController extends Controller
     public function sendVerification(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'new_email' => 'required|email|unique:pengguna,email',
+            'new_email' => 'required|email|unique:admin,email',
             'password' => 'required'
         ]);
 
@@ -98,23 +98,46 @@ class ChangeEmailController extends Controller
 
         $user = Auth::user();
 
-        $cacheKey = 'change_email_' . $user->id;
+        $cacheKey      = 'change_email_' . $user->id;
+        $attemptKey    = 'change_email_attempts_' . $user->id;
+        $maxAttempts   = 5;
+
+        // Cek jumlah percobaan — blok jika sudah melebihi batas
+        $attempts = \Illuminate\Support\Facades\Cache::get($attemptKey, 0);
+        if ($attempts >= $maxAttempts) {
+            // Hapus OTP agar tidak bisa dicoba lagi setelah blocking
+            $this->otpService->forgetCache($cacheKey);
+            \Illuminate\Support\Facades\Cache::forget($attemptKey);
+
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Terlalu banyak percobaan. OTP telah diinvalidasi, silakan minta OTP baru.',
+            ], 429);
+        }
 
         $cacheData = $this->otpService->getFromCache($cacheKey);
 
         if (!$cacheData) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'OTP tidak ditemukan'
+                'status'  => 'error',
+                'message' => 'OTP tidak ditemukan atau sudah kedaluwarsa',
             ], 400);
         }
 
         if ((string) $cacheData['otp'] !== (string) $request->otp) {
+            // Increment counter percobaan, expire dalam 15 menit
+            \Illuminate\Support\Facades\Cache::put($attemptKey, $attempts + 1, now()->addMinutes(15));
+
+            $remaining = $maxAttempts - ($attempts + 1);
             return response()->json([
-                'status' => 'error',
-                'message' => 'OTP tidak valid'
+                'status'    => 'error',
+                'message'   => 'OTP tidak valid',
+                'remaining' => max(0, $remaining),
             ], 400);
         }
+
+        // OTP valid — bersihkan counter percobaan
+        \Illuminate\Support\Facades\Cache::forget($attemptKey);
 
         $oldEmail = $user->email;
         $newEmail = $cacheData['new_email'];
@@ -126,12 +149,12 @@ class ChangeEmailController extends Controller
         $this->otpService->forgetCache($cacheKey);
 
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Email berhasil diubah',
-            'data' => [
+            'data'    => [
                 'old_email' => $oldEmail,
-                'new_email' => $newEmail
-            ]
+                'new_email' => $newEmail,
+            ],
         ], 200);
     }
 }

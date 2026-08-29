@@ -41,13 +41,19 @@ export const AuthProvider = ({
   const [loading, setLoading] = useState(true);
 
   const clearSession = () => {
-    localStorage.removeItem('token');
-    Cookies.remove('role');
+    localStorage.removeItem("token");
+    Cookies.remove("token");
+    Cookies.remove("is_admin_logged_in");
+    Cookies.remove("username");
     setUser(null);
   };
 
+  const isSecure = typeof window !== "undefined" && window.location.protocol === "https:";
+
   const fetchUser = async () => {
-    const token = localStorage.getItem('token');
+    const token = typeof window !== "undefined"
+      ? localStorage.getItem("token") || Cookies.get("token")
+      : null;
 
     // Tidak ada token = langsung selesai
     if (!token) {
@@ -60,16 +66,12 @@ export const AuthProvider = ({
 
       const userData = response.data.user ?? response.data;
 
-      setUser(userData);
-
-      Cookies.set('role', userData.role);
-      // Cookie 'username' dibaca oleh /api/player-name (server route) untuk
-      // menentukan nama player di pameran 3D. localStorage/context useAuth
-      // tidak terlihat oleh server route, jadi harus disinkronkan ke cookie
-      // di sini juga — bukan cuma di login() — karena fetchUser() ini yang
-      // jalan otomatis tiap kali app di-refresh selama token masih ada.
-      Cookies.set('username', userData.nama);
-
+      if (userData) {
+        setUser(userData);
+        Cookies.set("token", token, { expires: 7, secure: isSecure, sameSite: "strict" });
+        Cookies.set("is_admin_logged_in", "true", { expires: 7, secure: isSecure, sameSite: "strict" });
+        Cookies.set("username", userData.nama || "", { expires: 7, secure: isSecure, sameSite: "strict" });
+      }
     } catch (error: any) {
       // Kalau unauthorized langsung reset session
       if (error?.response?.status === 401) {
@@ -90,9 +92,10 @@ export const AuthProvider = ({
   }, []);
 
   const login = (token: string, userData: User) => {
-    localStorage.setItem('token', token);
-    Cookies.set('role', userData.role); // simpan role ke cookie
-    Cookies.set('username', userData.nama); // dipakai /api/player-name
+    localStorage.setItem("token", token);
+    Cookies.set("token", token, { expires: 7, secure: isSecure, sameSite: "strict" });
+    Cookies.set("is_admin_logged_in", "true", { expires: 7, secure: isSecure, sameSite: "strict" });
+    Cookies.set("username", userData.nama || "", { expires: 7, secure: isSecure, sameSite: "strict" });
     setUser(userData);
   };
 

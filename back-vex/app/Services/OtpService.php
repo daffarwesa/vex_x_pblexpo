@@ -17,7 +17,7 @@ class OtpService
      */
     public function generateOtp(): int
     {
-        return rand(100000, 999999);
+        return random_int(100000, 999999);
     }
 
     /**

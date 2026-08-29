@@ -107,19 +107,32 @@ export async function POST(req: Request) {
     );
   }
 }
+const ALLOWED_IMAGE_EXTS = ["jpg", "jpeg", "png", "webp"];
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
 // PUT
 export async function PUT(req: Request) {
   try {
     const formData = await req.formData();
     const id = formData.get("id") as string;
-    const title = formData.get("title") as string;
-    const kategori = formData.get("kategori_kode") as string;
+    const title = (formData.get("title") as string)?.slice(0, 255) || "";
+    const kategori = (formData.get("kategori_kode") as string)?.slice(0, 100) || "";
     const publishDate = formData.get("publishDate") as string;
     const endDate = formData.get("endDate") as string;
     const prepareStart = formData.get("prepareStart") as string;
     const prepareEnd = formData.get("prepareEnd") as string;
-    const description = formData.get("description") as string;
+    const description = (formData.get("description") as string) || "";
     const fileImage = formData.get("image") as File | null;
+
+    if (!id || id.trim() === "") {
+      return NextResponse.json({ success: false, message: "ID wajib diisi" }, { status: 400 });
+    }
+
+    if (!fs.existsSync(jsonPath)) {
+      return NextResponse.json({ success: false, message: "Data tidak ditemukan" }, { status: 404 });
+    }
+
     const file = fs.readFileSync(jsonPath, "utf-8");
     const data: Pameran[] = JSON.parse(file);
     const index = data.findIndex((item: any) => String(item.id) === String(id));
@@ -136,11 +149,25 @@ export async function PUT(req: Request) {
 
     let bannerImage = data[index].bannerImage;
 
-    /* upload image baru */
+    /* upload image baru dengan validasi */
     if (fileImage && fileImage.size > 0) {
+      if (fileImage.size > MAX_FILE_SIZE) {
+        return NextResponse.json({ success: false, message: "Ukuran banner melebihi 5MB" }, { status: 400 });
+      }
+      if (!ALLOWED_MIME_TYPES.includes(fileImage.type)) {
+        return NextResponse.json({ success: false, message: "Format gambar banner tidak diizinkan" }, { status: 400 });
+      }
+      const ext = fileImage.name.split(".").pop()?.toLowerCase() || "";
+      if (!ALLOWED_IMAGE_EXTS.includes(ext)) {
+        return NextResponse.json({ success: false, message: "Ekstensi gambar tidak diizinkan" }, { status: 400 });
+      }
+
+      if (!fs.existsSync(imageDir)) {
+        fs.mkdirSync(imageDir, { recursive: true });
+      }
+
       const bytes = await fileImage.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      const ext = fileImage.name.split(".").pop();
       const fileName = `${Date.now()}.${ext}`;
 
       fs.writeFileSync(path.join(imageDir, fileName), buffer);
