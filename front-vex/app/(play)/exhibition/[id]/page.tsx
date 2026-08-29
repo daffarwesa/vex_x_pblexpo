@@ -499,6 +499,7 @@ export default function ExhibitionPage() {
           id={id}
           src={posterData.src}
           booth={posterData.booth}
+          karyaList={karyaList}
           onClose={() => {
             setPosterOpen(false);
             relockPointer();
@@ -683,34 +684,41 @@ function LoaderWatcher({
   onLoaded: () => void;
 }) {
   const firedRef = useRef(false);
+  const hasStartedRef = useRef(false);
   const dataReadyRef = useRef(dataReady);
 
   useEffect(() => {
     dataReadyRef.current = dataReady;
   }, [dataReady]);
 
-  // Subscribe manual ke progress store milik drei (zustand-based)
+  // Subscribe ke progress store milik drei (zustand-based)
   useEffect(() => {
     const unsub = useProgress.subscribe((state) => {
-      const { progress, active } = state;
+      const { progress, active, total } = state;
+
+      if (total > 0 || active) {
+        hasStartedRef.current = true;
+      }
 
       onProgress(progress);
 
       if (firedRef.current) return;
       if (!dataReadyRef.current) return;
 
-      // Selesai jika tidak aktif lagi atau progress mencapai 100%
-      if (!active || progress >= 100) {
+      // Hanya selesai jika progress sudah benar-benar 100% atau semua item selesai diunduh
+      if (progress >= 100 && (!active || total === 0)) {
         firedRef.current = true;
-        onLoaded();
+        // Beri jeda 350ms agar GPU selesai mengompilasi shader sebelum layar dibuka
+        setTimeout(() => {
+          onLoaded();
+        }, 350);
       }
     });
 
     return () => unsub();
   }, [onLoaded, onProgress]);
 
-  // Safety fallback: jika data siap, pastikan loading tetap selesai
-  // dan tidak stuck jika Drei tidak memicu event un-active
+  // Safety fallback (12 detik): jika jaringan sangat lambat atau tidak ada aset tambahan
   useEffect(() => {
     if (!dataReady) return;
 
@@ -719,7 +727,7 @@ function LoaderWatcher({
         firedRef.current = true;
         onLoaded();
       }
-    }, 1200);
+    }, 12000);
 
     return () => clearTimeout(t);
   }, [dataReady, onLoaded]);
@@ -1004,16 +1012,32 @@ function PosterViewer({
   id,
   src,
   booth,
+  karyaList = [],
   onClose,
   onOpenTautan,
 }: {
   id: string;
   src: string;
   booth: string;
+  karyaList?: any[];
   onClose: () => void;
   onOpenTautan: (url: string) => void;
 }) {
   const [zoom, setZoom] = useState(1);
+
+  const norm = (s: any) => String(s ?? "").trim().toLowerCase();
+  const boothNorm = norm(booth);
+
+  // Cari karya langsung di memori (instant 0ms)
+  const findMatch = (list: any[]) => {
+    return list.find((k: any) =>
+      norm(k.booth_name) === boothNorm ||
+      norm(k.judul) === boothNorm ||
+      norm(k.id_stan) === boothNorm
+    );
+  };
+
+  const initialKarya = findMatch(karyaList);
 
   const [info, setInfo] = useState<{
     id_karya: number | null;
@@ -1022,33 +1046,52 @@ function PosterViewer({
     is_terbaik: boolean;
     is_terbanyak: boolean;
     tautan: string | null;
-  }>({
-    id_karya: null,
-    judul: "Loading...",
-    deskripsi: "Loading...",
-    is_terbaik: false,
-    is_terbanyak: false,
-    tautan: null,
+  }>(() => {
+    if (initialKarya) {
+      return {
+        id_karya: initialKarya.id_karya,
+        judul: initialKarya.judul ?? "-",
+        deskripsi: initialKarya.deskripsi ?? "-",
+        is_terbaik: initialKarya.is_terbaik ?? false,
+        is_terbanyak: initialKarya.is_terbanyak ?? false,
+        tautan: initialKarya.tautan ?? null,
+      };
+    }
+    return {
+      id_karya: null,
+      judul: "Loading...",
+      deskripsi: "Loading...",
+      is_terbaik: false,
+      is_terbanyak: false,
+      tautan: null,
+    };
   });
 
   /* ====================== */
-  /* LOAD DATA KARYA        */
+  /* LOAD DATA KARYA FALLBACK */
   /* ====================== */
 
   useEffect(() => {
     let cancelled = false;
 
+    // Jika sudah ketemu dari memori, update dan tidak perlu request HTTP lagi
+    const matched = findMatch(karyaList);
+    if (matched) {
+      setInfo({
+        id_karya: matched.id_karya,
+        judul: matched.judul ?? "-",
+        deskripsi: matched.deskripsi ?? "-",
+        is_terbaik: matched.is_terbaik ?? false,
+        is_terbanyak: matched.is_terbanyak ?? false,
+        tautan: matched.tautan ?? null,
+      });
+      return;
+    }
+
     const load = async () => {
       try {
         const res = await getKaryaDetail(id);
-        const norm = (s: any) => String(s ?? "").trim().toLowerCase();
-        const boothNorm = norm(booth);
-
-        const karya = res.find((k: any) =>
-          norm(k.booth_name) === boothNorm ||
-          norm(k.judul) === boothNorm ||
-          norm(k.id_stan) === boothNorm
-        );
+        const karya = findMatch(res);
 
         if (!karya) throw new Error("Karya tidak ditemukan");
         if (cancelled) return;
@@ -1076,21 +1119,46 @@ function PosterViewer({
 
     load();
     return () => { cancelled = true; };
-  }, [id, booth]);
+  }, [id, booth, karyaList]);
+
+  const resolveImageSrc = (url: string) => {
+    if (!url) return "";
+    const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    if (url.startsWith("/storage/")) {
+      return `${base}${url}`;
+    }
+    if (url.includes("drive.google.com")) {
+      return `${base}/api/experience/proxy-image?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+  };
 
   const wheel = (e: React.WheelEvent) => {
     e.preventDefault();
     setZoom((p) => Math.min(Math.max(p - e.deltaY * 0.0015, 0.5), 5));
   };
 
+  const finalSrc = resolveImageSrc(src);
+
   return (
     <div className="fixed inset-0 z-[99997] bg-black/95 flex flex-row">
 
       {/* IMAGE */}
-      <div onWheel={wheel} className="w-[55%] h-full flex items-center justify-center p-3 border-r border-white/10">
-        <div style={{ transform: `scale(${zoom})` }} className="relative w-full h-full">
-          <Image src={src} alt="Poster" fill draggable={false} className="object-contain" />
-        </div>
+      <div onWheel={wheel} className="w-[55%] h-full flex items-center justify-center p-3 border-r border-white/10 relative overflow-hidden">
+        {finalSrc ? (
+          <div style={{ transform: `scale(${zoom})` }} className="relative w-full h-full">
+            <Image
+              src={finalSrc}
+              alt="Poster"
+              fill
+              unoptimized
+              draggable={false}
+              className="object-contain"
+            />
+          </div>
+        ) : (
+          <div className="text-white/50 text-sm font-medium">Poster belum diunggah</div>
+        )}
       </div>
 
       {/* RIGHT PANEL */}

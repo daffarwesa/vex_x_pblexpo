@@ -106,35 +106,33 @@ function disposeMaterial(obj: any) {
 
 export default function Experience(props: Props) {
   const [hallModel, setHallModel] = useState<string | null>(null);
-  const [karyaList, setKaryaList] = useState<any[]>([]);
-  const [folder, setFolder] = useState<string | null>(null); // ← null dulu
+  const [karyaList, setKaryaList] = useState<any[] | null>(null);
+  const [folder, setFolder] = useState<string | null>(null);
 
   const notifiedRef = useRef(false);
 
   useEffect(() => {
-    getHallModel(props.exhibitionId)
-      .then(setHallModel)
-      .catch((err) => console.error("Failed to load hall model", err));
+    let active = true;
 
-    getKaryaList(props.exhibitionId)
-      .then(({ karya }) => setKaryaList(karya))  // ← ambil .karya saja
-      .catch((err) => console.error("Failed to load karya list", err));
+    Promise.all([
+      getHallModel(props.exhibitionId).catch(() => null),
+      getKaryaList(props.exhibitionId).then(({ karya }) => karya).catch(() => []),
+      getPameranFolder(props.exhibitionId).catch(() => "default"),
+    ]).then(([hall, karya, fld]) => {
+      if (!active) return;
+      setHallModel(hall);
+      setKaryaList(karya || []);
+      setFolder(fld || "default");
+    });
 
-    getPameranFolder(props.exhibitionId)
-      .then(setFolder)
-      .catch(() => setFolder("default"));
+    return () => {
+      active = false;
+    };
   }, [props.exhibitionId]);
 
-  // ← tunggu keduanya sebelum render
-  const ready = !!hallModel && !!folder;
+  // Tunggu KETIGANYA selesai di-fetch secara lengkap sebelum me-mount scene 3D
+  const ready = !!hallModel && !!folder && karyaList !== null;
 
-  // Lapor ke ExhibitionPage bahwa fase fetch data sudah selesai, supaya
-  // progress bar bisa lanjut ke fase loading GLTF + texture.
-  // Dipanggil di useEffect (bukan di body render) karena onDataReady
-  // memicu setState di komponen lain (ExhibitionPage) — melakukannya
-  // langsung di body render melanggar aturan React ("cannot update a
-  // component while rendering a different component") dan bisa
-  // mengganggu commit React lain yang sedang berjalan (mis. LoaderWatcher).
   useEffect(() => {
     if (!ready || notifiedRef.current) return;
     notifiedRef.current = true;

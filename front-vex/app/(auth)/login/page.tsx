@@ -217,7 +217,7 @@ export default function LoginPage() {
               className="w-full py-3 border-2 border-gray-200 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-50 transition"
             >
               <FaArrowLeft size={14} />
-              <span>Kembali ke Beranda</span>
+              <span>Back to Home</span>
             </ButtonPutih>
           </div>
         </form>

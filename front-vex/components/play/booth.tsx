@@ -38,10 +38,14 @@ function loadCachedTexture(
 // biasa yang tidak butuh CORS). Di-proxy lewat backend sendiri supaya
 // dapat header Access-Control-Allow-Origin yang benar.
 function toProxiedUrl(url: string): string {
-  if (!url) return url;
+  if (!url) return "";
+  const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  
   if (url.includes("drive.google.com")) {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
     return `${base}/api/experience/proxy-image?url=${encodeURIComponent(url)}`;
+  }
+  if (url.startsWith("/storage/")) {
+    return `${base}${url}`;
   }
   return url;
 }
@@ -61,12 +65,12 @@ type BoothProps = {
   position?: [number, number, number];
   quaternion?: [number, number, number, number];
   boothName: string;
-  poster: string;
-  sampul: string;
+  poster?: string;
+  sampul?: string;
   tautan?: string;
   modelPath: string;
-  idKarya?: any;
-  idKategori?: any;
+  idKarya: number;
+  idKategori: number;
   cameraMode?: "first" | "third";
   mobile?: boolean;
   numBaseUrl?: string | null;
@@ -95,15 +99,23 @@ export default function Booth({
   const sampulMesh = useRef<THREE.Mesh | null>(null);
 
   useEffect(() => {
+    posterMesh.current = null;
+    sampulMesh.current = null;
+
     scene.traverse((obj: any) => {
       if (!obj.isMesh) return;
-      if (obj.name?.toLowerCase().includes("collider")) {
+      const lower = (obj.name || "").toLowerCase();
+      if (lower.includes("collider")) {
         obj.visible = false;
         obj.userData.collider = true;
       }
+      if (lower === "panelposter" || lower.startsWith("panelposter")) {
+        posterMesh.current = obj;
+      }
+      if (lower === "panelvideo" || lower.startsWith("panelvideo")) {
+        sampulMesh.current = obj;
+      }
     });
-    posterMesh.current = scene.getObjectByName("PanelPoster") as THREE.Mesh;
-    sampulMesh.current = scene.getObjectByName("PanelVideo") as THREE.Mesh;
   }, [scene]);
 
   /* ===================== */
@@ -243,3 +255,5 @@ export default function Booth({
     </group>
   );
 }
+
+useGLTF.preload("/api/experience/booth-model/booth.glb");
