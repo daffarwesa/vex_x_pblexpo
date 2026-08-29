@@ -380,7 +380,7 @@ export default function BestOfSelector({
                 transform: `translate(-50%, 0) translateX(${offset * 58}%) scale(${isActive ? 1 : 0.7})`,
                 zIndex: isActive ? 20 : 10 - Math.abs(offset),
               }}
-              className={`absolute left-1/2 bottom-0 origin-bottom w-[68%] sm:w-[32%] md:w-[26%] aspect-[2/3] rounded-2xl overflow-hidden shadow-lg will-change-transform transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+              className={`absolute left-1/2 bottom-0 w-[58%] sm:w-[32%] md:w-[26%] aspect-[2/3] rounded-2xl overflow-hidden shadow-lg will-change-transform transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
                 isActive
                   ? "ring-2 ring-main-blue shadow-2xl opacity-100"
                   : "opacity-70 hover:opacity-90"
