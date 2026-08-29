@@ -40,31 +40,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchUser = async () => {
     const token = typeof window !== "undefined"
       ? localStorage.getItem("token") || Cookies.get("token")
+      : null;
+
+    if (!token) {
+      setLoading(false);
       return;
-  }
-
-  try {
-    const response = await url.get("/api/user");
-    const userData = response.data.user ?? response.data;
-
-    if (userData) {
-      setUser(userData);
-      Cookies.set("token", token, { expires: 7, secure: isSecure, sameSite: "strict" });
-      Cookies.set("is_admin_logged_in", "true", { expires: 7, secure: isSecure, sameSite: "strict" });
-      Cookies.set("username", userData.nama || "", { expires: 7, secure: isSecure, sameSite: "strict" });
     }
-  } catch (error: any) {
-    if (error?.response?.status === 401) {
-      clearSession();
-    }
-  } finally {
-    setLoading(false);
-  }
-};
 
-useEffect(() => {
-  fetchUser();
-}, []);
+    try {
+      const response = await url.get("/api/user");
+      const userData = response.data.user ?? response.data;
+
+      if (userData) {
+        setUser(userData);
+        Cookies.set("token", token, { expires: 7, secure: isSecure, sameSite: "strict" });
+        Cookies.set("is_admin_logged_in", "true", { expires: 7, secure: isSecure, sameSite: "strict" });
+        Cookies.set("username", userData.nama || "", { expires: 7, secure: isSecure, sameSite: "strict" });
+      }
+    } catch (error: any) {
+      if (error?.response?.status === 401) {
+        clearSession();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
 const login = (token: string, userData: User) => {
   localStorage.setItem("token", token);

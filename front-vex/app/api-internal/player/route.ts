@@ -15,11 +15,12 @@ export async function GET() {
         players.push(typeof data === "string" ? JSON.parse(data) : data);
       }
     }
-  }
 
-return NextResponse.json(
-    players
-  );
+    return NextResponse.json(players);
+  } catch (err) {
+    console.error("GET /api-internal/player failed:", err);
+    return NextResponse.json({ success: false }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {

@@ -30,12 +30,6 @@ Route::get('/kategori', function () {
         'data' => \App\Models\Kategori::all(),
     ]);
 });
-Route::get('/pameran', [PameranPublicController::class, 'index']);
-Route::get('/pameran/{slug}', [PameranPublicController::class, 'show']);
-Route::post('/pameran/{slug}/kunjungan', [PameranPublicController::class, 'catatKunjungan']);
-Route::post('/kunjungan', [StatistikController::class, 'store']);
-Route::get('/karya/{id_karya}', [KaryaPublicController::class, 'show']);
-Route::get('/karya/predikat/{predikat}', [KaryaPublicController::class, 'getByPredikat']);
 
 Route::get('/pameran', [PameranPublicController::class, 'index']);
 Route::get('/pameran/{slug}', [PameranPublicController::class, 'show']);
