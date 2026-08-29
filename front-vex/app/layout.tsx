@@ -1,6 +1,7 @@
 import "@/app/globals.css";
 import type { Metadata } from "next";
 import { Tilt_Warp, Poppins } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import ToastContainer from "@/components/shared/ui/ToastNotification";
 
 // API
@@ -27,13 +28,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body className={`${poppins.variable} ${tiltWarp.variable} font-poppins`}>
         <AuthProvider>
           {children}
           <ToastContainer /> 
-          </AuthProvider>
+        </AuthProvider>
+        {gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
     </html>
   );
