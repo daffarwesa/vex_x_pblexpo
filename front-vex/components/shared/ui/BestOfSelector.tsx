@@ -193,6 +193,21 @@ function getGoogleDrivePreviewUrl(url: string): string | null {
 
 function PosterImage({ src, alt }: { src: string; alt: string }) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  /**
+   * Kalau gambar sudah ke-cache browser sebelum React sempat
+   * pasang onLoad listener, event onLoad bisa nggak pernah
+   * terpanggil — jadi kita cek `img.complete` manual begitu
+   * elemen ini mount / src berubah.
+   */
+  useEffect(() => {
+    setIsLoaded(false);
+
+    if (imgRef.current?.complete) {
+      setIsLoaded(true);
+    }
+  }, [src]);
 
   /**
    * If a Google Drive link is supplied,
@@ -210,10 +225,6 @@ function PosterImage({ src, alt }: { src: string; alt: string }) {
           allow="autoplay"
           className="absolute inset-0 h-full w-full border-0 bg-main-blue/5"
           style={{
-            /**
-             * Keep clicks going to the parent poster button
-             * rather than the iframe itself.
-             */
             pointerEvents: "none",
           }}
         />
@@ -233,6 +244,7 @@ function PosterImage({ src, alt }: { src: string; alt: string }) {
       )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        ref={imgRef}
         src={src || FALLBACK_IMAGE}
         alt={alt}
         loading="lazy"
