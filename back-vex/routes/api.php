@@ -103,6 +103,7 @@ Route::prefix('experience')->group(function () {
     Route::get('/3d-models/{id}', [GameAssetController::class, 'get3DModel']);
     Route::get('/hall-model/{modelId}', [GameAssetController::class, 'serveHallModel']);
     Route::get('/booth-model/{filename}', [GameAssetController::class, 'serveBoothModel']);
+    Route::get('/num/{filename}', [GameAssetController::class, 'serveNumImage']);
     Route::get('/karya/pameran/{id_pameran}', [GameAssetController::class, 'karyaByPameran']);
     Route::get('/proxy-image', [GameAssetController::class, 'proxyImage']); // ← baru
 });
