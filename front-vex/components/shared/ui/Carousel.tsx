@@ -175,17 +175,23 @@ export default function Carousel({
   if (!data || data.length === 0) {
     return (
       <div
-        className={`w-full h-full min-h-[300px] flex flex-col font-medium text-gray-400 text-base lg:text-lg items-center justify-center bg-gray-100 rounded-xl border border-dashed border-gray-300 p-6 text-center ${
+        className={`relative w-full h-full min-h-[300px] overflow-hidden rounded-xl border border-dashed border-gray-300 ${
           className || ""
         }`}
       >
-        <span className="font-poppins text-gray-500 font-semibold">
-          No Projects Yet
-        </span>
+        <Image
+          src="/image/BGlogopblexpo.webp"
+          alt="No Projects Yet"
+          fill
+          className="object-cover"
+          priority
+        />
 
-        <span className="text-xs text-gray-400 mt-1">
-          Belum ada karya yang dipilih
-        </span>
+        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-6">
+          <span className="font-poppins text-white font-semibold">
+            No Projects Yet
+          </span>
+        </div>
       </div>
     );
   }
