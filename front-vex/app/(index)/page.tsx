@@ -563,12 +563,10 @@ export default function HomePage() {
     "
         >
           <div className="text-main-blue text-center">
-            <p className="font-poppins font-thin text-4xl lg:text-5xl leading-none">
-              BEST
+            <p className="font-poppins font-bold text-4xl lg:text-5xl leading-none">
+              BEST OF
             </p>
-            <p className="font-tilt-wrap font-bold text-4xl lg:text-5xl leading-none">
-              OF
-            </p>
+        
           </div>
 
           <BestOfSelector data={bestOfCategories} />

@@ -339,7 +339,7 @@ export default function BestOfSelector({
 
       <p
         key={activeIndex}
-        className="text-main-blue font-bold text-lg sm:text-5xl tracking-wide animate-[fadeIn_0.4s_ease] -mb-7 sm:mb-3"
+        className="text-main-blue font-bold text-3xl sm:text-3xl tracking-wide animate-[fadeIn_0.4s_ease] -mb-7 sm:mb-3"
       >
         {slots[activeIndex]?.label}
       </p>
