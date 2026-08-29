@@ -69,6 +69,7 @@ type BoothProps = {
   idKategori?: any;
   cameraMode?: "first" | "third";
   mobile?: boolean;
+  numBaseUrl?: string | null;
   openPoster: (src: string, booth: string) => void;
   openTautan: (url: string, booth: string) => void;
 };
@@ -77,7 +78,7 @@ export default function Booth({
   position = [0, 0, 0],
   quaternion = [0, 0, 0, 1],
   boothName, poster, sampul, tautan, modelPath,
-  idKarya, idKategori, cameraMode, mobile,
+  idKarya, idKategori, cameraMode, mobile, numBaseUrl,
   openPoster, openTautan,
 }: BoothProps) {
   const gltf = useGLTF(modelPath);
@@ -92,7 +93,6 @@ export default function Booth({
 
   const posterMesh = useRef<THREE.Mesh | null>(null);
   const sampulMesh = useRef<THREE.Mesh | null>(null);
-  const numCanvasTex = useRef<THREE.Texture | null>(null);
 
   useEffect(() => {
     scene.traverse((obj: any) => {
@@ -129,6 +129,11 @@ export default function Booth({
   /* LABEL NOMOR: OBJEK "num"                                              */
   /* Cari case-insensitive & tembus ke child kalau "num" berupa grup/empty */
   /* (bukan mesh langsung) — pola umum hasil export dari Blender.          */
+  /*                                                                        */
+  /* Nomornya diambil dari backend storage lewat numBaseUrl (dikirim dari  */
+  /* Experience.tsx, hasil getNumBaseUrl() di apiPlay.ts) — bukan dari      */
+  /* public/ dan bukan digambar ke canvas lagi. URL yang dipakai:           */
+  /* `${numBaseUrl}/${idKarya}.png`.                                        */
   /* ===================== */
   useEffect(() => {
     let numMesh: THREE.Mesh | null = null;
@@ -146,43 +151,31 @@ export default function Booth({
       }
     });
 
-    if (!numMesh || idKarya == null) return;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#000000";
-    ctx.font = "bold 140px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(String(idKarya), canvas.width / 2, canvas.height / 2);
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.flipY = false;
-    tex.needsUpdate = true;
-
-    numCanvasTex.current?.dispose();
-    numCanvasTex.current = tex;
-
-    ((numMesh as any).material as THREE.Material)?.dispose?.();
-    (numMesh as any).material = new THREE.MeshBasicMaterial({
-      map: tex,
-      toneMapped: false,
-      side: THREE.DoubleSide,
+    // TEMP DEBUG — remove once this is confirmed working
+    console.log("[num debug]", {
+      boothName,
+      foundNumMesh: !!numMesh,
+      idKarya,
+      numBaseUrl,
     });
-  }, [scene, idKarya]);
 
-  useEffect(() => {
+    if (!numMesh || idKarya == null || !numBaseUrl) return;
+
+    let cancelled = false;
+    loadCachedTexture(`${numBaseUrl.replace(/\/$/, "")}/${idKarya}.png`, (tex) => {
+      if (cancelled || !numMesh) return;
+      (numMesh.material as THREE.Material)?.dispose?.();
+      numMesh.material = new THREE.MeshBasicMaterial({
+        map: tex,
+        toneMapped: false,
+        side: THREE.DoubleSide,
+      });
+    });
+
     return () => {
-      numCanvasTex.current?.dispose();
+      cancelled = true;
     };
-  }, []);
+  }, [scene, idKarya, numBaseUrl]);
 
   useEffect(() => {
     if (!poster || !posterMesh.current) return;

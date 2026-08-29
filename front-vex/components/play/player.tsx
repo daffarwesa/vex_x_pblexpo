@@ -45,12 +45,28 @@ type Props = {
     value: boolean
   ) => void;
 
+  // Dipanggil tiap kali status "lagi sprint" (Shift ditahan / toggle sprint
+  // di HP, DAN lagi bener-bener gerak) berubah — dipakai ExhibitionPage buat
+  // nampilin overlay animasi sprint di luar <Canvas>.
+  setSprinting?: (
+    value: boolean
+  ) => void;
+
   mobileMove?: React.MutableRefObject<{
     w: boolean;
     a: boolean;
     s: boolean;
     d: boolean;
   }>;
+
+  // Toggle sprint dari tombol HP (beda dari keys.current.shift yang cuma
+  // ada di desktop) — nilainya persist sampai user tap lagi buat matiin,
+  // BUKAN dipegang terus kayak tombol gerak.
+  mobileSprint?: React.MutableRefObject<boolean>;
+
+  // Tombol lompat di HP — true selama tombolnya ditekan, sama perlakuannya
+  // kayak keys.current.space di desktop (lihat bagian JUMP di useFrame).
+  mobileJump?: React.MutableRefObject<boolean>;
 
   lookDelta?: React.MutableRefObject<{
     x: number;
@@ -67,7 +83,10 @@ export default function Player({
   controlsLocked,
   setWalking,
   setJumping,
+  setSprinting,
   mobileMove,
+  mobileSprint,
+  mobileJump,
   lookDelta,
 
   playerId,
@@ -98,6 +117,8 @@ export default function Player({
   /* ===================== */
 
   const MOVE_SPEED = 10;
+  // Multiplier applied to MOVE_SPEED while Shift is held (sprint/run).
+  const RUN_MULTIPLIER = 1.8;
   const GRAVITY = 24;
   const JUMP_FORCE = 10;
   // Tinggi kamera/mata dari lantai (dipakai buat first-person DAN sebagai
@@ -116,6 +137,7 @@ export default function Player({
     s: false,
     d: false,
     space: false,
+    shift: false,
   });
 
   /* ===================== */
@@ -234,6 +256,7 @@ const HEARTBEAT_INTERVAL = 3;
       if (e.code === "KeyS") keys.current.s = true;
       if (e.code === "KeyD") keys.current.d = true;
       if (e.code === "Space") keys.current.space = true;
+      if (e.code === "ShiftLeft" || e.code === "ShiftRight") keys.current.shift = true;
     };
 
     const up = (e: KeyboardEvent) => {
@@ -242,6 +265,7 @@ const HEARTBEAT_INTERVAL = 3;
       if (e.code === "KeyS") keys.current.s = false;
       if (e.code === "KeyD") keys.current.d = false;
       if (e.code === "Space") keys.current.space = false;
+      if (e.code === "ShiftLeft" || e.code === "ShiftRight") keys.current.shift = false;
     };
 
     window.addEventListener("keydown", down);
@@ -409,7 +433,9 @@ const HEARTBEAT_INTERVAL = 3;
 
     let moving = false;
 
-    const moveAmount = MOVE_SPEED * dt;
+    // Shift (desktop) ATAU toggle sprint dari tombol HP.
+    const isRunning = keys.current.shift || !!mobileSprint?.current;
+    const moveAmount = MOVE_SPEED * (isRunning ? RUN_MULTIPLIER : 1) * dt;
 
     const W = keys.current.w || mobileMove?.current.w;
     const A = keys.current.a || mobileMove?.current.a;
@@ -439,6 +465,10 @@ const HEARTBEAT_INTERVAL = 3;
     }
 
     setWalking?.(moving && grounded.current);
+    // Overlay animasi sprint cuma nyala kalau lagi lari CEPAT (Shift/toggle
+    // sprint aktif) DAN bener-bener lagi gerak — diem sambil nahan Shift
+    // nggak bikin overlay muncul.
+    setSprinting?.(isRunning && moving);
 
     /* ===================== */
     /* WALL COLLISION */
@@ -500,7 +530,7 @@ const HEARTBEAT_INTERVAL = 3;
     /* JUMP */
     /* ===================== */
 
-    if (grounded.current && keys.current.space) {
+    if (grounded.current && (keys.current.space || mobileJump?.current)) {
       velocityY.current = JUMP_FORCE;
       grounded.current = false;
       setJumping?.(true);
