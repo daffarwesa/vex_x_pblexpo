@@ -41,7 +41,7 @@ export async function GetKaryaFavoritAktif(): Promise<KaryaPredikatResponse> {
 
 // is_best: 1 = Innovation, 2 = Design, 3 = System
 export interface KaryaBestOfItem extends Omit<KaryaPredikatItem, "predikat"> {
-  is_best: 1 | 2 | 3 | null;
+  is_best: 1 | 2 | 3 | 4 | 5 | 6 | 7 | null;
 }
 
 interface KaryaBestOfResponse {
@@ -50,7 +50,7 @@ interface KaryaBestOfResponse {
 }
 
 export async function GetKaryaBestOfAktif(
-  isBest: 1 | 2 | 3
+  isBest: 1 | 2 | 3 | 4 | 5 | 6 | 7
 ): Promise<KaryaBestOfResponse> {
   // sesuaikan path ini dengan route backend kamu untuk kolom is_best
   const res = await url.get(`/api/karya/best/${isBest}`);
