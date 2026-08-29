@@ -23,6 +23,7 @@ import {
 } from "./api";
 
 const RELEASE_VIDEO_ID = "bLdFe6G7OC8";
+const RELEASE_AUTOPLAY_DELAY = 5000;
 
 type ReleaseMediaItem =
   | { type: "video"; videoId: string; thumbnail: string; title: string }
@@ -109,6 +110,10 @@ export default function HomePage() {
   const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isFirstRender = useRef(true);
+
+  // Autoplay untuk Release Announcement thumbnail strip
+  const [releaseAutoplayEnabled, setReleaseAutoplayEnabled] = useState(true);
+  const releaseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // const tutorialLink = "/tutorial";
 
   const goToPrevMedia = () =>
@@ -146,15 +151,10 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Scroll only the horizontal thumbnail strip itself when the active thumbnail
-  // changes — never touch the page's vertical scroll position. Also skipped on
-  // first render so mounting doesn't cause any scroll movement at all.
+  // Scroll the horizontal thumbnail strip so the active thumbnail is centered
+  // — never touch the page's vertical scroll position. On first render it
+  // centers instantly (no smooth animation) so mounting doesn't show a jump.
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-
     const container = scrollContainerRef.current;
     const thumb = thumbRefs.current[activeMediaIndex];
     if (!container || !thumb) return;
@@ -166,9 +166,35 @@ export default function HomePage() {
 
     container.scrollTo({
       left: targetScrollLeft,
-      behavior: "smooth",
+      behavior: isFirstRender.current ? "auto" : "smooth",
     });
+
+    isFirstRender.current = false;
   }, [activeMediaIndex]);
+
+  // Autoplay: geser preview besar secara otomatis tiap RELEASE_AUTOPLAY_DELAY,
+  // berhenti begitu user memilih thumbnail secara manual.
+  useEffect(() => {
+    if (releaseTimerRef.current) {
+      clearInterval(releaseTimerRef.current);
+      releaseTimerRef.current = null;
+    }
+
+    if (!releaseAutoplayEnabled || releaseMedia.length <= 1) {
+      return;
+    }
+
+    releaseTimerRef.current = setInterval(() => {
+      setActiveMediaIndex((i) => (i + 1) % releaseMedia.length);
+    }, RELEASE_AUTOPLAY_DELAY);
+
+    return () => {
+      if (releaseTimerRef.current) {
+        clearInterval(releaseTimerRef.current);
+        releaseTimerRef.current = null;
+      }
+    };
+  }, [releaseAutoplayEnabled]);
 
   // Fetch karya Juara 1 (Best Work) & Juara 2 (Favorite Work) untuk carousel landing page
   useEffect(() => {
@@ -234,24 +260,54 @@ export default function HomePage() {
       </section>
 
       {/* SECTION 1.5 - In Collaboration With (logo strip) */}
-      <section className="bg-main-blue w-full">
-        <div className="autoMid py-14 sm:py-16 lg:py-15 flex flex-col items-center gap-6 sm:gap-8">
+<section className="bg-main-blue w-full">
+  <div className="autoMid py-12 sm:py-16 lg:py-20 flex flex-col items-center">
 
-          <div className="grid grid-cols-4 gap-6 sm:gap-12 lg:gap-20 items-center w-full max-w-4xl">
-            {collaborators.map((logo, i) => (
-              // <div className='bg-white p-[100px] rounded-full'>
-              <img
-                key={i}
-                src={logo.src}
-                alt={logo.alt}
-                className="w-full rounded-full bg-white h-10 sm:h-16 z-4 lg:h-40 p-2 object-contain opacity-100 hover:opacity-120 transition-opacity duration-300" 
-              />
-
-            // </div>
-            ))}
-          </div>
+    <div
+      className="
+        grid
+        grid-cols-2
+        sm:grid-cols-4
+        gap-8
+        sm:gap-8
+        lg:gap-10
+        xl:gap-16
+        items-center
+        justify-items-center
+        w-full
+        max-w-6xl
+      "
+    >
+      {collaborators.map((logo, i) => (
+        <div
+          key={i}
+          className="
+            w-28 h-28
+            sm:w-34 sm:h-34
+            md:w-42 md:h-42
+            lg:w-40 lg:h-40
+            
+            rounded-full
+            bg-white
+            flex items-center justify-center
+            p-4
+            sm:p-4
+            lg:p-6
+            shadow-lg
+          "
+        >
+          <img
+            src={logo.src}
+            alt={logo.alt}
+            className="w-full h-full object-contain"
+          />
         </div>
-      </section>
+      ))}
+    </div>
+
+  </div>
+</section>
+
 
       {/* SECTION 2 - Release Announcement (Steam-style: click a thumbnail to swap the main preview) */}
       <section id="release" className="bg-[#3612C7] w-full scroll-mt-24">
@@ -338,7 +394,10 @@ export default function HomePage() {
                     thumbRefs.current[i] = el;
                   }}
                   type="button"
-                  onClick={() => setActiveMediaIndex(i)}
+                  onClick={() => {
+                    setActiveMediaIndex(i);
+                    setReleaseAutoplayEnabled(false);
+                  }}
                   aria-label={item.title}
                   aria-pressed={i === activeMediaIndex}
                   className={`shrink-0 w-[220px] sm:w-[260px] aspect-video rounded-md overflow-hidden shadow-lg relative transition
@@ -504,12 +563,10 @@ export default function HomePage() {
     "
         >
           <div className="text-main-blue text-center">
-            <p className="font-poppins font-thin text-4xl lg:text-5xl leading-none">
-              BEST
+            <p className="font-poppins font-bold text-4xl lg:text-5xl leading-none">
+              BEST OF
             </p>
-            <p className="font-tilt-wrap font-bold text-4xl lg:text-5xl leading-none">
-              OF
-            </p>
+        
           </div>
 
           <BestOfSelector data={bestOfCategories} />

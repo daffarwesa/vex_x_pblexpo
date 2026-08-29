@@ -11,7 +11,7 @@ import CameraSwitcher from "./cameraSwitcher";
 import { sharedTextureLoader } from "@/components/shared/ui/LoadingManager";
 import { getHallMaterial } from "@/components/play/boothMaterials";
 
-import { getHallModel, getKaryaList, getPameranFolder, getGameAssets, getPlayerModelUrl } from "@/components/play/apiPlay";
+import { getHallModel, getKaryaList, getPameranFolder, getGameAssets, getPlayerModelUrl, getNumBaseUrl } from "@/components/play/apiPlay";
 
 type RemotePlayer = {
   id: string;
@@ -32,7 +32,6 @@ type Props = {
   openTautan: (url: string, booth: string) => void;
   controlsLocked: boolean;
   soundOn: boolean;
-  currentFloor: number;
   // Mode kamera (first/third person) — sekarang di-lift ke ExhibitionPage
   // (page.tsx) supaya Crosshair (yang cuma boleh tampil pas first-person)
   // dan tombol "ganti sudut pandang" di HUD mobile juga bisa baca/ubahnya
@@ -44,7 +43,15 @@ type Props = {
   // nggak ada target dalam jangkauan), supaya ExhibitionPage bisa nampilin
   // hint-nya sebagai HUD di luar <Canvas>.
   onInteractHint?: (hint: { label: string } | null) => void;
+  // Dipanggil tiap status sprint (Shift / toggle sprint HP + lagi gerak)
+  // berubah, supaya ExhibitionPage bisa nampilin overlay animasi sprint di
+  // luar <Canvas> (lihat SprintOverlay di page.tsx).
+  onSprintChange?: (sprinting: boolean) => void;
   mobileMove?: React.MutableRefObject<{ w: boolean; a: boolean; s: boolean; d: boolean }>;
+  // Toggle sprint & tombol lompat dari HUD mobile (lihat MobileHUD di
+  // page.tsx) — diteruskan apa adanya ke <Player>.
+  mobileSprint?: React.MutableRefObject<boolean>;
+  mobileJump?: React.MutableRefObject<boolean>;
   lookDelta?: React.MutableRefObject<{ x: number; y: number }>;
   // Dipanggil sekali, saat fetch data awal (hall model, karya list, folder)
   // selesai dan ExperienceInner siap mulai dirender. ExhibitionPage memakai
@@ -159,12 +166,14 @@ function ExperienceInner({
   openTautan,
   controlsLocked,
   soundOn,
-  currentFloor,
   mobile,
   cameraMode,
   setCameraMode,
   onInteractHint,
+  onSprintChange,
   mobileMove,
+  mobileSprint,
+  mobileJump,
   lookDelta,
   hallModel,
   karyaList,
@@ -172,6 +181,7 @@ function ExperienceInner({
 }: Props & { hallModel: string; karyaList: any[]; folder: string }) {
   const [audioUrls, setAudioUrls] = useState({ bgm: "", footstep: "", jump: "" });
   const [playerModelUrl, setPlayerModelUrl] = useState<string | null>(null);
+  const [numBaseUrl, setNumBaseUrl] = useState<string | null>(null);
   const [walking, setWalking] = useState(false);
   const [jumping, setJumping] = useState(false);
   const [remotePlayers, setRemotePlayers] = useState<RemotePlayer[]>([]);
@@ -219,6 +229,10 @@ function ExperienceInner({
         // apiPlay.ts: pakai field `player` dari response ini kalau ada,
         // atau fallback ke path storage default.
         setPlayerModelUrl(getPlayerModelUrl(data));
+        // Base URL folder angka booth (1.png .. 144.png). Lihat getNumBaseUrl()
+        // di apiPlay.ts: pakai field `num_base` dari response ini kalau ada,
+        // atau fallback ke path storage default.
+        setNumBaseUrl(getNumBaseUrl(data));
       })
       .catch(() => { });
   }, []);
@@ -367,7 +381,7 @@ function ExperienceInner({
         }
       }
     });
-  }, [scene, folder, loadTextureSafe, karyaList]); // ← currentFloor sudah dihapus dari deps
+  }, [scene, folder, loadTextureSafe, karyaList]);
 
   /* ===================== */
   /* BOOTH POINTS          */
@@ -459,6 +473,7 @@ function ExperienceInner({
           modelPath={karya.model_path}
           cameraMode={cameraMode}
           mobile={mobile}
+          numBaseUrl={numBaseUrl}
           openPoster={openPoster}
           openTautan={openTautan}
         />
@@ -489,7 +504,10 @@ function ExperienceInner({
         controlsLocked={controlsLocked}
         setWalking={setWalking}
         setJumping={setJumping}
+        setSprinting={onSprintChange}
         mobileMove={mobileMove}
+        mobileSprint={mobileSprint}
+        mobileJump={mobileJump}
         lookDelta={lookDelta}
         playerId={playerId}
         playerName={playerName}
@@ -674,7 +692,7 @@ function RemotePlayerMesh({ player, modelUrl }: { player: RemotePlayer; modelUrl
           Sebelumnya Text ikut muter bareng badan, jadi kelihatan kepotong/
           kebalik pas karakter nengok ke arah tertentu. */}
       <Billboard position={[0, 1, 0]}>
-        <Text fontSize={0.28} color="red" anchorX="center" anchorY="middle">
+        <Text fontSize={0.28} color="black" anchorX="center" anchorY="middle">
           {player.name}
         </Text>
       </Billboard>

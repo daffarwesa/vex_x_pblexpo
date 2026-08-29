@@ -30,6 +30,7 @@ class GameAssetController extends Controller
             'footstep' => asset('storage/audio/footstep.mp3'),
             'jump' => asset('storage/audio/jump.mp3'),
             'player' => url('/api/experience/player-model'),
+            'num_base' => url('/api/experience/num'), // ← new: base folder for 1.png .. 144.png
         ]);
     }
 
@@ -51,6 +52,28 @@ class GameAssetController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
+            'Access-Control-Allow-Origin' => config('app.frontend_url'),
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => '*',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    public function serveNumImage($filename)
+    {
+        $safeFilename = basename($filename); // proteksi path traversal
+        $path = storage_path('app/public/num/' . $safeFilename);
+
+        if (!file_exists($path)) {
+            $path = public_path('storage/num/' . $safeFilename);
+        }
+
+        if (!file_exists($path)) {
+            return response()->json(['error' => 'File tidak ditemukan'], 404);
+        }
+
+        return response()->file($path, [
+            'Content-Type' => 'image/png',
             'Access-Control-Allow-Origin' => config('app.frontend_url'),
             'Access-Control-Allow-Methods' => 'GET, OPTIONS',
             'Access-Control-Allow-Headers' => '*',

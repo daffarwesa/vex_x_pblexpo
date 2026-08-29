@@ -119,10 +119,11 @@ export function createSecondaryMaterial(
 /* ============================================================= */
 
 export const HALL_COLORS: Record<string, string> = {
-  white: "#FFFFFF",
+  white: "#feffff",
   blue: "#2196F3",
   red: "#ff0000",
-  maroon: "#ff0000", // alias — kalau di glb namanya "maroon" bukan "red"
+  maroon: "#ff0000",
+  black: "#111111" // alias — kalau di glb namanya "maroon" bukan "red"
 };
 
 // Cache otomatis lewat createToonMaterial — tiap nama warna cukup 1 instance,

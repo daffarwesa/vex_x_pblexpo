@@ -3,7 +3,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   Suspense,
@@ -101,27 +100,12 @@ export default function ExhibitionPage() {
   const [embedOpen, setEmbedOpen] = useState(false);
   const [embedUrl, setEmbedUrl] = useState("");
 
-  // Floor switcher
-  const [currentFloor, setCurrentFloor] = useState(1);
-  const [maxFloor, setMaxFloor] = useState<Record<string, number>>({});
   const [karyaList, setKaryaList] = useState<any[]>([]);
-  const [mapOpen, setMapOpen] = useState(false);
-
-  // Derived from maxFloor — memoized so we don't re-spread Object.values(...)
-  // on every render (and every render happens a LOT during gameplay).
-  const globalMaxFloor = useMemo(
-    () => Math.max(...Object.values(maxFloor), 1),
-    [maxFloor]
-  );
-  const hasMultipleFloors = useMemo(
-    () => Object.values(maxFloor).some((v) => v > 1),
-    [maxFloor]
-  );
 
   // Guard agar tidak POST kunjungan dua kali saat StrictMode di dev
   const hasTrackedVisitor = useRef(false);
 
-  // Load karya + max_floor once & record visit
+  // Load karya once & record visit
   useEffect(() => {
     if (!id) return;
 
@@ -131,9 +115,8 @@ export default function ExhibitionPage() {
     }
 
     getKaryaList(id)
-      .then(({ karya, max_floor }) => {
+      .then(({ karya }) => {
         setKaryaList(karya);
-        setMaxFloor(max_floor);
       })
       .catch(() => { });
   }, [id]);
@@ -179,13 +162,25 @@ export default function ExhibitionPage() {
 
   // mobileMove was previously React state, updated on every touchmove event
   // (60+/sec while dragging). That re-rendered the ENTIRE page tree —
-  // Canvas, floor switcher, map button, modals — at touch-drag frequency,
+  // Canvas, map button, modals — at touch-drag frequency,
   // on the exact device class with the least CPU headroom. lookDelta was
   // already correctly a ref; mobileMove now follows the same pattern so
   // dragging the joystick no longer triggers any React re-render at all.
   // Player reads mobileMoveRef.current directly inside its useFrame loop.
   const mobileMoveRef = useRef({ w: false, a: false, s: false, d: false });
   const lookDelta = useRef({ x: 0, y: 0 });
+
+  // Toggle sprint dari tombol HP: sekali tap nyala terus sampai di-tap lagi
+  // buat matiin (beda dari mobileMoveRef yang harus ditahan). Sama kayak
+  // mobileMoveRef, sengaja ref biar update-nya nggak re-render seluruh page.
+  const mobileSprintRef = useRef(false);
+  // Tombol lompat HP: true selama tombolnya ditekan, false pas dilepas.
+  const mobileJumpRef = useRef(false);
+
+  // Status "lagi sprint" (dari Shift desktop ATAU toggle sprint HP + lagi
+  // gerak) — ini React state (bukan ref) karena dipakai buat nampilin/
+  // nyembunyiin overlay animasi sprint, jadi memang butuh re-render.
+  const [sprinting, setSprinting] = useState(false);
 
   // Ref ke elemen <canvas> Three.js — dipakai buat manual re-lock pointer
   // setelah modal (poster/video/menu) ditutup, karena exitPointerLock()
@@ -327,7 +322,7 @@ export default function ExhibitionPage() {
   }, [assetsLoaded]);
 
   const controlsLocked =
-    assetsLoaded && !posterOpen && !menuOpen && !embedOpen && !mapOpen && introStep === null;
+    assetsLoaded && !posterOpen && !menuOpen && !embedOpen && introStep === null;
 
   return (
     <div className="w-screen h-screen bg-black overflow-hidden relative touch-none select-none">
@@ -335,8 +330,8 @@ export default function ExhibitionPage() {
       {/* PORTRAIT WARNING */}
       {isMobile && isPortrait && (
         <div className="fixed inset-0 z-[999999] bg-black text-white flex flex-col items-center justify-center text-center px-6">
-          <h1 className="text-4xl font-bold mb-4">Putar HP Anda</h1>
-          <p className="text-white/70 text-lg">Gunakan mode landscape untuk masuk pameran 3D</p>
+          <h1 className="text-4xl font-bold mb-4">Rotate Your Phone</h1>
+          <p className="text-white/70 text-lg">Use landscape mode to enter the 3D exhibition</p>
         </div>
       )}
 
@@ -355,14 +350,16 @@ export default function ExhibitionPage() {
                   soundOn={soundOn}
                   mobile={isMobile}
                   mobileMove={mobileMoveRef}
+                  mobileSprint={mobileSprintRef}
+                  mobileJump={mobileJumpRef}
                   lookDelta={lookDelta}
                   playerId={playerId}
                   playerName={playerName}
-                  currentFloor={currentFloor}
                   onDataReady={handleDataReady}
                   cameraMode={cameraMode}
                   setCameraMode={setCameraMode}
                   onInteractHint={setInteractHint}
+                  onSprintChange={setSprinting}
                 />
               </Suspense>
             </Canvas>
@@ -371,6 +368,11 @@ export default function ExhibitionPage() {
           {!isMobile && controlsLocked && cameraMode === "first" && (
             <Crosshair canvasRef={canvasRef} />
           )}
+
+          {/* Overlay animasi sprint — vignette + garis kecepatan, nyala
+              tiap kali player lagi lari cepat (Shift ditahan di desktop
+              atau toggle sprint di HP), baik first maupun third person. */}
+          {controlsLocked && <SprintOverlay active={sprinting} />}
 
           {/* HINT "TEKAN E" — cuma tampil pas desktop third-person & lagi
               deket panel poster/video (dikirim dari ThirdPersonInteract). */}
@@ -384,79 +386,72 @@ export default function ExhibitionPage() {
           )}
 
           {isMobile && controlsLocked && (
-            <MobileHUD mobileMoveRef={mobileMoveRef} lookDelta={lookDelta} />
+            <MobileHUD
+              mobileMoveRef={mobileMoveRef}
+              lookDelta={lookDelta}
+              mobileSprintRef={mobileSprintRef}
+              mobileJumpRef={mobileJumpRef}
+            />
           )}
 
-          {/* FLOOR SWITCHER — bottom center */}
-          {controlsLocked && hasMultipleFloors && (
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 bg-black/70 backdrop-blur rounded-full px-4 py-2 border border-white/15">
-              <button
-                onClick={() => setCurrentFloor(f => Math.max(1, f - 1))}
-                disabled={currentFloor <= 1}
-                className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-30 text-white text-sm"
-              >
-                ▼
-              </button>
-              <span className="text-white text-sm font-bold px-2">Lantai {currentFloor}</span>
-              <button
-                onClick={() => setCurrentFloor(f => Math.min(globalMaxFloor, f + 1))}
-                disabled={currentFloor >= globalMaxFloor}
-                className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center disabled:opacity-30 text-white text-sm"
-              >
-                ▲
-              </button>
-            </div>
-          )}
-
-          {/* TOP-RIGHT BUTTON STACK — peta selalu ada; ganti sudut pandang &
-              menu cuma muncul di HP, karena di desktop udah ada tombol C
-              dan ESC di keyboard buat itu. */}
-          {controlsLocked && (
+          {/* TOP-RIGHT BUTTON STACK — ganti sudut pandang & menu cuma
+              muncul di HP, karena di desktop udah ada tombol C dan ESC di
+              keyboard buat itu. */}
+          {controlsLocked && isMobile && (
             <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2">
               <button
-                onClick={() => { setMapOpen(true); exitPointerLockSafe(); }}
+                onClick={() => setCameraMode((m) => (m === "first" ? "third" : "first"))}
                 className="w-10 h-10 rounded-xl bg-black/60 border border-white/15 text-white flex items-center justify-center text-lg"
-                title="Lihat semua karya"
+                title="Switch view"
               >
-                🗺
+                🎥
               </button>
-
-              {isMobile && (
-                <>
-                  <button
-                    onClick={() => setCameraMode((m) => (m === "first" ? "third" : "first"))}
-                    className="w-10 h-10 rounded-xl bg-black/60 border border-white/15 text-white flex items-center justify-center text-lg"
-                    title="Ganti sudut pandang"
-                  >
-                    🎥
-                  </button>
-                  <button
-                    onClick={() => { setMenuOpen(true); exitPointerLockSafe(); }}
-                    className="w-10 h-10 rounded-xl bg-black/60 border border-white/15 text-white flex items-center justify-center text-lg"
-                    title="Menu"
-                  >
-                    ☰
-                  </button>
-                </>
-              )}
+              <button
+                onClick={() => { setMenuOpen(true); exitPointerLockSafe(); }}
+                className="w-10 h-10 rounded-xl bg-black/60 border border-white/15 text-white flex items-center justify-center text-lg"
+                title="Menu"
+              >
+                ☰
+              </button>
             </div>
           )}
         </>
       )}
 
-      {/* LOADING SCREEN — menutupi semuanya sampai asset 3D selesai load */}
+      {/* LOADING SCREEN — menutupi semuanya sampai asset 3D selesai load.
+          Background pakai gambar frontend (bukan hitam polos), dengan
+          progress bar putih full-width dipin di tepi bawah layar. */}
       {!assetsLoaded && (!isMobile || !isPortrait) && (
-        <div className="fixed inset-0 z-[999999] bg-black flex flex-col items-center justify-center px-6">
-          <div className="w-[280px] max-w-full space-y-4">
-            <p className="text-white text-center font-bold text-lg">Memuat Pameran...</p>
-            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-              <div
-                className="h-full bg-blue-500 rounded-full transition-[width] duration-150 ease-out"
-                style={{ width: `${loadProgress}%` }}
-              />
-            </div>
-            <p className="text-white/50 text-center text-sm">{Math.round(loadProgress)}%</p>
+        <div className="fixed inset-0 z-[999999] bg-[url(/image/BGLoading.png)] bg-cover bg-center flex flex-col items-center justify-center px-6">
+          {/* Teks "Loading exhibition..." — nempel tepat di atas progress
+              bar, rata kiri (bukan center kayak konten lain di layar ini).
+              Titik-titiknya cycling muncul-hilang satu-satu (typing-dots
+              style), bukan cuma "..." statis. */}
+          <div className="fixed bottom-4 left-6 z-[999999] flex items-baseline gap-[3px] text-white/80 text-lg font-medium tracking-wide">
+            <span>Loading Exhibition</span>
+            <span className="loading-dot">.</span>
+            <span className="loading-dot" style={{ animationDelay: "0.2s" }}>.</span>
+            <span className="loading-dot" style={{ animationDelay: "0.4s" }}>.</span>
           </div>
+
+          {/* Bar putih penuh selebar layar, dipin di tepi paling bawah */}
+          <div className="fixed bottom-0 left-0 w-full h-2 bg-white/20 overflow-hidden">
+            <div
+              className="h-full bg-white transition-[width] duration-150 ease-out"
+              style={{ width: `${loadProgress}%` }}
+            />
+          </div>
+
+          <style>{`
+            @keyframes loadingDotFade {
+              0%, 80%, 100% { opacity: 0; }
+              40% { opacity: 1; }
+            }
+            .loading-dot {
+              display: inline-block;
+              animation: loadingDotFade 1.4s ease-in-out infinite;
+            }
+          `}</style>
         </div>
       )}
 
@@ -478,7 +473,7 @@ export default function ExhibitionPage() {
               }}
               className="w-full h-12 rounded-xl bg-green-500 font-bold"
             >
-              Lanjut
+              Resume
             </button>
             <button
               onClick={() => {
@@ -492,7 +487,7 @@ export default function ExhibitionPage() {
               }}
               className="w-full h-12 rounded-xl bg-red-500 hover:bg-red-600 font-bold transition-colors"
             >
-              Keluar
+              Exit
             </button>
           </div>
         </div>
@@ -541,31 +536,13 @@ export default function ExhibitionPage() {
         </div>
       )}
 
-      {/* KARYA MAP PANEL */}
-      {mapOpen && (
-        <KaryaMapPanel
-          karyaList={karyaList}
-          currentFloor={currentFloor}
-          maxFloor={maxFloor}
-          onFloorChange={setCurrentFloor}
-          onSelectPoster={(src, booth) => {
-            setMapOpen(false);
-            openPoster(src, booth);
-          }}
-          onClose={() => {
-            setMapOpen(false);
-            relockPointer();
-          }}
-        />
-      )}
-
-      {/* INTRO — STEP 1: KONTROL */}
+      {/* INTRO — STEP 1: CONTROLS */}
       {introStep === "controls" && (
         <div className="fixed inset-0 z-[999999] bg-black/90 flex items-center justify-center px-4">
           <div className="w-[480px] max-w-full rounded-2xl bg-zinc-900 border border-white/10 p-8 text-white space-y-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="text-center space-y-1">
-              <h1 className="text-2xl font-bold">Panduan Kontrol</h1>
-              <p className="text-white/40 text-xs">Pelajari cara menjelajahi pameran</p>
+              <h1 className="text-2xl font-bold">Controls Guide</h1>
+              <p className="text-white/40 text-xs">Learn how to explore the exhibition</p>
             </div>
 
             <div className="grid grid-cols-1 gap-2.5 text-sm">
@@ -583,40 +560,47 @@ export default function ExhibitionPage() {
                           </kbd>
                         ))}
                       </div>
-                      <span className="text-white/70">Bergerak</span>
+                      <span className="text-white/70">Move</span>
                     </div>
 
                     <div className="flex items-center gap-3">
                       <kbd className="px-3 h-7 rounded-md bg-white/10 border border-white/10 flex items-center justify-center font-bold text-[11px] shrink-0">
                         SPACE
                       </kbd>
-                      <span className="text-white/70">Loncat</span>
+                      <span className="text-white/70">Jump</span>
                     </div>
                   </div>
 
+                  <div className="flex items-center gap-3 bg-white/5 hover:bg-white/[0.07] rounded-xl p-3 transition-colors">
+                    <kbd className="px-3 h-7 rounded-md bg-white/10 border border-white/10 flex items-center justify-center font-bold text-[11px] shrink-0">
+                      SHIFT
+                    </kbd>
+                    <span className="text-white/70">Hold to run</span>
+                  </div>
+
                   <div className="flex items-center bg-white/5 hover:bg-white/[0.07] rounded-xl p-3 transition-colors">
-                    <span className="text-white/70">Gerakkan mouse untuk melihat sekitar, klik untuk berinteraksi</span>
+                    <span className="text-white/70">Move the mouse to look around, click to interact</span>
                   </div>
 
                   <div className="flex items-center gap-3 bg-white/5 hover:bg-white/[0.07] rounded-xl p-3 transition-colors">
                     <kbd className="px-3 h-7 rounded-md bg-white/10 border border-white/10 flex items-center justify-center font-bold text-[11px] shrink-0">
                       ESC
                     </kbd>
-                    <span className="text-white/70">Buka menu pengaturan</span>
+                    <span className="text-white/70">Open settings menu</span>
                   </div>
 
                   <div className="flex items-center gap-3 bg-white/5 hover:bg-white/[0.07] rounded-xl p-3 transition-colors">
                     <kbd className="px-3 h-7 rounded-md bg-white/10 border border-white/10 flex items-center justify-center font-bold text-[11px] shrink-0">
                       C
                     </kbd>
-                    <span className="text-white/70">Ganti sudut pandang (first/third person)</span>
+                    <span className="text-white/70">Switch view (first/third person)</span>
                   </div>
 
                   <div className="flex items-center gap-3 bg-white/5 hover:bg-white/[0.07] rounded-xl p-3 transition-colors">
                     <kbd className="px-3 h-7 rounded-md bg-white/10 border border-white/10 flex items-center justify-center font-bold text-[11px] shrink-0">
                       E
                     </kbd>
-                    <span className="text-white/70">Berinteraksi (khusus mode third person)</span>
+                    <span className="text-white/70">Interact (third-person mode only)</span>
                   </div>
                 </>
               )}
@@ -624,13 +608,13 @@ export default function ExhibitionPage() {
               {isMobile && (
                 <>
                   <div className="flex items-center bg-white/5 rounded-xl p-3">
-                    <span className="text-white/70">Joystick kiri untuk bergerak</span>
+                    <span className="text-white/70">Left joystick to move</span>
                   </div>
                   <div className="flex items-center bg-white/5 rounded-xl p-3">
-                    <span className="text-white/70">Joystick kanan untuk melihat sekitar</span>
+                    <span className="text-white/70">Right joystick to look around</span>
                   </div>
                   <div className="flex items-center bg-white/5 rounded-xl p-3">
-                    <span className="text-white/70">Ketuk objek untuk berinteraksi</span>
+                    <span className="text-white/70">Tap objects to interact</span>
                   </div>
                 </>
               )}
@@ -644,26 +628,26 @@ export default function ExhibitionPage() {
                 }}
                 className="flex-1 h-11 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 font-medium text-sm transition-colors"
               >
-                Lewati
+                Skip
               </button>
               <button
                 onClick={() => setIntroStep("welcome")}
                 className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold transition-colors"
               >
-                Lanjut
+                Next
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* INTRO — STEP 2: SELAMAT BERKUNJUNG */}
+      {/* INTRO — STEP 2: WELCOME MESSAGE */}
       {introStep === "welcome" && (
         <div className="fixed inset-0 z-[999999] bg-black/90 flex items-center justify-center">
           <div className="w-[420px] max-w-[92%] rounded-2xl bg-zinc-900 border border-white/10 p-8 text-white text-center space-y-5">
-            <h1 className="text-3xl font-bold">Selamat Berkunjung!</h1>
+            <h1 className="text-3xl font-bold">Welcome!</h1>
             <p className="text-white/60 text-sm leading-relaxed">
-              Jelajahi pameran virtual ini, kunjungi setiap booth, dan nikmati karya-karya terbaik yang telah dipersembahkan.
+              Explore this virtual exhibition, visit every booth, and enjoy the best works on display.
             </p>
             <button
               onClick={() => {
@@ -672,7 +656,7 @@ export default function ExhibitionPage() {
               }}
               className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold text-lg transition-colors"
             >
-              Mulai Jelajahi
+              Start Exploring
             </button>
           </div>
         </div>
@@ -789,10 +773,34 @@ function toEmbedUrl(url: string): string {
 function MobileHUD({
   mobileMoveRef,
   lookDelta,
+  mobileSprintRef,
+  mobileJumpRef,
 }: {
   mobileMoveRef: React.MutableRefObject<{ w: boolean; a: boolean; s: boolean; d: boolean }>;
   lookDelta: React.MutableRefObject<{ x: number; y: number }>;
+  mobileSprintRef: React.MutableRefObject<boolean>;
+  mobileJumpRef: React.MutableRefObject<boolean>;
 }) {
+  // Cuma dipakai buat re-render tombol sprint (ganti warna aktif/nggak) —
+  // nilai sebenarnya yang dibaca Player tetap mobileSprintRef.current.
+  const [sprintOn, setSprintOn] = useState(false);
+
+  const toggleSprint = () => {
+    const next = !mobileSprintRef.current;
+    mobileSprintRef.current = next;
+    setSprintOn(next);
+  };
+
+  // Jump: nyala selama tombol ditekan, mati pas dilepas — persis kayak
+  // menahan Space di keyboard (lihat pengecekan grounded di player.tsx).
+  const jumpStart = (e: any) => {
+    e.preventDefault();
+    mobileJumpRef.current = true;
+  };
+  const jumpEnd = (e: any) => {
+    e.preventDefault();
+    mobileJumpRef.current = false;
+  };
   const moveBase = useRef<any>(null);
   const moveStick = useRef<any>(null);
   const moveTouchId = useRef<number | null>(null);
@@ -905,154 +913,89 @@ function MobileHUD({
         className="fixed bottom-5 left-5 z-[99999] w-28 h-28 rounded-full bg-white/10 border border-white/20">
         <div ref={moveStick} className="absolute left-1/2 top-1/2 w-10 h-10 -ml-5 -mt-5 rounded-full bg-white/60" />
       </div>
+
+      {/* JUMP — tap & tahan, sama kayak Space di keyboard. */}
+      <button
+        onTouchStart={jumpStart}
+        onTouchEnd={jumpEnd}
+        onTouchCancel={jumpEnd}
+        style={{ touchAction: "none" }}
+        className="fixed bottom-24 right-5 z-[99999] w-16 h-16 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold flex items-center justify-center active:bg-white/25"
+      >
+        JUMP
+      </button>
+
+      {/* SPRINT — toggle on/off, bukan ditahan. Warna berubah pas aktif. */}
+      <button
+        onClick={toggleSprint}
+        style={{ touchAction: "none" }}
+        className={`fixed bottom-5 right-5 z-[99999] w-16 h-16 rounded-full border text-xs font-bold flex items-center justify-center transition-colors ${
+          sprintOn
+            ? "bg-amber-400/80 border-amber-300 text-black"
+            : "bg-white/10 border-white/20 text-white"
+        }`}
+      >
+        SPRINT
+      </button>
     </>
   );
 }
 
 /* ======================= */
-/* KARYA MAP PANEL         */
+/* SPRINT OVERLAY           */
+/* Efek visual pas player lagi sprint: vignette yang menggelap di tepi     */
+/* layar + garis-garis kecepatan yang "narik" ke tengah, plus sedikit      */
+/* zoom pulsing biar berasa ngebut. Murni CSS, ditaruh di luar <Canvas>    */
+/* jadi nggak numpang render loop three.js.                                */
 /* ======================= */
 
-const ZONES = ["a", "b", "c", "d"];
-const ZONE_LABELS: Record<string, string> = { a: "Kelas A", b: "Kelas B", c: "Kelas C", d: "Kelas D" };
-
-function KaryaMapPanel({
-  karyaList,
-  currentFloor,
-  maxFloor,
-  onFloorChange,
-  onSelectPoster,
-  onClose,
-}: {
-  karyaList: any[];
-  currentFloor: number;
-  maxFloor: Record<string, number>;
-  onFloorChange: (f: number) => void;
-  onSelectPoster: (src: string, booth: string) => void;
-  onClose: () => void;
-}) {
-  const [activeZone, setActiveZone] = useState(ZONES[0]);
-
-  const globalMax = useMemo(
-    () => Math.max(...Object.values(maxFloor), 1),
-    [maxFloor]
-  );
-
-  const karyaInView = useMemo(
-    () =>
-      karyaList
-        .filter((k) => (k.kelas ?? "") === activeZone)
-        .sort((a, b) => a.id_karya - b.id_karya)
-        .slice((currentFloor - 1) * 6, currentFloor * 6),
-    [karyaList, activeZone, currentFloor]
-  );
-
-  // Fill empty slots to always show 6
-  const slots = useMemo(
-    () => Array.from({ length: 6 }, (_, i) => karyaInView[i] ?? null),
-    [karyaInView]
-  );
-
+function SprintOverlay({ active }: { active: boolean }) {
   return (
-    <div className="fixed inset-0 z-[99998] bg-black/90 flex flex-col">
-      {/* HEADER */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
-        <h1 className="text-white font-bold text-lg">Peta Pameran</h1>
-        <button onClick={onClose} className="text-white/70 hover:text-white text-xl font-bold">✕</button>
+    <div
+      className={`fixed inset-0 z-[9996] pointer-events-none transition-opacity duration-300 ${
+        active ? "opacity-100" : "opacity-0"
+      }`}
+    >
+      <div className="sprint-fx-vignette absolute inset-0" />
+      <div className="sprint-fx-lines-wrap absolute inset-0 overflow-hidden">
+        <div className="sprint-fx-lines absolute inset-0" />
       </div>
 
-      {/* ZONE TABS */}
-      <div className="flex gap-2 px-5 pt-4 shrink-0">
-        {ZONES.map((z) => (
-          <button
-            key={z}
-            onClick={() => setActiveZone(z)}
-            className={`px-4 h-9 rounded-full text-sm font-bold transition-colors ${activeZone === z
-              ? "bg-white text-black"
-              : "bg-white/10 text-white/60 hover:bg-white/20"
-              }`}
-          >
-            {ZONE_LABELS[z]}
-          </button>
-        ))}
-      </div>
+      <style>{`
+        .sprint-fx-vignette {
+          background: radial-gradient(
+            ellipse at center,
+            transparent 45%,
+            rgba(0, 0, 0, 0.55) 100%
+          );
+          animation: sprintFxPulse 0.7s ease-in-out infinite alternate;
+        }
 
-      {/* FLOOR SWITCHER */}
-      {globalMax > 1 && (
-        <div className="flex items-center gap-3 px-5 pt-3 shrink-0">
-          <span className="text-white/50 text-xs">Lantai:</span>
-          {Array.from({ length: globalMax }, (_, i) => i + 1).map((f) => (
-            <button
-              key={f}
-              onClick={() => onFloorChange(f)}
-              className={`w-8 h-8 rounded-lg text-sm font-bold transition-colors ${currentFloor === f ? "bg-blue-500 text-white" : "bg-white/10 text-white/60 hover:bg-white/20"
-                }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-      )}
+        .sprint-fx-lines-wrap {
+          mix-blend-mode: screen;
+        }
 
-      {/* GRID — 6 slots */}
-      <div className="flex-1 overflow-y-auto p-5">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {slots.map((karya, i) => (
-            <div key={i} className="aspect-[3/4] rounded-xl overflow-hidden bg-white/5 border border-white/10 relative">
-              {karya ? (
-                <>
-                  {karya.poster ? (
-                    <Image
-                      src={karya.poster}
-                      alt={karya.judul}
-                      fill
-                      sizes="(max-width: 640px) 50vw, 33vw"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
-                      No Poster
-                    </div>
-                  )}
-                  {/* OVERLAY */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-3">
-                    <p className="text-white text-xs font-bold leading-tight line-clamp-2">{karya.judul}</p>
-                    <p className="text-white/50 text-xs mt-0.5">
-                      {ZONE_LABELS[activeZone]} · Slot {i + 1}
-                    </p>
-                  </div>
+        .sprint-fx-lines {
+          background-image: repeating-conic-gradient(
+            from 0deg,
+            rgba(255, 255, 255, 0.08) 0deg 1deg,
+            transparent 1deg 6deg
+          );
+          transform: scale(2.2);
+          animation: sprintFxZoom 0.5s linear infinite;
+          opacity: 0.5;
+        }
 
-                  {/* TERBAIK BADGE */}
-                  {karya.is_terbaik && (
-                    <div className="absolute top-2 right-2 w-18 h-18">
-                      <Image src="/icon/Medalion.svg" alt="Karya Terbaik" fill className="object-contain" />
-                    </div>
-                  )}
+        @keyframes sprintFxPulse {
+          from { opacity: 0.75; }
+          to { opacity: 1; }
+        }
 
-                  {/* TERBANYAK LIKES BADGE */}
-                  {karya.is_terbanyak && (
-                    <div className="absolute top-2 left-2 w-18 h-18">
-                      <Image src="/icon/Favorite.svg" alt="Likes Terbanyak" fill className="object-contain" />
-                    </div>
-                  )}
-
-                  {/* CLICK OVERLAY */}
-                  {karya.poster && (
-                    <button
-                      onClick={() => onSelectPoster(karya.poster, karya.booth_name)}
-                      className="absolute inset-0"
-                    />
-                  )}
-                </>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-white/20 text-sm">
-                  Kosong
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+        @keyframes sprintFxZoom {
+          from { transform: scale(2.1); }
+          to { transform: scale(2.35); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -1155,7 +1098,7 @@ function PosterViewer({
 
         {/* HEADER */}
         <div className="h-14 px-4 border-b border-white/10 flex items-center justify-between shrink-0">
-          <h1 className="font-bold text-sm lg:text-base">Detail Booth</h1>
+          <h1 className="font-bold text-sm lg:text-base">Project Detail</h1>
           <button onClick={onClose} className="px-3 h-9 text-md font-bold">✕</button>
         </div>
 
@@ -1166,20 +1109,6 @@ function PosterViewer({
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-bold leading-tight">{info.judul}</h1>
-            </div>
-
-            {/* BADGE */}
-            <div className="flex items-start gap-2 shrink-0">
-              {info.is_terbaik && (
-                <div className="relative w-12 h-12 lg:w-16 lg:h-16">
-                  <Image src="/icon/Medalion.svg" alt="Karya Terbaik" fill className="object-contain" />
-                </div>
-              )}
-              {info.is_terbanyak && (
-                <div className="relative w-11 h-11 lg:w-[60px] lg:h-[60px]">
-                  <Image src="/icon/Favorite.svg" alt="Terbanyak Likes" fill className="object-contain" />
-                </div>
-              )}
             </div>
           </div>
 
@@ -1197,7 +1126,7 @@ function PosterViewer({
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-5 h-5">
                 <path d="M8 5v14l11-7z" />
               </svg>
-              Tonton Video
+              Watch Video
             </button>
           )}
         </div>

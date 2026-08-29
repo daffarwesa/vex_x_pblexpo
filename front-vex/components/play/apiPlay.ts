@@ -40,6 +40,16 @@ export function getPlayerModelUrl(gameAssets?: { player?: string }) {
     return `${base}/api/experience/player-model`
 }
 
+// New — mirrors getPlayerModelUrl exactly: use the backend-provided URL if
+// it comes back with game-assets, otherwise fall back to a predictable
+// storage path so this doesn't hard-break if the backend field is missing.
+export function getNumBaseUrl(gameAssets?: { num_base?: string }) {
+    if (gameAssets?.num_base) return gameAssets.num_base
+
+    const base = (url.defaults.baseURL ?? "").replace(/\/api\/?$/, "")
+    return `${base}/api/experience/num` // ← was `${base}/storage/num`, same CORS problem
+}
+
 // ── page.tsx (ExhibitionPage) ──
 export async function getPlayerName() {
     const res = await fetch("/api-internal/player-name")
