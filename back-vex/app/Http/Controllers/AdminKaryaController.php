@@ -221,12 +221,12 @@ class AdminKaryaController extends Controller
     }
 
     // ==================================
-    // SET is_best PADA KARYA (rank 1,2,3 / batal)
+    // SET is_best PADA KARYA (rank 1..7 / batal)
     // ==================================
     public function setBest(Request $request, $id_karya)
     {
         $request->validate([
-            'is_best' => 'nullable|in:1,2,3',
+            'is_best' => 'nullable|in:1,2,3,4,5,6,7',
         ]);
 
         $karya = Karya::find($id_karya);
@@ -291,7 +291,11 @@ class AdminKaryaController extends Controller
                      WHEN is_best = '1' THEN 2
                      WHEN is_best = '2' THEN 3
                      WHEN is_best = '3' THEN 4
-                     ELSE 5 END
+                     WHEN is_best = '4' THEN 5
+                     WHEN is_best = '5' THEN 6
+                     WHEN is_best = '6' THEN 7
+                     WHEN is_best = '7' THEN 8
+                     ELSE 9 END
             ")
             ->get();
 
