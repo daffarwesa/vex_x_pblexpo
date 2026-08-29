@@ -23,6 +23,7 @@ import {
 } from "./api";
 
 const RELEASE_VIDEO_ID = "bLdFe6G7OC8";
+const RELEASE_AUTOPLAY_DELAY = 5000;
 
 type ReleaseMediaItem =
   | { type: "video"; videoId: string; thumbnail: string; title: string }
@@ -109,6 +110,10 @@ export default function HomePage() {
   const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isFirstRender = useRef(true);
+
+  // Autoplay untuk Release Announcement thumbnail strip
+  const [releaseAutoplayEnabled, setReleaseAutoplayEnabled] = useState(true);
+  const releaseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // const tutorialLink = "/tutorial";
 
   const goToPrevMedia = () =>
@@ -146,15 +151,10 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Scroll only the horizontal thumbnail strip itself when the active thumbnail
-  // changes — never touch the page's vertical scroll position. Also skipped on
-  // first render so mounting doesn't cause any scroll movement at all.
+  // Scroll the horizontal thumbnail strip so the active thumbnail is centered
+  // — never touch the page's vertical scroll position. On first render it
+  // centers instantly (no smooth animation) so mounting doesn't show a jump.
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-
     const container = scrollContainerRef.current;
     const thumb = thumbRefs.current[activeMediaIndex];
     if (!container || !thumb) return;
@@ -166,9 +166,35 @@ export default function HomePage() {
 
     container.scrollTo({
       left: targetScrollLeft,
-      behavior: "smooth",
+      behavior: isFirstRender.current ? "auto" : "smooth",
     });
+
+    isFirstRender.current = false;
   }, [activeMediaIndex]);
+
+  // Autoplay: geser preview besar secara otomatis tiap RELEASE_AUTOPLAY_DELAY,
+  // berhenti begitu user memilih thumbnail secara manual.
+  useEffect(() => {
+    if (releaseTimerRef.current) {
+      clearInterval(releaseTimerRef.current);
+      releaseTimerRef.current = null;
+    }
+
+    if (!releaseAutoplayEnabled || releaseMedia.length <= 1) {
+      return;
+    }
+
+    releaseTimerRef.current = setInterval(() => {
+      setActiveMediaIndex((i) => (i + 1) % releaseMedia.length);
+    }, RELEASE_AUTOPLAY_DELAY);
+
+    return () => {
+      if (releaseTimerRef.current) {
+        clearInterval(releaseTimerRef.current);
+        releaseTimerRef.current = null;
+      }
+    };
+  }, [releaseAutoplayEnabled]);
 
   // Fetch karya Juara 1 (Best Work) & Juara 2 (Favorite Work) untuk carousel landing page
   useEffect(() => {
@@ -368,7 +394,10 @@ export default function HomePage() {
                     thumbRefs.current[i] = el;
                   }}
                   type="button"
-                  onClick={() => setActiveMediaIndex(i)}
+                  onClick={() => {
+                    setActiveMediaIndex(i);
+                    setReleaseAutoplayEnabled(false);
+                  }}
                   aria-label={item.title}
                   aria-pressed={i === activeMediaIndex}
                   className={`shrink-0 w-[220px] sm:w-[260px] aspect-video rounded-md overflow-hidden shadow-lg relative transition

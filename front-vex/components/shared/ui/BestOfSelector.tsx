@@ -334,26 +334,15 @@ export default function BestOfSelector({
       }`}
     >
       {/* ===================== */}
-      {/* CATEGORY TABS */}
+      {/* ACTIVE CATEGORY LABEL */}
       {/* ===================== */}
 
-      <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-        {slots.map((category, index) => (
-          <button
-            key={`tab-${category.label}-${index}`}
-            type="button"
-            onClick={() => handleSelect(index)}
-            aria-pressed={activeIndex === index}
-            className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-base font-bold transition-colors ${
-              activeIndex === index
-                ? "bg-main-blue text-white"
-                : "bg-main-blue/10 text-main-blue hover:bg-main-blue/20"
-            }`}
-          >
-            {category.label}
-          </button>
-        ))}
-      </div>
+      <p
+        key={activeIndex}
+        className="text-main-blue font-bold text-lg sm:text-5xl tracking-wide animate-[fadeIn_0.4s_ease] -mb-7 sm:mb-3"
+      >
+        {slots[activeIndex]?.label}
+      </p>
 
       {/* ===================== */}
       {/* POSTER TRIO */}
