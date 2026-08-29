@@ -7,7 +7,7 @@ import DateRangeFilter, {
   type DateRangeValue,
   type PresetKey,
 } from "./DateRangeFilter";
-import { StatData, generateDummyByRange } from "./mockData";
+import { StatData } from "./mockData";
 import {
   GetStatistikRange,
   GetStatistikKunjungan,
@@ -17,7 +17,6 @@ import {
 type ModeTab = "range" | "kelompok";
 
 export default function PageStatistik() {
-  const [useDummy, setUseDummy]   = useState<boolean>(true);
   const [modeTab, setModeTab]     = useState<ModeTab>("range");
   const [groupBy, setGroupBy]     = useState<"harian" | "jam">("harian");
 
@@ -33,17 +32,6 @@ export default function PageStatistik() {
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (useDummy) {
-      setLoading(true);
-      setError(null);
-      const t = setTimeout(() => {
-        setData(generateDummyByRange(range.startDate, range.endDate));
-        setTotal(0);
-        setLoading(false);
-      }, 150);
-      return () => clearTimeout(t);
-    }
-
     async function fetchLive() {
       setLoading(true);
       setError(null);
@@ -82,12 +70,12 @@ export default function PageStatistik() {
     }
 
     fetchLive();
-  }, [range.startDate, range.endDate, useDummy, modeTab, groupBy]);
+  }, [range.startDate, range.endDate, modeTab, groupBy]);
 
   // ── Derived stats ─────────────────────────────────────────────────────────
   const totalPengunjung = useMemo(
-    () => (useDummy ? data.reduce((s, d) => s + d.pengunjung, 0) : total),
-    [data, useDummy, total]
+    () => total,
+    [total]
   );
 
   const averagePengunjung = useMemo(() => {
@@ -114,32 +102,10 @@ export default function PageStatistik() {
         <div className="min-w-0">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-gray-800">Visitor Statistics</h1>
-            {useDummy && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-300">
-                Demo Mode (Dummy Data)
-              </span>
-            )}
           </div>
           <p className="text-sm text-gray-500 mt-1">
             Visualization of exhibition visitor traffic logs based on date range
           </p>
-        </div>
-
-        {/* CONTROLS */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* TOGGLE DUMMY */}
-          <button
-            type="button"
-            onClick={() => setUseDummy((prev) => !prev)}
-            className={`px-3 py-2 text-xs font-semibold rounded-lg border transition-all flex items-center gap-2 ${
-              useDummy
-                ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
-                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${useDummy ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
-            {useDummy ? "Switch to Live API" : "Switch to Dummy Data"}
-          </button>
         </div>
       </div>
 
@@ -154,8 +120,7 @@ export default function PageStatistik() {
             <button
               key={t.key}
               onClick={() => setModeTab(t.key)}
-              disabled={useDummy}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
                 modeTab === t.key
                   ? "bg-white text-main-blue shadow-sm"
                   : "text-gray-500 hover:text-gray-700"
@@ -167,7 +132,7 @@ export default function PageStatistik() {
         </div>
 
         {/* Group By (hanya tampil di mode Kelompok) */}
-        {modeTab === "kelompok" && !useDummy && (
+        {modeTab === "kelompok" && (
           <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
             {(["harian", "jam"] as const).map((g) => (
               <button
@@ -252,11 +217,9 @@ export default function PageStatistik() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-base font-semibold text-gray-800">Visitor Traffic Chart</h2>
-            {!useDummy && (
-              <p className="text-xs text-gray-400 mt-0.5">
-                {modeTab === "range" ? "Auto-group berdasarkan rentang tanggal" : `Dikelompokkan per ${groupBy}`}
-              </p>
-            )}
+            <p className="text-xs text-gray-400 mt-0.5">
+              {modeTab === "range" ? "Auto-group berdasarkan rentang tanggal" : `Dikelompokkan per ${groupBy}`}
+            </p>
           </div>
           <span className="text-xs text-gray-400">{data.length} data points</span>
         </div>
