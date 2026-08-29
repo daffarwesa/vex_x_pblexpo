@@ -1,35 +1,43 @@
 export const metadata = {
-  title: "FAQs | V-EX",
+  title: "V-EX+ | FAQs",
 };
 
 const faqs = [
   {
-    q: "Apa itu V-EX (Virtual Exhibition)?",
-    a: "V-EX adalah platform pameran karya PBL (Project Based Learning) berbasis 3D yang memungkinkan mahasiswa Teknik Informatika Polibatam menampilkan karya mereka secara virtual dan interaktif kepada publik.",
+    q: "What is V-EX+ (Virtual Exhibition Plus)?",
+    a: "V-EX+ is a 3D-based exhibition platform for PBL (Project Based Learning) projects, born from a collaboration between V-EX and PBL Expo at Politeknik Negeri Batam. It allows students to showcase their projects virtually and interactively to the public.",
   },
   {
-    q: "Siapa saja yang bisa mengakses V-EX?",
-    a: "Siapa saja bisa mengunjungi dan menjelajahi pameran secara publik. Untuk memberi komentar dan menyukai karya, pengunjung perlu membuat akun terlebih dahulu.",
+    q: "Who can access V-EX+?",
+    a: "Anyone can visit and explore the exhibition publicly. To leave comments and like projects, visitors need to create an account first.",
   },
   {
-    q: "Bagaimana cara mendaftar akun?",
-    a: "Klik tombol \"Daftar\" pada halaman utama, lalu isi data diri menggunakan email aktif. Setelah verifikasi, akun kamu siap digunakan untuk berinteraksi di pameran.",
+    q: "How do I register an account?",
+    a: "Click the \"Register\" button on the homepage, then fill in your details using an active email address. Once verified, your account is ready to use for interacting with the exhibition.",
   },
   {
-    q: "Bagaimana karya dipilih menjadi \"Karya Terbaik\"?",
-    a: "Karya terbaik dinilai langsung oleh Kepala Program Studi (KPS) berdasarkan kualitas, kreativitas, dan inovasi. Satu karya terbaik dipilih dari setiap program studi.",
+    q: "How many project categories are there in the exhibition?",
+    a: "There are 12 project categories in total. Each category has its own winner, resulting in 12 winning projects across the exhibition.",
   },
   {
-    q: "Apa bedanya \"Karya Terbaik\" dan \"Karya Favorit\"?",
-    a: "Karya Terbaik dipilih oleh KPS berdasarkan penilaian kualitas. Karya Favorit ditentukan dari jumlah suka (likes) terbanyak dari seluruh pengunjung.",
+    q: "How is a category winner chosen?",
+    a: "Each of the 12 category winners is judged directly by a panel of judges based on quality, creativity, and innovation. One winning project is selected per category, for 12 winners overall.",
   },
   {
-    q: "Apakah karya yang ditampilkan dilindungi hak cipta?",
-    a: "Ya. Setiap karya yang diunggah otomatis diberi watermark sebagai bentuk proteksi terhadap hasil karya mahasiswa. Detail lebih lanjut ada di halaman Kebijakan Privasi.",
+    q: "What is \"Best Project\", and is it different from the 12 category winners?",
+    a: "Yes, it's separate. Aside from the 12 category winners, there are also 3 additional overall categories used to determine Best Project — these 3 categories are distinct from the 12 project categories mentioned earlier.",
   },
   {
-    q: "Saya lupa kata sandi akun saya, bagaimana solusinya?",
-    a: "Gunakan fitur \"Lupa Kata Sandi\" pada halaman login. Sistem akan mengirimkan tautan pemulihan kata sandi ke email yang terdaftar.",
+    q: "What's the difference between \"Best Project\" and \"Favorite Project\"?",
+    a: "Best Project is chosen by the judges based on quality assessment across the 3 overall categories. Favorite Project is determined by the highest number of likes from all visitors, regardless of category.",
+  },
+  {
+    q: "Are the displayed projects copyright protected?",
+    a: "Yes. Every uploaded project is automatically watermarked as a form of protection for the students' work. More details can be found on the Privacy Policy page.",
+  },
+  {
+    q: "I forgot my account password, what should I do?",
+    a: "Use the \"Forgot Password\" feature on the login page. The system will send a password reset link to your registered email.",
   },
 ];
 
@@ -37,16 +45,16 @@ export default function FaqsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="text-main-blue">
-        <p className="font-poppins font-thin text-3xl sm:text-4xl leading-none">PERTANYAAN</p>
-        <p className="font-tilt-wrap font-bold text-3xl sm:text-4xl leading-none">UMUM (FAQs)</p>
+        <p className="font-poppins font-thin text-3xl sm:text-4xl leading-none">FREQUENTLY ASKED</p>
+        <p className="font-tilt-wrap font-bold text-3xl sm:text-4xl leading-none">QUESTIONS (FAQs)</p>
       </div>
 
       <p className="font-poppins font-light text-gray-600 max-w-2xl">
-        Belum menemukan jawaban yang kamu cari? Hubungi kami melalui halaman{" "}
-        <a href="/hubungi-kami" className="text-main-blue font-medium underline underline-offset-2">
-          Hubungi Kami
-        </a>
-        .
+        Couldn't find the answer you're looking for? Contact us through the{" "}
+        <a href="/contact-us" className="text-main-blue font-medium underline underline-offset-2">
+          Contact Us
+        </a>{" "}
+        page.
       </p>
 
       <div className="flex flex-col gap-3">

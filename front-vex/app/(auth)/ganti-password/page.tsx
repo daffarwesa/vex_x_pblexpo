@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { GantiPassword } from './apiGantiPassword';
-import { useRouter } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { PasswordField } from '@/components/shared/ui/InputFields';
 
 type StrengthBarProps = {
@@ -38,6 +38,7 @@ function StrengthBar({ password }: StrengthBarProps) {
 }
 
 export default function GantiPasswordPage() {
+  // notFound();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('');

@@ -2,19 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import DetailThumbnail from "@/components/karya/DetailThumbnail";
-import DetailPoster from "@/components/karya/DetailPoster";
-// import DetailPreview from "@/components/karya/DetailPreview";
+import DetailPoster, { PosterMode, extractDriveDirectUrl } from "@/components/karya/DetailPoster";
 import DetailForm from "@/components/karya/DetailForm";
-import DetailAction from "@/components/karya/DetailAction";
+import { Button, ButtonPutih } from "@/components/shared/ui/Button";
 import { showToast } from "@/components/shared/ui/ToastNotification";
-import { PostKarya } from "@/components/karya/apiKarya";
+import { PostKaryaAdmin } from "@/components/karya/apiKarya";
 import { KaryaItem } from "@/types/karya";
 
 // =============================
 // CONSTANTS
 // =============================
-const MAX_IMAGE_SIZE_MB = 5;
+const MAX_IMAGE_SIZE_MB = 2;
 const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg"];
 
@@ -30,13 +28,14 @@ function normalizeUrl(raw: string): string {
 
 function validate(
   form: KaryaItem,
-  thumbnailFile: File | null,
+  posterMode: PosterMode,
   posterFile: File | null,
+  posterDriveUrl: string,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
 
   if (!form.pameranId) errors.pameranId = "Pameran wajib dipilih.";
-  if (!form.modelStan) errors.modelStan = "Stan wajib dipilih."; // ← FIX: cek modelStan, bukan booth
+  if (!form.category) errors.category = "Kategori wajib dipilih.";
   if (!form.title.trim()) errors.title = "Judul wajib diisi.";
   if (!form.description?.trim()) errors.description = "Deskripsi wajib diisi.";
 
@@ -51,8 +50,16 @@ function validate(
     }
   }
 
-  if (!thumbnailFile) errors.thumbnail = "Gambar sampul wajib diunggah.";
-  if (!posterFile) errors.poster = "Gambar poster wajib diunggah.";
+  // Validasi Opsi Poster (Mutual Exclusive)
+  if (posterMode === "file") {
+    if (!posterFile) errors.poster = "File poster wajib diunggah.";
+  } else {
+    if (!posterDriveUrl.trim()) {
+      errors.poster = "Link Google Drive poster wajib diisi.";
+    } else if (!posterDriveUrl.includes("drive.google.com") && !posterDriveUrl.startsWith("http")) {
+      errors.poster = "Masukkan link Google Drive yang valid.";
+    }
+  }
 
   return errors;
 }
@@ -62,11 +69,10 @@ function mapLaravelErrors(
 ): Record<string, string> {
   return {
     ...(raw.id_pameran ? { pameranId: raw.id_pameran[0] } : {}),
-    ...(raw.id_model ? { modelStan: raw.id_model[0] } : {}), // ← FIX: id_model → modelStan
+    ...(raw.id_kategori ? { category: raw.id_kategori[0] } : {}),
     ...(raw.judul ? { title: raw.judul[0] } : {}),
     ...(raw.deskripsi ? { description: raw.deskripsi[0] } : {}),
     ...(raw.tautan ? { link: raw.tautan[0] } : {}),
-    ...(raw.gambar_sampul ? { thumbnail: raw.gambar_sampul[0] } : {}),
     ...(raw.gambar_poster ? { poster: raw.gambar_poster[0] } : {}),
   };
 }
@@ -84,25 +90,28 @@ const initialForm: KaryaItem = {
   semester: "",
   description: "",
   booth: "",
-  modelStan: "1", // ← FIX: tambahkan field baru
   link: "",
   pameranId: undefined,
 };
 
+interface AddKaryaProps {
+  onCancel?: () => void;
+  onSuccess?: () => void;
+}
+
 // =============================
 // COMPONENT
 // =============================
-export default function AddKaryaPage() {
+export default function AddKaryaPage({ onCancel, onSuccess }: AddKaryaProps) {
   const router = useRouter();
 
   const [form, setForm] = useState<KaryaItem>(initialForm);
-  const [thumbnailPreview, setThumbnailPreview] = useState("");
+  const [posterMode, setPosterMode] = useState<PosterMode>("file");
   const [posterPreview, setPosterPreview] = useState("");
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [posterDriveUrl, setPosterDriveUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // const [globalError, setGlobalError] = useState('');
 
   const clearFieldError = (key: string) =>
     setErrors((prev) => {
@@ -116,30 +125,56 @@ export default function AddKaryaPage() {
     clearFieldError(field as string);
   };
 
+  const handleModeChange = (mode: PosterMode) => {
+    setPosterMode(mode);
+    clearFieldError("poster");
+    if (mode === "file") {
+      setPosterDriveUrl("");
+      if (posterFile) {
+        setPosterPreview(URL.createObjectURL(posterFile));
+      } else {
+        setPosterPreview("");
+      }
+    } else {
+      setPosterFile(null);
+      if (posterDriveUrl) {
+        setPosterPreview(extractDriveDirectUrl(posterDriveUrl));
+      } else {
+        setPosterPreview("");
+      }
+    }
+  };
+
+  const handleDriveUrlChange = (url: string) => {
+    setPosterDriveUrl(url);
+    clearFieldError("poster");
+    const directUrl = extractDriveDirectUrl(url);
+    setPosterPreview(directUrl);
+  };
+
   const handleImageUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "thumbnail" | "poster",
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const label = type === "thumbnail" ? "Gambar thumbnail" : "Gambar poster";
+    const label = "Gambar poster";
 
     // Validasi tipe file
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setErrors((prev) => ({
         ...prev,
-        [type]: `${label} harus berformat PNG, JPG, atau JPEG.`,
+        poster: `${label} harus berformat PNG, JPG, atau JPEG.`,
       }));
       showToast(`${label} harus berformat PNG, JPG, atau JPEG.`, "warning");
       return;
     }
 
-    // Validasi ukuran file (maks 5MB)
+    // Validasi ukuran file (maks 2MB)
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
       setErrors((prev) => ({
         ...prev,
-        [type]: `${label} maksimal ${MAX_IMAGE_SIZE_MB}MB (file Anda ${(file.size / (1024 * 1024)).toFixed(1)}MB).`,
+        poster: `${label} maksimal ${MAX_IMAGE_SIZE_MB}MB (file Anda ${(file.size / (1024 * 1024)).toFixed(1)}MB).`,
       }));
       showToast(`${label} melebihi batas ${MAX_IMAGE_SIZE_MB}MB.`, "warning");
       return;
@@ -147,18 +182,13 @@ export default function AddKaryaPage() {
 
     // Lolos validasi
     const preview = URL.createObjectURL(file);
-    if (type === "thumbnail") {
-      setThumbnailPreview(preview);
-      setThumbnailFile(file);
-    } else {
-      setPosterPreview(preview);
-      setPosterFile(file);
-    }
-    clearFieldError(type);
+    setPosterPreview(preview);
+    setPosterFile(file);
+    clearFieldError("poster");
   };
 
   const handleSave = async () => {
-    const validationErrors = validate(form, thumbnailFile, posterFile);
+    const validationErrors = validate(form, posterMode, posterFile, posterDriveUrl);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       showToast("Lengkapi semua data terlebih dahulu.", "warning");
@@ -170,21 +200,31 @@ export default function AddKaryaPage() {
     try {
       const formData = new FormData();
       formData.append("id_pameran", String(form.pameranId));
-      formData.append("id_model", form.modelStan ?? ""); // ← FIX: kirim modelStan sebagai id_model
+      formData.append("id_kategori", form.category);
       formData.append("judul", form.title.trim());
       formData.append("deskripsi", form.description?.trim() ?? "");
       formData.append("tautan", normalizeUrl(form.link ?? ""));
-      formData.append("gambar_sampul", thumbnailFile!);
-      formData.append("gambar_poster", posterFile!);
 
-      const result = await PostKarya(formData);
+      if (posterMode === "file") {
+        formData.append("gambar_poster", posterFile!);
+      } else {
+        formData.append("gambar_poster", extractDriveDirectUrl(posterDriveUrl));
+      }
+
+      const result = await PostKaryaAdmin(formData);
 
       if (!result.success && result.status !== "success") {
         throw new Error(result.message || "Gagal menambahkan karya");
       }
 
       showToast("Karya berhasil ditambahkan!", "success");
-      window.location.reload();
+      if (onSuccess) {
+        onSuccess();
+      } else if (onCancel) {
+        onCancel();
+      } else {
+        window.location.reload();
+      }
     } catch (error: any) {
       const status = error.response?.status;
 
@@ -196,22 +236,9 @@ export default function AddKaryaPage() {
         setErrors(mapLaravelErrors(laravelErrors));
         showToast("Periksa kembali data yang diisi.", "warning");
         window.scrollTo({ top: 0, behavior: "smooth" });
-      } else if (status === 409) {
-        showToast("Anda sudah mengunggah karya pada pameran ini.", "error");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      } else if (status === 500) {
-        setErrors({
-          thumbnail: "Server gagal memproses gambar sampul. Coba upload ulang.",
-          poster: "Server gagal memproses gambar poster. Coba upload ulang.",
-        });
-        showToast(
-          "Terjadi kesalahan di server (500). Coba simpan lagi.",
-          "error",
-        );
-        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         showToast(
-          error.response?.data?.message || "Gagal terhubung ke server.",
+          error.response?.data?.message || "Gagal menyimpan karya.",
           "error",
         );
       }
@@ -220,40 +247,47 @@ export default function AddKaryaPage() {
     }
   };
 
-  // const handleDelete = () => {
-  //   setForm(initialForm);
-  //   setThumbnailPreview('');
-  //   setPosterPreview('');
-  //   setThumbnailFile(null);
-  //   setPosterFile(null);
-  //   setErrors({});
-  //   setGlobalError('');
-  // };
-
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-0 py-6">
+    <div className="w-full px-4 sm:px-6 lg:px-0 py-6 font-poppins">
       <div className="max-w-[1200px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start lg:items-stretch">
-          <div className="space-y-3">
-            <DetailThumbnail
-              preview={thumbnailPreview}
-              onUpload={(e) => handleImageUpload(e, "thumbnail")}
-              error={errors.thumbnail}
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+          <div className="lg:sticky lg:top-6">
             <DetailPoster
+              mode={posterMode}
+              onModeChange={handleModeChange}
               preview={posterPreview}
-              onUpload={(e) => handleImageUpload(e, "poster")}
+              onUploadFile={handleImageUpload}
+              driveUrl={posterDriveUrl}
+              onDriveUrlChange={handleDriveUrlChange}
               error={errors.poster}
             />
           </div>
 
           <div className="flex flex-col">
             <p className="text-xl font-semibold mt-10 mb-1.5">
-              Detail<span className="text-red-500">*</span>
+              Detail Karya<span className="text-red-500">*</span>
             </p>
             
             <DetailForm form={form} onChange={handleChange} errors={errors} />
-            <DetailAction onSave={handleSave} loading={isLoading} />
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+              {onCancel && (
+                <ButtonPutih
+                  onClick={onCancel}
+                  type="button"
+                  className="px-6 py-2.5 rounded-xl font-medium"
+                >
+                  Batal
+                </ButtonPutih>
+              )}
+              <Button
+                onClick={handleSave}
+                disabled={isLoading}
+                type="button"
+                className="px-6 py-2.5 rounded-xl font-bold bg-main-blue text-white"
+              >
+                {isLoading ? "Menyimpan..." : "Simpan"}
+              </Button>
+            </div>
           </div>
         </div>
       </div>

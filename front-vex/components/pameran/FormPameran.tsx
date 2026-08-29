@@ -1,9 +1,8 @@
 import { FaCloudUploadAlt } from "react-icons/fa";
-import { PameranForm as PameranFormType, KATEGORI_OPTIONS } from "@/types/pameran";
+import { PameranForm as PameranFormType } from "@/types/pameran";
 import { Button } from "@/components/shared/ui/Button";
 import {
   InputField,
-  SelectField,
   TextareaField,
   Label,
 } from "@/components/shared/ui/InputFields";
@@ -14,10 +13,14 @@ type Props = {
   loading: boolean;
   errors?: Partial<Record<keyof PameranFormType | "image", string>>;
   onChangeImage: (e: React.ChangeEvent<HTMLInputElement>) => void;
-onChange: (
-  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-) => void;
+  onChange: (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => void;
   onSubmit: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 };
 
 export default function FormPameran({
@@ -28,6 +31,8 @@ export default function FormPameran({
   onChangeImage,
   onChange,
   onSubmit,
+  onDelete,
+  isDeleting = false,
 }: Props) {
   return (
     <div className="flex flex-col lg:flex-row gap-10">
@@ -73,19 +78,6 @@ export default function FormPameran({
 
       {/* RIGHT - FIELDS */}
       <div className="w-full lg:w-[60%] mt-10 flex flex-col gap-4">
-
-        {/* KATEGORI */}
-        <SelectField
-          name="kategori"
-          label="Kategori"
-          required
-          value={form.kategori}
-          options={KATEGORI_OPTIONS.map((p) => ({ value: p.kode, label: p.nama }))}
-          placeholder="-- Pilih Kategori --"
-          error={errors.kategori}
-          onChange={onChange}
-        />
-
         {/* TITLE */}
         <InputField
           type="text"
@@ -123,6 +115,7 @@ export default function FormPameran({
                 onChange={onChange}
               />
             </div>
+
             <div>
               <p className="text-xs text-gray-400 mb-1">Berakhir</p>
               <InputField
@@ -148,12 +141,23 @@ export default function FormPameran({
           className="h-[140px]"
         />
 
-        {/* BUTTON */}
-        <div className="flex justify-end">
+        {/* BUTTONS */}
+        <div className="flex justify-end gap-3 pt-2">
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={loading || isDeleting}
+              className="px-6 py-2.5 rounded-lg border border-red-200 bg-red-50 text-red-600 font-semibold text-sm hover:bg-red-100 disabled:opacity-50 transition"
+            >
+              {isDeleting ? "Menghapus..." : "Hapus Pameran"}
+            </button>
+          )}
+
           <Button
             onClick={onSubmit}
-            disabled={loading}
-            className="px-8 py-2.5 text-white rounded-lg hover:opacity-80"
+            disabled={loading || isDeleting}
+            className="px-8 py-2.5 text-white rounded-lg hover:opacity-80 font-bold"
           >
             {loading ? "Menyimpan..." : "Simpan"}
           </Button>

@@ -1,10 +1,18 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { FaUser, FaBook, FaImage, FaPlus, FaTimes, FaDollarSign } from 'react-icons/fa';
-import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Tooltip } from './Components';
+import Link from "next/link";
+import {
+  FaUser,
+  FaBook,
+  FaImage,
+  FaPlus,
+  FaTimes,
+  FaChartBar,
+  FaTrophy,
+} from "react-icons/fa";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Tooltip } from "./Components";
 
 interface AddOn {
   onAddClick?: () => void;
@@ -16,28 +24,22 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
 
   const menuItems = [
     {
-      id: 1,
-      title: 'Pengguna',
-      icon: <FaUser size={17} />,
-      link: '/admin/pengguna',
-    },
-    {
       id: 2,
-      title: 'Pameran',
+      title: "Exhibition",
       icon: <FaBook size={17} />,
-      link: '/admin/pameran',
-    },
-    {
-      id: 3,
-      title: 'Karya',
-      icon: <FaImage size={17} />,
-      link: '/admin/karya',
+      link: "/admin/pameran",
     },
     {
       id: 4,
-      title: 'Sponsor',
-      icon: <FaDollarSign size={17} />,
-      link: '/admin/sponsor',
+      title: "Statistics",
+      icon: <FaChartBar size={17} />,
+      link: "/admin/statistik",
+    },
+    {
+      id: 5,
+      title: "Ratings",
+      icon: <FaTrophy size={17} />,
+      link: "/admin/penilaian",
     },
   ];
 
@@ -46,7 +48,7 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
       className="fixed z-14 left-1/2 -translate-x-1/2 bottom-0 w-fit flex justify-center px-3 pb-3
       "
       style={{
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)',
+        paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)",
       }}
     >
       <div
@@ -55,10 +57,14 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
       >
         {/* MENU */}
         {menuItems.map((item) => {
-          const isActive = pathname === item.link || pathname.startsWith(item.link + '/');
+          const isActive =
+            pathname === item.link || pathname.startsWith(item.link + "/");
 
           return (
-            <div key={item.id} className="group relative flex h-10 w-10 items-center justify-center">
+            <div
+              key={item.id}
+              className="group relative flex h-10 w-10 items-center justify-center"
+            >
               {/* ITEM */}
               <div className="relative h-10 w-10">
                 {isActive && (
@@ -66,7 +72,7 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
                     layoutId="activePill"
                     className="absolute inset-0 rounded-full bg-white"
                     transition={{
-                      type: 'spring',
+                      type: "spring",
                       stiffness: 400,
                       damping: 30,
                     }}
@@ -77,7 +83,7 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
                 <Link
                   href={item.link}
                   className={`relative z-10 flex h-full w-full items-center justify-center rounded-full transition
-                    ${isActive ? 'text-main-blue' : 'text-white border border-white/20 hover:bg-white/10'}
+                    ${isActive ? "text-main-blue" : "text-white border border-white/20 hover:bg-white/10"}
                     `}
                 >
                   {item.icon}
@@ -92,7 +98,7 @@ export default function NavAdmin({ onAddClick, isFormOpen }: AddOn) {
 
         {/* BUTTON */}
         <div className="group relative flex h-10 w-10 items-center justify-center">
-          <Tooltip>Tambah</Tooltip>
+          <Tooltip>Add</Tooltip>
 
           <motion.button
             onClick={onAddClick}

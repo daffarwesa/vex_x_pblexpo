@@ -13,6 +13,7 @@ import {
   useParams,
   useRouter,
 } from "next/navigation";
+import Cookies from "js-cookie";
 
 import { Canvas } from "@react-three/fiber";
 import { useProgress } from "@react-three/drei";
@@ -21,30 +22,15 @@ import { v4 as uuidv4 } from 'uuid';
 import Experience from "@/components/play/experience";
 import Crosshair from "@/components/play/crosshair";
 import Image from "next/image";
-import { showToast } from "@/components/shared/ui/ToastNotification"; //
 
 import {
   getKaryaList, getPlayerName, deletePlayer,
-  getKaryaDetail, getKaryaLikeStatus, toggleKaryaLike,
-  getKomentar, postKomentar
+  getKaryaDetail, postKunjungan
 } from "@/components/play/apiPlay";
-
 
 type PosterData = {
   src: string;
   booth: string;
-};
-
-type InfoData = {
-  id_karya: number | null;
-  judul: string;
-  deskripsi: string;
-  likes: number;
-  liked: boolean;
-  is_terbaik: boolean;      // ← tambah
-  is_terbanyak: boolean;    // ← tambah
-  tautan: string | null;
-  komentar: { nama: string; isi: string; }[];
 };
 
 /* ======================= */
@@ -132,8 +118,18 @@ export default function ExhibitionPage() {
     [maxFloor]
   );
 
-  // Load karya + max_floor once
+  // Guard agar tidak POST kunjungan dua kali saat StrictMode di dev
+  const hasTrackedVisitor = useRef(false);
+
+  // Load karya + max_floor once & record visit
   useEffect(() => {
+    if (!id) return;
+
+    if (!hasTrackedVisitor.current) {
+      hasTrackedVisitor.current = true;
+      postKunjungan(id).catch(() => { });
+    }
+
     getKaryaList(id)
       .then(({ karya, max_floor }) => {
         setKaryaList(karya);
@@ -194,7 +190,7 @@ export default function ExhibitionPage() {
   // Ref ke elemen <canvas> Three.js — dipakai buat manual re-lock pointer
   // setelah modal (poster/video/menu) ditutup, karena exitPointerLock()
   // saat modal dibuka tidak otomatis di-lock lagi begitu modal ditutup.
-const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const relockRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -225,27 +221,19 @@ const canvasRef = useRef<HTMLCanvasElement | null>(null);
       relockRetryTimer.current = null;
     }
 
-    const tryLock = () => {
-      const canvas = canvasRef.current;
-      if (!canvas?.requestPointerLock) return;
+    const canvas = canvasRef.current;
+    if (!canvas?.requestPointerLock) return;
 
-      // requestPointerLock() balikin Promise di browser modern. Kalau
-      // rejected, hampir selalu karena cooldown wajib browser (Chromium
-      // butuh ±1.1–1.3 detik setelah pointer lock terakhir dilepas sebelum
-      // mau mengunci lagi — ini pembatasan keamanan bawaan, bukan sesuatu
-      // yang bisa dilewati dari kode). Tangkap errornya biar tidak
-      // melempar SecurityError yang tidak tertangani, lalu coba sekali lagi
-      // setelah cooldown biasanya sudah lewat — supaya user biasanya tidak
-      // perlu klik manual lagi.
+    try {
       const result = canvas.requestPointerLock() as unknown;
       if (result && typeof (result as Promise<void>).catch === "function") {
         (result as Promise<void>).catch(() => {
-          relockRetryTimer.current = setTimeout(tryLock, 1300);
+          // Cooldown browser aktif atau user gesture belum ada; abaikan tanpa throw
         });
       }
-    };
-
-    tryLock();
+    } catch {
+      // Abaikan error gesture
+    }
   }, []);
 
   useEffect(() => {
@@ -493,14 +481,16 @@ const canvasRef = useRef<HTMLCanvasElement | null>(null);
               Lanjut
             </button>
             <button
-              onClick={async () => {
-                await fetch(`/api-internal/player?id=${playerId}`, { method: "DELETE" });
+              onClick={() => {
+                exitPointerLockSafe();
+                fetch(`/api-internal/player?id=${playerId}`, { method: "DELETE" }).catch(() => { });
                 sessionStorage.removeItem("playerId");
                 sessionStorage.removeItem("playerName");
-                document.cookie = "username=; path=/; max-age=0"; // ← tambah ini
-                router.back();
+                document.cookie = "username=; path=/; max-age=0";
+                const isAdmin = Cookies.get("is_admin_logged_in") === "true" || !!localStorage.getItem("token");
+                window.location.href = isAdmin ? "/admin/pameran" : "/pameran";
               }}
-              className="w-full h-12 rounded-xl bg-red-500 font-bold"
+              className="w-full h-12 rounded-xl bg-red-500 hover:bg-red-600 font-bold transition-colors"
             >
               Keluar
             </button>
@@ -709,56 +699,43 @@ function LoaderWatcher({
   onLoaded: () => void;
 }) {
   const firedRef = useRef(false);
-  const sawActiveRef = useRef(false);
   const dataReadyRef = useRef(dataReady);
 
   useEffect(() => {
     dataReadyRef.current = dataReady;
   }, [dataReady]);
 
-  // Subscribe manual ke progress store milik drei (zustand-based) lewat
-  // useEffect, BUKAN dengan memanggil hook useProgress() langsung di body
-  // render. useProgress() di render-time membaca state yang di-update oleh
-  // THREE.DefaultLoadingManager tepat saat sebuah loader baru (mis.
-  // useGLTF(hallModel) di ExperienceInner) mendaftarkan diri — ini terjadi
-  // dalam render-pass yang sama dengan LoaderWatcher sebagai sibling-nya,
-  // sehingga React menganggapnya "update a component while rendering a
-  // different component". Subscribe via store di luar render path
-  // sepenuhnya menghindari race ini (lihat: pmndrs/drei#314).
+  // Subscribe manual ke progress store milik drei (zustand-based)
   useEffect(() => {
     const unsub = useProgress.subscribe((state) => {
       const { progress, active } = state;
 
       onProgress(progress);
 
-      if (active) sawActiveRef.current = true;
-
       if (firedRef.current) return;
       if (!dataReadyRef.current) return;
 
-      if (sawActiveRef.current && !active && progress >= 100) {
+      // Selesai jika tidak aktif lagi atau progress mencapai 100%
+      if (!active || progress >= 100) {
         firedRef.current = true;
         onLoaded();
       }
     });
 
     return () => unsub();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onLoaded, onProgress]);
 
-  // Fallback: kalau asset sudah ter-cache / tidak ada yang perlu di-load,
-  // store tidak akan pernah memanggil listener dengan active=true sama
-  // sekali. Beri sedikit delay supaya loading screen tetap tampil sebentar
-  // (tidak "flash"), lalu lanjut otomatis.
+  // Safety fallback: jika data siap, pastikan loading tetap selesai
+  // dan tidak stuck jika Drei tidak memicu event un-active
   useEffect(() => {
     if (!dataReady) return;
 
     const t = setTimeout(() => {
-      if (!firedRef.current && !sawActiveRef.current) {
+      if (!firedRef.current) {
         firedRef.current = true;
         onLoaded();
       }
-    }, 600);
+    }, 1200);
 
     return () => clearTimeout(t);
   }, [dataReady, onLoaded]);
@@ -785,15 +762,20 @@ function firstName(nama: string | null | undefined): string {
 
 function toEmbedUrl(url: string): string {
   if (!url) return "";
-  // Ini URL bukan axios tapi url youtube
+
+  // Google Drive: /file/d/{id}/view atau ?id={id} → harus jadi /preview
+  // supaya bisa di-embed di iframe (format /view diblokir Google).
+  if (url.includes("drive.google.com")) {
+    const match = url.match(/\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
+    if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
+    return url;
+  }
+
   if (url.includes("youtube.com/embed/")) return url;
-  // youtu.be/VIDEO_ID
   const short = url.match(/youtu\.be\/([^?&]+)/);
   if (short) return `https://www.youtube.com/embed/${short[1]}`;
-  // youtube.com/watch?v=VIDEO_ID
   const watch = url.match(/[?&]v=([^&]+)/);
   if (watch) return `https://www.youtube.com/embed/${watch[1]}`;
-  // Fallback (misal Vimeo atau link lain)
   return url;
 }
 
@@ -1089,25 +1071,22 @@ function PosterViewer({
   onOpenTautan: (url: string) => void;
 }) {
   const [zoom, setZoom] = useState(1);
-  const [tab, setTab] = useState<"detail" | "komentar">("detail");
-  const [newComment, setNewComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
-  const [info, setInfo] = useState<InfoData>({
+  const [info, setInfo] = useState<{
+    id_karya: number | null;
+    judul: string;
+    deskripsi: string;
+    is_terbaik: boolean;
+    is_terbanyak: boolean;
+    tautan: string | null;
+  }>({
     id_karya: null,
     judul: "Loading...",
     deskripsi: "Loading...",
-    likes: 0,
-    liked: false,
-    is_terbaik: false,   // ← tambah
-    is_terbanyak: false, // ← tambah
+    is_terbaik: false,
+    is_terbanyak: false,
     tautan: null,
-    komentar: [],
   });
-
-  const isLoggedIn = () => {
-    return typeof window !== "undefined" && !!localStorage.getItem("token");
-  };
 
   /* ====================== */
   /* LOAD DATA KARYA        */
@@ -1129,137 +1108,32 @@ function PosterViewer({
         );
 
         if (!karya) throw new Error("Karya tidak ditemukan");
-
         if (cancelled) return;
 
-        // Tampilkan dulu judul/deskripsi langsung dari getKaryaDetail,
-        // tidak menunggu like-status / komentar yang butuh auth.
-        setInfo((prev) => ({
-          ...prev,
+        setInfo({
           id_karya: karya.id_karya,
           judul: karya.judul ?? "-",
           deskripsi: karya.deskripsi ?? "-",
-          likes: karya.total_suka ?? 0,
-          liked: false,
           is_terbaik: karya.is_terbaik ?? false,
           is_terbanyak: karya.is_terbanyak ?? false,
           tautan: karya.tautan ?? null,
-        }));
-
-        // Like-status butuh token — kalau gagal (mis. belum login),
-        // jangan sampai menimpa judul/deskripsi yang sudah berhasil dimuat.
-        const token = localStorage.getItem("token") ?? undefined;
-        if (token) {
-          try {
-            const sukaData = await getKaryaLikeStatus(karya.id_karya, token);
-            if (!cancelled) {
-              setInfo((prev) => ({
-                ...prev,
-                liked: sukaData.liked ?? false,
-                likes: sukaData.total_suka ?? prev.likes,
-              }));
-            }
-          } catch {
-            // diamkan saja — tetap pakai total_suka dari karya & liked=false
-          }
-        }
-
-        // Komentar bisa publik (tidak butuh token) — tapi tetap diisolasi
-        // supaya kalau gagal, tidak menimpa judul/deskripsi yang sudah ada.
-        try {
-          const komentar = await getKomentar(karya.id_karya);
-          if (!cancelled) {
-            setInfo((prev) => ({ ...prev, komentar }));
-          }
-        } catch {
-          // diamkan saja — komentar tetap kosong
-        }
+        });
       } catch {
         if (cancelled) return;
         setInfo({
           id_karya: null,
           judul: "Data Tidak Ditemukan",
           deskripsi: "Data karya belum tersedia.",
-          likes: 0,
-          liked: false,
           is_terbaik: false,
           is_terbanyak: false,
           tautan: null,
-          komentar: [],
         });
       }
     };
 
     load();
-
     return () => { cancelled = true; };
   }, [id, booth]);
-
-  /* ====================== */
-  /* TOGGLE LIKE (ke API)   */
-  /* ====================== */
-
-  const toggleLike = async () => {
-    if (!info.id_karya) return;
-    if (!isLoggedIn()) {
-      showToast("Kamu harus login untuk menyukai karya.", "warning");
-      return;
-    }
-    const wasLiked = info.liked;
-    setInfo((prev) => ({
-      ...prev,
-      liked: !wasLiked,
-      likes: wasLiked ? prev.likes - 1 : prev.likes + 1,
-    }));
-    try {
-      const token = localStorage.getItem("token")!;
-      const data = await toggleKaryaLike(info.id_karya!, token);
-      setInfo((prev) => ({ ...prev, liked: data.liked, likes: data.total_suka }));
-    } catch {
-      setInfo((prev) => ({
-        ...prev,
-        liked: wasLiked,
-        likes: wasLiked ? prev.likes + 1 : prev.likes - 1,
-      }));
-    }
-  };
-
-  /* ====================== */
-  /* KIRIM KOMENTAR (ke API)*/
-  /* ====================== */
-
-  const [commentError, setCommentError] = useState<string | null>(null);
-
-  const sendComment = async () => {
-    if (!newComment.trim() || !info.id_karya || submitting) return;
-    if (!isLoggedIn()) {
-      showToast("Kamu harus login untuk berkomentar.", "warning");
-      return;
-    }
-    setSubmitting(true);
-    setCommentError(null);
-    try {
-      const token = localStorage.getItem("token")!;
-      const data = await postKomentar(info.id_karya!, newComment, token);
-      if (data.status === 429) {
-        setCommentError(data.message ?? "Tunggu beberapa menit sebelum komentar lagi.");
-      } else {
-        const nama = data.komentar?.pengguna?.nama ?? "Kamu";
-        const isi = data.komentar?.isi_komentar ?? newComment;
-        setInfo((prev) => ({ ...prev, komentar: [...prev.komentar, { nama, isi }] }));
-        setNewComment("");
-      }
-    } catch (err: any) {
-      // 422 dari Laravel = gagal validasi (misalnya kata kasar, atau
-      // komentar kosong/kepanjangan). Ambil pesannya kalau ada supaya
-      // user tahu alasan spesifiknya, bukan cuma "gagal kirim".
-      const validasi = err?.response?.data?.errors?.isi_komentar?.[0];
-      const pesanUmum = err?.response?.data?.message;
-      setCommentError(validasi ?? pesanUmum ?? "Gagal mengirim komentar. Coba lagi.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const wheel = (e: React.WheelEvent) => {
     e.preventDefault();
@@ -1285,126 +1159,48 @@ function PosterViewer({
           <button onClick={onClose} className="px-3 h-9 text-md font-bold">✕</button>
         </div>
 
-        {/* TAB */}
-        <div className="grid grid-cols-2 border-b border-white/10">
-          <button
-            onClick={() => setTab("detail")}
-            className={`h-11 text-sm ${tab === "detail" ? "bg-white text-black font-bold" : "text-white/70"}`}
-          >
-            Detail
-          </button>
-          <button
-            onClick={() => setTab("komentar")}
-            className={`h-11 text-sm ${tab === "komentar" ? "bg-white text-black font-bold" : "text-white/70"}`}
-          >
-            Komentar ({info.komentar.length})
-          </button>
-        </div>
-
         {/* CONTENT */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-4 space-y-5">
 
-          {/* DETAIL */}
-          {tab === "detail" && (
-            <div className="p-4 space-y-5">
-
-              {/* TOP */}
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-xl font-bold leading-tight">{info.judul}</h1>
-
-                  {/* LIKE */}
-                  <button onClick={toggleLike} className="flex items-center gap-2 mt-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                      fill={info.liked ? "white" : "none"} stroke="white" strokeWidth="2" className="w-5 h-5">
-                      <path d="M12 21s-7-4.35-9.5-8C.5 9.5 2.5 5 7 5c2.54 0 4 1.5 5 3 1-1.5 2.46-3 5-3 4.5 0 6.5 4.5 4.5 8-2.5 3.65-9.5 8-9.5 8z" />
-                    </svg>
-                    <span className="text-sm">{info.likes}</span>
-                  </button>
-                </div>
-
-                {/* BADGE */}
-                <div className="flex items-start gap-2 shrink-0">
-                  {info.is_terbaik && (
-                    <div className="relative w-12 h-12 lg:w-16 lg:h-16">
-                      <Image src="/icon/Medalion.svg" alt="Karya Terbaik" fill className="object-contain" />
-                    </div>
-                  )}
-                  {info.is_terbanyak && (
-                    <div className="relative w-11 h-11 lg:w-[60px] lg:h-[60px]">
-                      <Image src="/icon/Favorite.svg" alt="Terbanyak Likes" fill className="object-contain" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* DESC */}
-              <p className="text-sm text-white/80 whitespace-pre-line leading-relaxed text-justify">
-                {info.deskripsi}
-              </p>
-
-              {/* TOMBOL TONTON VIDEO — muncul kalau ada tautan */}
-              {info.tautan && (
-                <button
-                  onClick={() => onOpenTautan(info.tautan!)}
-                  className="w-full h-11 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold flex items-center justify-center gap-2 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-5 h-5">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                  Tonton Video
-                </button>
-              )}
-
+          {/* TOP */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold leading-tight">{info.judul}</h1>
             </div>
-          )}
 
-          {/* KOMENTAR */}
-          {tab === "komentar" && (
-            <div className="p-4 space-y-3">
-              {info.komentar.length === 0 && (
-                <p className="text-sm text-white/50">Belum ada komentar</p>
-              )}
-              {info.komentar.map((item, i) => (
-                <div key={i} className="bg-white/5 rounded-[6px] p-3">
-                  <p className="text-xs font-bold mb-1">{firstName(item.nama)}</p>
-                  <p className="text-sm text-white/70">{item.isi}</p>
+            {/* BADGE */}
+            <div className="flex items-start gap-2 shrink-0">
+              {info.is_terbaik && (
+                <div className="relative w-12 h-12 lg:w-16 lg:h-16">
+                  <Image src="/icon/Medalion.svg" alt="Karya Terbaik" fill className="object-contain" />
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* INPUT KOMENTAR */}
-        {tab === "komentar" && (
-          <div className="border-t border-white/10">
-            {!isLoggedIn() && (
-              <p className="px-3 pt-2 text-xs text-yellow-400">Login untuk berkomentar.</p>
-            )}
-            {commentError && (
-              <p className="px-3 pt-2 text-xs text-red-400">{commentError}</p>
-            )}
-            <div className="p-3 flex gap-2">
-              <input
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendComment()}
-                placeholder="Tulis komentar..."
-                className="flex-1 h-11 px-3 rounded-[6px] bg-white/10 text-sm outline-none"
-              />
-              <button
-                onClick={sendComment}
-                disabled={submitting}
-                className="w-11 h-11 rounded-[6px] bg-main-blue flex items-center justify-center disabled:opacity-50"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                  stroke="white" strokeWidth="2" className="w-5 h-5">
-                  <path d="M3 20l18-8L3 4v6l13 2-13 2v6z" />
-                </svg>
-              </button>
+              )}
+              {info.is_terbanyak && (
+                <div className="relative w-11 h-11 lg:w-[60px] lg:h-[60px]">
+                  <Image src="/icon/Favorite.svg" alt="Terbanyak Likes" fill className="object-contain" />
+                </div>
+              )}
             </div>
           </div>
-        )}
+
+          {/* DESC */}
+          <p className="text-sm text-white/80 whitespace-pre-line leading-relaxed text-justify">
+            {info.deskripsi}
+          </p>
+
+          {/* TOMBOL TONTON VIDEO */}
+          {info.tautan && (
+            <button
+              onClick={() => onOpenTautan(info.tautan!)}
+              className="w-full h-11 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold flex items-center justify-center gap-2 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-5 h-5">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Tonton Video
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

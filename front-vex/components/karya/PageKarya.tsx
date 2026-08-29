@@ -18,8 +18,8 @@ interface Props {
 export default function PageKarya({ href }: Props) {
   const { user, loading: authLoading } = useAuth();
 
-  const isAdmin   = user?.role === "Admin";
-  const isCreator = user?.role === "Creator";
+  const isAdmin   = !!user;
+  const isCreator = false;
 
   const [karyaList, setKaryaList] = useState<KaryaItem[]>([]);
   const [pameranList, setPameranList] = useState<PameranItem[]>([]);
@@ -252,9 +252,6 @@ export default function PageKarya({ href }: Props) {
               setSearch={setSearch}
               selectedTahun={selectedTahun}
               setSelectedTahun={setSelectedTahun}
-              selectedSemester={selectedSemester}
-              setSelectedSemester={setSelectedSemester}
-              hideKategori={true}
               searchPlaceholder="Cari karya atau pameran..."
             />
           </div>
@@ -303,13 +300,8 @@ export default function PageKarya({ href }: Props) {
         <FilterSection
           search={search}
           setSearch={setSearch}
-          selectedKategori={selectedKategori}
-          setSelectedKategori={setSelectedKategori}
           selectedTahun={selectedTahun}
           setSelectedTahun={setSelectedTahun}
-          selectedSemester={selectedSemester}
-          setSelectedSemester={setSelectedSemester}
-        hideKategori={!isAdmin}
         />
       </div>
     </section>

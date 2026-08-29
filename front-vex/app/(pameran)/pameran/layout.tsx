@@ -18,8 +18,8 @@ export default function IndexLayout({
   }, []);
 
   const userMenu = [
-    { title: "BERANDA", subtitle: "UTAMA", link: "/" },
-    { title: "PAMERAN", subtitle: "3D BOOTH", link: "/pameran" },
+    { title: "HOMEPAGE", subtitle: "MAIN", link: "/" },
+    { title: "EXHIBITION", subtitle: "3D BOOTH", link: "/pameran" },
   ];
 
   return (

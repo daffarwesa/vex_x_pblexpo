@@ -15,7 +15,6 @@ export async function sendVerification(payload: SendVerificationPayload) {
     return res.data;
 }
 
-
 // STEP 2 — POST veriviakasi token
 export async function verifyToken(payload: VerifyPayload) {
     const res = await url.post('/api/change-email/verify', payload);

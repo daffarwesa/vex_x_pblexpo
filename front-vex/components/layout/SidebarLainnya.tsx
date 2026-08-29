@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { FiChevronDown } from 'react-icons/fi';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { FiChevronDown } from "react-icons/fi";
 
 type MenuItem = {
   title: string;
@@ -16,30 +16,28 @@ type MenuGroup = {
 };
 
 const menuGroups: MenuGroup[] = [
+  // {
+  //   label: "Tutorial",
+  //   items: [
+  //     { title: "Admin", link: "/tutorial/admin" },
+  //     { title: "Creator", link: "/tutorial/creator" },
+  //     { title: "Visitor", link: "/tutorial/visitor" },
+  //   ],
+  // },
   {
-    label: 'Tutorial',
+    label: "Source",
     items: [
-      { title: 'Panduan Umum', link: '/tutorial/umum' },
-      { title: 'Panduan Pengunjung', link: '/tutorial/pengunjung' },
-      { title: 'Panduan Admin', link: '/tutorial/admin' },
-      { title: 'Panduan Ketua PBL', link: '/tutorial/ketua-pbl' },
-      { title: 'Panduan KPS', link: '/tutorial/kps' },
+      { title: "FAQs", link: "/faqs" },
+      // { title: "Tutorial", link: "/tutorial" },
+      { title: "Service", link: "/service" },
     ],
   },
   {
-    label: 'Sumber',
+    label: "Terms",
     items: [
-      { title: 'FAQs', link: '/faqs' },
-      { title: 'Petunjuk', link: '/petunjuk' },
-      { title: 'Pelayanan', link: '/pelayanan' },
-    ],
-  },
-  {
-    label: 'Hukum',
-    items: [
-      { title: 'Syarat & Ketentuan', link: '/syarat-ketentuan' },
-      { title: 'Kebijakan Privasi', link: '/kebijakan-privasi' },
-      { title: 'Hubungi Kami', link: '/hubungi-kami' },
+      { title: "Terms & Conditions", link: "/terms-conditions" },
+      { title: "Privacy Policy", link: "/privacy-policy" },
+      { title: "Contact Us", link: "/contact-us" },
     ],
   },
 ];
@@ -78,13 +76,15 @@ export default function SidebarLainnya() {
               >
                 <span>{group.label}</span>
                 <FiChevronDown
-                  className={`text-lg transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                  className={`text-lg transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
                 />
               </button>
 
               <div
                 className={`grid transition-all duration-300 ease-in-out ${
-                  isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                  isOpen
+                    ? "grid-rows-[1fr] opacity-100"
+                    : "grid-rows-[0fr] opacity-0"
                 }`}
               >
                 <div className="overflow-hidden">
@@ -97,8 +97,8 @@ export default function SidebarLainnya() {
                             href={item.link}
                             className={`block py-2 px-3 rounded-lg text-sm font-poppins font-light transition-colors ${
                               active
-                                ? 'bg-main-blue text-white font-medium'
-                                : 'text-gray-600 hover:bg-secondary-color hover:text-main-blue'
+                                ? "bg-main-blue text-white font-medium"
+                                : "text-gray-600 hover:bg-secondary-color hover:text-main-blue"
                             }`}
                           >
                             {item.title}

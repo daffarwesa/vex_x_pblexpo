@@ -37,7 +37,7 @@ export function getPlayerModelUrl(gameAssets?: { player?: string }) {
     if (gameAssets?.player) return gameAssets.player
 
     const base = (url.defaults.baseURL ?? "").replace(/\/api\/?$/, "")
-    return `${base}/storage/models/player.glb`
+    return `${base}/api/experience/player-model`
 }
 
 // ── page.tsx (ExhibitionPage) ──
@@ -48,7 +48,17 @@ export async function getPlayerName() {
 }
 
 export async function deletePlayer(playerId: string) {
-    await fetch(`/api-internal/player?id=${playerId}`, { method: "DELETE" })
+    try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 2000)
+        await fetch(`/api-internal/player?id=${playerId}`, {
+            method: "DELETE",
+            signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+    } catch {
+        // Abaikan error jaringan saat delete player
+    }
 }
 
 // ── PosterViewer ──
@@ -90,3 +100,11 @@ export async function postKomentar(karyaId: number, isi: string, token: string) 
     )
     return res.data
 }
+
+export async function postKunjungan(exhibitionId: string | number) {
+    const res = await url.post('/api/kunjungan', {
+        id_pameran: exhibitionId,
+    });
+    return res.data;
+}
+

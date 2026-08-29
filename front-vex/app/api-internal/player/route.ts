@@ -5,31 +5,24 @@ import { redis } from "@/lib/redis";
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function GET() {
-  const keys =
-    await redis.keys(
-      "player:*"
-    );
+  try {
+    const keys = await redis.keys("player:*");
+    const players = [];
 
-  for (const key of keys) {
-    const data = await redis.get(key);
-    if (data) {
-      players.push(typeof data === "string" ? JSON.parse(data) : data);
+    for (const key of keys) {
+      const data = await redis.get(key);
+      if (data) {
+        players.push(typeof data === "string" ? JSON.parse(data) : data);
+      }
     }
   }
-}
 
 return NextResponse.json(
-  players
-);
+    players
+  );
 }
 
-/* ====================== */
-/* POST */
-/* ====================== */
-
-export async function POST(
-  req: Request
-) {
+export async function POST(req: Request) {
   try {
     const body = await req.json();
 
@@ -53,62 +46,29 @@ export async function POST(
       updatedAt: Date.now(),
     };
 
-    await redis.set(
-      `player:${body.id}`,
-      JSON.stringify(playerData),
-      "EX",
-      50
-    );
+    // ioredis style signature: (key, value, "EX", seconds)
+    await redis.set(`player:${body.id}`, JSON.stringify(playerData), "EX", 50);
 
-    return NextResponse.json({
-      success: true,
-    });
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-      },
-      {
-        status: 500,
-      }
-    );
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("POST /api-internal/player failed:", err);
+    return NextResponse.json({ success: false }, { status: 500 });
   }
 }
 
-/* ====================== */
-/* DELETE */
-/* ====================== */
-
-export async function DELETE(
-  req: Request
-) {
+export async function DELETE(req: Request) {
   try {
-    const {
-      searchParams,
-    } = new URL(req.url);
-
-    const id =
-      searchParams.get("id");
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
 
     if (!id || !UUID_REGEX.test(id)) {
       return NextResponse.json({ success: false, message: "Invalid player ID" }, { status: 400 });
     }
 
-    await redis.del(
-      `player:${id}`
-    );
-
-    return NextResponse.json({
-      success: true,
-    });
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-      },
-      {
-        status: 500,
-      }
-    );
+    await redis.del(`player:${id}`);
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("DELETE /api-internal/player failed:", err);
+    return NextResponse.json({ success: false }, { status: 500 });
   }
 }

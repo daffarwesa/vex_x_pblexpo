@@ -15,7 +15,6 @@ export default function AddPameran() {
   const [preview, setPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
   const [form, setForm] = useState<PameranForm>({
-    kategori: "",
     title: "",
     publishDate: "",
     prepareStart: "",
@@ -25,11 +24,12 @@ export default function AddPameran() {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    // Hapus error field yang sedang diubah
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -40,33 +40,19 @@ export default function AddPameran() {
     if (!file) return;
     setForm((prev) => ({ ...prev, image: file }));
     setPreview(URL.createObjectURL(file));
-    // Hapus error image
     if (errors.image) setErrors((prev) => ({ ...prev, image: "" }));
-  };
-
-  const resetForm = () => {
-    setForm({
-      kategori: "",
-      title: "",
-      publishDate: "",
-      prepareStart: "",
-      prepareEnd: "",
-      description: "",
-      image: null,
-    });
-    setPreview(null);
-    setErrors({});
   };
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!form.image) newErrors.image = "Thumbnail wajib diupload";
-    if (!form.kategori) newErrors.kategori = "Kategori wajib dipilih";
+    if (!form.image) newErrors.image = "Thumbnail wajib diunggah";
     if (!form.title) newErrors.title = "Judul pameran wajib diisi";
-    if (!form.publishDate) newErrors.publishDate = "Tanggal buka wajib diisi";
-    if (!form.prepareStart) newErrors.prepareStart = "Tanggal persiapan mulai wajib diisi";
-    if (!form.prepareEnd) newErrors.prepareEnd = "Tanggal persiapan berakhir wajib diisi";
+    if (!form.publishDate) newErrors.publishDate = "Tanggal buka pameran wajib diisi";
+    if (!form.prepareStart)
+      newErrors.prepareStart = "Tanggal mulai persiapan wajib diisi";
+    if (!form.prepareEnd)
+      newErrors.prepareEnd = "Tanggal akhir persiapan wajib diisi";
     if (!form.description) newErrors.description = "Deskripsi wajib diisi";
 
     setErrors(newErrors);
@@ -75,7 +61,7 @@ export default function AddPameran() {
 
   const handleSubmit = async () => {
     if (!validate()) {
-      showToast("Lengkapi semua data terlebih dahulu.", "warning");
+      showToast("Harap lengkapi semua kolom yang wajib diisi.", "warning");
       return;
     }
 
@@ -83,58 +69,80 @@ export default function AddPameran() {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("kategori_kode", form.kategori);
-      formData.append("title", form.title);
-      formData.append("prepare_start", form.prepareStart);
-      formData.append("prepare_end", form.prepareEnd);
-      formData.append("open_date", form.publishDate);
-      formData.append("description", form.description);
-      if (form.image) formData.append("banner", form.image);
+      formData.append("judul", form.title);
+      formData.append("deskripsi", form.description);
+      formData.append("tanggal_mulai_persiapan", form.prepareStart);
+      formData.append("tanggal_akhir_persiapan", form.prepareEnd);
+      formData.append("tanggal_buka", form.publishDate);
+      if (form.image) {
+        formData.append("banner", form.image);
+      }
 
       const data = await PostPameran(formData);
 
-      if (data.status === "success") {
+      if (data.status === "success" || data.data || data.pameran) {
         showToast("Pameran berhasil ditambahkan!", "success");
-        const newSlug = data.pameran?.slug;
-        router.push(`/admin/pameran/detail/${newSlug}`);
+        const newSlug = data.pameran?.slug ?? data.data?.slug;
+        if (newSlug) {
+          router.push(`/admin/pameran/detail/${newSlug}`);
+        } else {
+          router.push(`/admin/pameran`);
+        }
       } else {
-        showToast("Gagal menambahkan pameran.", "error");
+        showToast("Gagal membuat pameran.", "error");
       }
     } catch (error: any) {
       if (error.response) {
         const status = error.response.status;
-        const data = error.response.data;
+        const resData = error.response.data;
 
         if (status === 422) {
-          // Kembalikan error validasi Laravel ke masing-masing field
-          const laravelErrors = data.errors as Record<string, string[]>;
+          const laravelErrors = resData.errors as Record<string, string[]>;
           const fieldMap: Record<string, keyof FormErrors> = {
-            kategori_kode: "kategori",
+            judul: "title",
             title: "title",
+            tanggal_mulai_persiapan: "prepareStart",
             prepare_start: "prepareStart",
+            tanggal_akhir_persiapan: "prepareEnd",
             prepare_end: "prepareEnd",
+            tanggal_buka: "publishDate",
             open_date: "publishDate",
+            deskripsi: "description",
             description: "description",
             banner: "image",
           };
 
           const mappedErrors: FormErrors = {};
-          Object.entries(laravelErrors).forEach(([key, messages]) => {
-            const fieldKey = fieldMap[key];
-            if (fieldKey) mappedErrors[fieldKey] = messages[0];
-          });
+          if (laravelErrors) {
+            Object.entries(laravelErrors).forEach(([key, messages]) => {
+              const fieldKey = fieldMap[key];
+              if (fieldKey) mappedErrors[fieldKey] = messages[0];
+            });
+          }
 
           setErrors(mappedErrors);
-          showToast("Periksa kembali data yang diisi.", "error");
+          showToast("Harap periksa kembali data yang dimasukkan.", "error");
         } else if (status === 404) {
-          showToast(data.message ?? "Data tidak ditemukan.", "error");
+          showToast(
+            resData.message ?? "Data tidak ditemukan.",
+            "error",
+          );
         } else if (status === 500) {
-          showToast(data.message ?? "Terjadi kesalahan pada server.", "error");
+          showToast(
+            resData.message ?? "Terjadi kesalahan pada server.",
+            "error",
+          );
         } else {
-          showToast(`Error ${status}: ${data.message ?? "Terjadi kesalahan."}`, "error");
+          showToast(
+            `Error ${status}: ${resData.message ?? "Terjadi kesalahan."}`,
+            "error",
+          );
         }
       } else {
-        showToast("Tidak dapat terhubung ke server.", "error");
+        showToast(
+          "Tidak dapat terhubung ke server. Silakan coba lagi.",
+          "error",
+        );
       }
     } finally {
       setLoading(false);

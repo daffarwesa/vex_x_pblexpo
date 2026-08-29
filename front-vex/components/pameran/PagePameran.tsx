@@ -1,18 +1,12 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import useEmblaCarousel from "embla-carousel-react";
 import Link from "next/link";
 import { GetPameran } from "./apiPameran";
 import { useAuth } from "@/context/AuthContext";
-
 import ProjectCard from "@/components/shared/ui/ProjectCard";
-import { KategoriType } from "@/components/shared/filter/SelectKategori";
 import { TahunType } from "@/components/shared/filter/SelectTahun";
-import { SemesterType } from "@/components/shared/filter/SelectSemester";
-
 import FilterSection from "@/components/pameran/FilterSection";
-// import CarouselSection from "@/components/pameran/CarouselSection";
 
 interface PameranProps {
   href?: string;
@@ -22,74 +16,68 @@ const ITEMS_PER_PAGE = 12; // 4 kolom x 3 baris
 
 export default function PagePameran({ href = "/pameran/" }: PameranProps) {
   const { user } = useAuth();
-  const isAdmin = user?.role === "Admin";
+  const isAdmin = Boolean(user);
 
-  const [emblaRef] = useEmblaCarousel({ align: "start" });
-  const [selectedKategori, setSelectedKategori] = useState<KategoriType | null>(null);
   const [selectedTahun, setSelectedTahun] = useState<TahunType | null>(null);
-  const [selectedSemester, setSelectedSemester] = useState<SemesterType | null>(
-    null,
-  );
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function loadPameran() {
       try {
         const res = await GetPameran();
-        setData(res.pameran || []);
+        if (isMounted) {
+          const list = res.pameran || res.data || [];
+          setData(Array.isArray(list) ? list : []);
+        }
       } catch (error) {
-        console.error(error);
+        console.error("Error loading pameran:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
+
     loadPameran();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filteredData = useMemo(() => {
     return data.filter((item) => {
-      const matchSearch =
-        item.title.toLowerCase().includes(search.toLowerCase()) ||
-        item.category.toLowerCase().includes(search.toLowerCase());
-      const matchKategori = !selectedKategori || item.category === selectedKategori.name;
+      const title = (item.title || item.judul || "").toLowerCase();
+      const category = (item.category || "").toLowerCase();
+      const s = search.toLowerCase();
+      const matchSearch = title.includes(s) || category.includes(s);
+
+      const itemDate = item.stats?.startDate || item.tanggal_buka || item.date;
       const matchTahun =
         !selectedTahun ||
-        new Date(item.date).getFullYear().toString() === selectedTahun.name;
-      return matchSearch && matchKategori && matchTahun;
+        (itemDate && new Date(itemDate).getFullYear().toString() === selectedTahun.name);
+
+      return matchSearch && matchTahun;
     });
-  }, [data, search, selectedKategori, selectedTahun]);
+  }, [data, search, selectedTahun]);
 
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
-  const oneWeekLater = new Date();
-  oneWeekLater.setDate(oneWeekLater.getDate() + 7);
-  oneWeekLater.setHours(23, 59, 59, 999);
-
-  // Carousel: admin → semua yang belum mulai, user → 1-7 hari ke depan
-  const upcomingData = filteredData
-    .filter((item) => {
-      const start = new Date(item.stats?.startDate);
-      if (isAdmin) return start > today;
-      return start > today && start <= oneWeekLater;
-    })
-    .sort(
-      (a, b) =>
-        new Date(a.stats?.startDate).getTime() -
-        new Date(b.stats?.startDate).getTime(),
-    )
-    .slice(0, 5);
-
-  // Tidak ada lagi pemisahan per kategori — semua pameran yang relevan digabung jadi satu list
+  // Filter status pameran (Admin melihat semua pameran)
   const openData = filteredData.filter((item) => {
     if (isAdmin) return true;
-    const start = new Date(item.stats?.startDate);
-    // endDate null → tidak ada batas tutup, cukup cek sudah dibuka
-    if (!item.stats?.endDate) return today >= start;
-    const end = new Date(item.stats.endDate);
+    const startStr = item.stats?.startDate || item.tanggal_buka || item.date;
+    if (!startStr) return true;
+    const start = new Date(startStr);
+    const endStr = item.stats?.endDate;
+    if (!endStr) return today >= start;
+    const end = new Date(endStr);
     end.setHours(23, 59, 59, 999);
     return today >= start && today <= end;
   });
@@ -97,7 +85,7 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
   // Reset ke halaman 1 setiap kali filter/search berubah
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, selectedKategori, selectedTahun]);
+  }, [search, selectedTahun]);
 
   const totalPages = Math.max(1, Math.ceil(openData.length / ITEMS_PER_PAGE));
 
@@ -118,27 +106,27 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
         {/* HERO SKELETON */}
         <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
           <div className="autoMid">
-            {/* Filter bar skeleton */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-7 mb-6">
-              <div className="h-[42px] rounded-xl bg-white/20 animate-pulse flex-1" />
-              <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
-              <div className="h-[42px] rounded-xl bg-white/20 animate-pulse w-full sm:w-[140px]" />
-            </div>
-
-            {/* "Segera Hadir" title skeleton */}
-
-
+            <FilterSection
+              search={search}
+              setSearch={setSearch}
+              selectedTahun={selectedTahun}
+              setSelectedTahun={setSelectedTahun}
+            />
           </div>
         </section>
 
         {/* GRID SKELETON */}
-        <main className="autoMid py-10">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
-              <div
-                key={i}
-                className="h-[80px] rounded-xl bg-gray-200 animate-pulse"
-              />
+        <main className="autoMid py-[40px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-2.5 animate-pulse">
+                <div className="aspect-video w-full rounded-md bg-gray-200" />
+                <div className="h-4 w-3/4 bg-gray-200 rounded mt-1" />
+                <div className="flex items-center gap-3 mt-1">
+                  <div className="h-3 w-16 bg-gray-200 rounded" />
+                  <div className="h-3 w-16 bg-gray-200 rounded" />
+                </div>
+              </div>
             ))}
           </div>
         </main>
@@ -148,54 +136,30 @@ export default function PagePameran({ href = "/pameran/" }: PameranProps) {
 
   return (
     <div className="min-h-screen bg-secondary-color font-poppins">
-      {/* HERO WRAPPER */}
+      {/* HERO / SEARCH BAR & FILTER SECTION */}
       <section className="bg-main-blue rounded-b-[25px] md:rounded-b-[40px] py-6">
         <div className="autoMid">
           <FilterSection
             search={search}
             setSearch={setSearch}
-            selectedKategori={selectedKategori}
-            setSelectedKategori={setSelectedKategori}
             selectedTahun={selectedTahun}
             setSelectedTahun={setSelectedTahun}
-            selectedSemester={selectedSemester}
-            setSelectedSemester={setSelectedSemester}
           />
-          {/* <div className="relative">
-            <h2 className="mb-5 mt-3 md:mb-6 text-2xl sm:text-3xl md:text-[40px] text-white font-semibold border-b-2 md:border-b-3 pb-2">
-              SEGERA HADIR
-            </h2>
-
-            {upcomingData.length === 0 ? (
-              <p className="text-white/60 text-sm py-4">
-                Tidak ada pameran dalam waktu dekat.
-              </p>
-            ) : (
-              <CarouselSection
-                className="w-full text-white"
-                data={upcomingData}
-                href={href}
-                emblaRef={emblaRef}
-              />
-            )}
-          </div> */}
         </div>
       </section>
 
       {/* GRID + PAGINATION */}
-      <main className="autoMid py-10">
+      <main className="autoMid py-[40px]">
         {openData.length === 0 ? (
-          <p className="text-gray-400 text-sm text-center py-10">
-            {isAdmin
-              ? "Belum ada pameran."
-              : "Tidak ada pameran yang sedang berlangsung."}
+          <p className="text-gray-400 text-xl font-bold text-center py-[200px]">
+            {isAdmin ? "No Exhibition Yet" : "No Ongoing Exhibition Yet"}
           </p>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
               {paginatedData.map((project) => (
                 <Link
-                  key={project.id}
+                  key={project.id || project.id_pameran}
                   href={`${href}${project.slug}`}
                   className="group block"
                 >

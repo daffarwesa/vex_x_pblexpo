@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use App\Models\Karya;
 use App\Models\Pameran;
 
@@ -14,9 +15,9 @@ class GameAssetController extends Controller
     // =============================
     private function resolvePameran(string $identifier): ?Pameran
     {
-            return Pameran::with('model3d')
-                ->where('slug', $identifier) 
-                ->first();
+        return is_numeric($identifier)
+            ? Pameran::find($identifier)
+            : Pameran::where('slug', $identifier)->first();
     }
 
     // ==============
@@ -28,7 +29,7 @@ class GameAssetController extends Controller
             'bgm' => asset('storage/audio/bgm.mp3'),
             'footstep' => asset('storage/audio/footstep.mp3'),
             'jump' => asset('storage/audio/jump.mp3'),
-            'player' => asset('storage/models/player.glb'),
+            'player' => url('/api/experience/player-model'),
         ]);
     }
 
@@ -41,12 +42,18 @@ class GameAssetController extends Controller
         $path = storage_path('app/public/models/' . $safeFilename);
 
         if (!file_exists($path)) {
+            $path = public_path('storage/models/' . $safeFilename);
+        }
+
+        if (!file_exists($path)) {
             return response()->json(['error' => 'File tidak ditemukan'], 404);
         }
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => 'http://localhost:8000',
+            'Access-Control-Allow-Origin' => config('app.frontend_url'),
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -59,12 +66,18 @@ class GameAssetController extends Controller
         $path = storage_path('app/public/models/player.glb');
 
         if (!file_exists($path)) {
+            $path = public_path('storage/models/player.glb');
+        }
+
+        if (!file_exists($path)) {
             return response()->json(['error' => 'File tidak ditemukan'], 404);
         }
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => 'http://localhost:3000',
+            'Access-Control-Allow-Origin' => config('app.frontend_url'),
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -80,12 +93,13 @@ class GameAssetController extends Controller
             return response()->json(['error' => 'Pameran tidak ditemukan'], 404);
         }
 
-        if (!$pameran->model3d) {
-            return response()->json(['error' => 'Model tidak ditemukan'], 404);
-        }
+        // Hall model sekarang selalu diambil dari file statis hall-utama.glb
+        // di storage, tidak lagi bergantung pada kolom/relasi di database.
+        $path = storage_path('app/public/models/hall-utama.glb');
 
-        // 3d_model sudah include subfolder, misal "models/hall-utama.glb"
-        $path = storage_path('app/public/' . $pameran->model3d->{'3d_model'});
+        if (!file_exists($path)) {
+            $path = public_path('storage/models/hall-utama.glb');
+        }
 
         if (!file_exists($path)) {
             return response()->json(['error' => 'File tidak ditemukan'], 404);
@@ -93,7 +107,9 @@ class GameAssetController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => 'http://localhost:8000',
+            'Access-Control-Allow-Origin' => config('app.frontend_url'),
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -109,14 +125,10 @@ class GameAssetController extends Controller
             return response()->json(['error' => 'Pameran tidak ditemukan'], 404);
         }
 
-        if (!$pameran->model3d) {
-            return response()->json(['error' => 'Model tidak ditemukan'], 404);
-        }
-
         return response()->json([
             // pakai identifier yang sama persis yang dikirim client (slug atau id),
             // supaya endpoint hall-model juga bisa resolve dengan cara yang sama
-            'model_hall' => "http://localhost:8000/experience/hall-model/{$identifier}",
+            'model_hall' => url("/api/experience/hall-model/{$identifier}"),
         ]);
     }
 
@@ -135,76 +147,116 @@ class GameAssetController extends Controller
 
         $karyas = DB::table('karya')
             ->leftJoin('stan', 'karya.id_stan', '=', 'stan.id_stan')
-            ->leftJoin('model', 'stan.model_stan', '=', 'model.id_model')
-            ->leftJoin('pengguna', 'karya.id_pengguna', '=', 'pengguna.id')
+            ->leftJoin('admin', 'karya.id_admin', '=', 'admin.id_admin')
             ->where('karya.id_pameran', $idPameran)
             ->select(
                 'karya.id_karya',
+                'karya.id_admin',
                 'karya.id_stan',
-                'karya.id_pengguna',
+                'karya.id_kategori',
                 'karya.judul',
                 'karya.deskripsi',
                 'karya.tautan',
                 'karya.gambar_poster',
-                'karya.gambar_sampul',
+                'karya.predikat',
                 'karya.is_best',
-                'pengguna.nama as nama_pengguna',
-                'model.nama_model as nama_stan',
-                DB::raw('model.`3d_model` as booth_model')
+                'admin.nama as nama_admin'
             )
             ->orderBy('karya.id_karya')
             ->get();
 
-        $karyaIds = $karyas->pluck('id_karya');
-
-        $sukaCount = DB::table('suka')
-            ->whereIn('id_karya', $karyaIds)
-            ->select('id_karya', DB::raw('count(*) as total'))
-            ->groupBy('id_karya')
-            ->pluck('total', 'id_karya');
-
-        $maxSuka = $sukaCount->max();
-        $idTerbanyak = $maxSuka > 0 ? $sukaCount->search($maxSuka) : null;
-
-        $komentarSemua = DB::table('komentar')
-            ->leftJoin('pengguna', 'komentar.id_pengguna', '=', 'pengguna.id')
-            ->whereIn('komentar.id_karya', $karyaIds)
-            ->select('komentar.id_karya', 'pengguna.nama', 'komentar.isi_komentar')
-            ->get()
-            ->groupBy('id_karya');
-
-        $result = $karyas->map(function ($karya) use ($idTerbanyak, $sukaCount, $komentarSemua) {
-            $totalSuka = $sukaCount->get($karya->id_karya, 0);
-
-            $komentar = ($komentarSemua->get($karya->id_karya) ?? collect())
-                ->map(fn($k) => [
-                    'nama' => $k->nama ?? 'Anonim',
-                    'isi' => $k->isi_komentar,
-                ]);
-
-            $boothModel = $karya->booth_model;
-
+        $result = $karyas->map(function ($karya) {
             return [
                 'id_karya' => $karya->id_karya,
-                'id_stan' => $karya->nama_stan ?? ('Stan ' . $karya->id_stan),
-                'nama_pengguna' => $karya->nama_pengguna ?? 'Anonim',
+                'id_kategori' => $karya->id_kategori,
+                'id_stan' => 'Stan ' . $karya->id_stan,
+                'nama_admin' => $karya->nama_admin ?? 'Anonim',
                 'booth_name' => $karya->judul,
                 'judul' => $karya->judul,
                 'deskripsi' => $karya->deskripsi,
                 'tautan' => $karya->tautan,
-                'poster' => $karya->gambar_poster ? '/storage/' . $karya->gambar_poster : null,
-                'sampul' => $this->getYoutubeThumbnail($karya->tautan),
-                'model_path' => $boothModel
-                    ? "http://localhost:8000/experience/booth-model/" . basename($boothModel)
-                    : null,
+                'poster' => $this->getPosterUrl($karya->gambar_poster),
+                'sampul' => $this->getSampulThumbnail($karya->tautan),
+                // Booth model sekarang selalu diambil dari file statis booth.glb
+                // di storage, tidak lagi bergantung pada relasi ke tabel model.
+                'model_path' => url("/api/experience/booth-model/booth.glb"),
+                'predikat' => $karya->predikat,
                 'is_terbaik' => (bool) $karya->is_best,
-                'is_terbanyak' => $idTerbanyak !== null && $karya->id_karya === $idTerbanyak,
-                'total_suka' => $totalSuka,
-                'komentar' => $komentar,
             ];
         });
 
         return response()->json($result);
+    }
+
+    // ========================================
+    // AMBIL URL POSTER: GOOGLE DRIVE ATAU FILE LOKAL
+    // ========================================
+    private function getPosterUrl($value)
+    {
+        if (!$value) {
+            return null;
+        }
+
+        // Kalau isinya link Google Drive, ambil thumbnail-nya
+        if (str_contains($value, 'drive.google.com')) {
+            return $this->getGoogleDriveThumbnail($value);
+        }
+
+        // Kalau sudah berupa URL penuh lainnya (http/https), pakai apa adanya
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+
+        // Selain itu anggap file yang diupload lokal ke storage
+        return '/storage/' . $value;
+    }
+
+    // ========================================
+    // AMBIL THUMBNAIL DARI YOUTUBE / GOOGLE DRIVE
+    // ========================================
+    private function getSampulThumbnail($url)
+    {
+        if (!$url) {
+            return null;
+        }
+
+        // Deteksi Google Drive lebih dulu
+        if (str_contains($url, 'drive.google.com')) {
+            return $this->getGoogleDriveThumbnail($url);
+        }
+
+        // Selain itu anggap YouTube
+        return $this->getYoutubeThumbnail($url);
+    }
+
+    // ========================
+    // THUMBNAIL GDRIVE DARI LINK
+    // ========================
+    private function getGoogleDriveThumbnail($url)
+    {
+        $fileId = null;
+
+        // Format umum 1: https://drive.google.com/file/d/{id}/view?usp=sharing
+        if (preg_match('/\/file\/d\/([^\/]+)/', $url, $matches)) {
+            $fileId = $matches[1];
+        }
+
+        // Format umum 2: https://drive.google.com/open?id={id}
+        // atau: https://drive.google.com/uc?id={id}
+        if (!$fileId) {
+            parse_str(parse_url($url, PHP_URL_QUERY), $query);
+            if (isset($query['id'])) {
+                $fileId = $query['id'];
+            }
+        }
+
+        if (!$fileId) {
+            return null;
+        }
+
+        // Endpoint thumbnail tidak resmi Google Drive.
+        // sz=w1000 mengatur lebar thumbnail (bisa disesuaikan, misal w500, w1000, dst).
+        return "https://drive.google.com/thumbnail?id={$fileId}&sz=w1000";
     }
 
     // ========================
@@ -212,7 +264,9 @@ class GameAssetController extends Controller
     // ========================
     private function getYoutubeThumbnail($url)
     {
-        if (!$url) return null;
+        if (!$url) {
+            return null;
+        }
 
         $videoId = null;
         parse_str(parse_url($url, PHP_URL_QUERY), $query);
@@ -229,7 +283,9 @@ class GameAssetController extends Controller
             $videoId = $matches[1];
         }
 
-        if (!$videoId) return null;
+        if (!$videoId) {
+            return null;
+        }
 
         return "https://img.youtube.com/vi/{$videoId}/hqdefault.jpg";
     }

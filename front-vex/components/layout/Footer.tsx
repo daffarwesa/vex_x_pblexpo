@@ -1,9 +1,13 @@
-import { FaInstagram, FaYoutube } from 'react-icons/fa';
+import { FaInstagram, FaYoutube } from "react-icons/fa";
 
-import { LogoWhite, LinkAkses, LinkAksesEks } from '@/components/shared/ui/Components';
+import {
+  LogoWhite,
+  LinkAkses,
+  LinkAksesEks,
+} from "@/components/shared/ui/Components";
 
-import { VectorBox } from '@/components/shared/ui/BoxModel';
-import '@/app/globals.css';
+import { VectorBox } from "@/components/shared/ui/BoxModel";
+import "@/app/globals.css";
 
 export default function Footer() {
   return (
@@ -16,8 +20,8 @@ export default function Footer() {
           </div>
 
           <div className="mt-10 lg:mt-auto relative z-20">
-            <p className="text-xs sm:text-sm md:text-base text-white font-bold tracking-wide leading-relaxed">
-              V-EX+ (Virtual Exhibition +) x PBL EXPO
+            <p className="text-xs sm:text-sm md:text-base text-white font-poppins font-normal tracking-wide leading-relaxed">
+              © V-EX+ x PBL EXPO
             </p>
           </div>
 
@@ -30,56 +34,70 @@ export default function Footer() {
         <div className="w-full lg:w-[55%] border-t border-white/10 lg:border-t-0 lg:border-l lg:border-white/10 px-5 sm:px-8 lg:px-16 py-8 sm:py-10 flex flex-col min-h-[260px] order-1 lg:order-2">
           <div className="footer-links grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             <div>
-              <h3 className="font-extrabold text-white mb-3 text-lg sm:text-xl tracking-wider">About</h3>
+              <h3 className="font-extrabold text-white mb-3 text-lg sm:text-xl tracking-wider">
+                About
+              </h3>
               <ul className="text-white/70 space-y-2 text-sm sm:text-base">
                 <li>
-                  <LinkAkses link={'/pameran'} title={'Exhibition'} />
+                  <LinkAkses link={"/pameran"} title={"Exhibition"} />
+                </li>
+                {/* <li>
+                  <LinkAkses link={"/#karya"} title={"Projects"} />
                 </li>
                 <li>
-                  <LinkAkses link={'/#karya'} title={'Projects'} />
-                </li>
+                  <LinkAkses link={"/#akun"} title={"Account"} />
+                </li> */}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-extrabold text-white mb-3 text-lg sm:text-xl tracking-wider">
+                Source
+              </h3>
+              <ul className="text-white/70 space-y-2 text-sm sm:text-base">
                 <li>
-                  <LinkAkses link={'/#akun'} title={'Account'} />
+                  <LinkAkses link={"/faqs"} title={"FAQs"} />
+                </li>
+                {/* <li>
+                  <LinkAkses link={"/tutorial"} title={"Tutorial"} />
+                </li> */}
+                <li>
+                  <LinkAkses link={"/service"} title={"Service"} />
                 </li>
               </ul>
             </div>
 
             <div>
-              <h3 className="font-extrabold text-white mb-3 text-lg sm:text-xl tracking-wider">Source</h3>
+              <h3 className="font-extrabold text-white mb-3 text-lg sm:text-xl tracking-wider">
+                Terms
+              </h3>
               <ul className="text-white/70 space-y-2 text-sm sm:text-base">
                 <li>
-                  <LinkAkses link={'/faqs'} title={'FAQs'} />
+                  <LinkAksesEks
+                    link={"/terms-conditions"}
+                    title="Terms & Conditions"
+                  />
                 </li>
                 <li>
-                  <LinkAkses link={'/petunjuk'} title={'Tutorial'} />
+                  <LinkAksesEks
+                    link={"/privacy-policy"}
+                    title="Privacy Policy"
+                  />
                 </li>
                 <li>
-                  <LinkAkses link={'/pelayanan'} title={'Service'} />
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-extrabold text-white mb-3 text-lg sm:text-xl tracking-wider">Terms</h3>
-              <ul className="text-white/70 space-y-2 text-sm sm:text-base">
-                <li>
-                  <LinkAksesEks link={'/syarat-ketentuan'} title="Terms & Conditions" />
-                </li>
-                <li>
-                  <LinkAksesEks link={'/kebijakan-privasi'} title="Privacy Policy" />
-                </li>
-                <li>
-                  <LinkAksesEks link={'/hubungi-kami'} title="Contact Us" />
+                  <LinkAksesEks link={"/contact-us"} title="Contact Us" />
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="mt-8 lg:mt-auto flex flex-wrap justify-center sm:justify-start lg:justify-end items-center gap-4 sm:gap-5 text-white">
+          <div className="mt-7 pr-3 lg:mt-auto flex flex-wrap justify-center sm:justify-start lg:justify-end items-center gap-4 sm:gap-5 text-white">
             <LinkAksesEks link="https://www.instagram.com/virtualexhibition204/">
               <FaInstagram className="w-8 h-8 sm:w-10 sm:h-10 hover:scale-125 transition-all cursor-pointer" />
             </LinkAksesEks>
-            <LinkAksesEks link={'https://youtube.com/@pbl-trpl204?si=kWdrqlvURisWyhHv'}>
+            <LinkAksesEks
+              link={"https://youtube.com/@pbl-trpl204?si=kWdrqlvURisWyhHv"}
+            >
               <FaYoutube className="w-8 h-8 sm:w-10 sm:h-10 hover:scale-125 transition-all cursor-pointer" />
             </LinkAksesEks>
           </div>

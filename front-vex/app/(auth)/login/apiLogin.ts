@@ -1,13 +1,13 @@
 import url from "@/lib/axios";
 
-interface LoginPayload{
-    email : string;
-    password : string;
+interface LoginPayload {
+    email: string;
+    password: string;
 }
 
 // Login API
-export async function Login(Payload: LoginPayload ) {
-    const res = await url.post('/api/auth/login',Payload);
+export async function Login(Payload: LoginPayload) {
+    const res = await url.post('/api/login', Payload);
     return res.data;
-    
+
 }

@@ -1,13 +1,14 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button, ButtonPutih } from '@/components/shared/ui/Button';
-import { useChangeEmail } from './useChangeEmail';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { InputField } from '@/components/shared/ui/InputFields';
+import { useState } from "react";
+import { Button, ButtonPutih } from "@/components/shared/ui/Button";
+import { useChangeEmail } from "./useChangeEmail";
+import { notFound, useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { InputField } from "@/components/shared/ui/InputFields";
 
 export default function GantiEmailPage() {
+  // notFound();
   const router = useRouter();
   const { fetchUser } = useAuth();
 
@@ -44,7 +45,7 @@ export default function GantiEmailPage() {
     handleReset();
     await fetchUser();
 
-    router.push('/');
+    router.push("/");
   };
 
   return (
@@ -53,7 +54,9 @@ export default function GantiEmailPage() {
         {isRedirecting ? (
           <div className="flex flex-col items-center justify-center py-8 space-y-4">
             <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">Mengalihkan ke halaman utama...</p>
+            <p className="text-sm text-gray-500">
+              Mengalihkan ke halaman utama...
+            </p>
           </div>
         ) : (
           <>
@@ -63,15 +66,23 @@ export default function GantiEmailPage() {
 
               <p className="text-sm text-gray-500 mt-2">
                 {step === 1
-                  ? 'Masukkan email baru dan password Anda'
-                  : 'Masukkan kode verifikasi yang dikirim ke email baru'}
+                  ? "Masukkan email baru dan password Anda"
+                  : "Masukkan kode verifikasi yang dikirim ke email baru"}
               </p>
             </div>
 
             {/* NOTIFIKASI */}
-            {globalError && <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg mb-4">{globalError}</div>}
+            {globalError && (
+              <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg mb-4">
+                {globalError}
+              </div>
+            )}
 
-            {success && <div className="bg-green-50 text-green-600 text-sm p-3 rounded-lg mb-4">{success}</div>}
+            {success && (
+              <div className="bg-green-50 text-green-600 text-sm p-3 rounded-lg mb-4">
+                {success}
+              </div>
+            )}
 
             {/* STEP 1 */}
             {step === 1 && (
@@ -94,8 +105,12 @@ export default function GantiEmailPage() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
 
-                <Button type="submit" disabled={isLoading} className="w-full py-3 rounded-lg disabled:opacity-50">
-                  {isLoading ? 'Mengirim...' : 'Kirim Kode Verifikasi'}
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-3 rounded-lg disabled:opacity-50"
+                >
+                  {isLoading ? "Mengirim..." : "Kirim Kode Verifikasi"}
                 </Button>
               </form>
             )}
@@ -104,7 +119,8 @@ export default function GantiEmailPage() {
             {step === 2 && (
               <div className="space-y-4">
                 <p className="text-sm text-gray-500">
-                  Kode dikirim ke: <span className="font-medium text-gray-700">{newEmail}</span>
+                  Kode dikirim ke:{" "}
+                  <span className="font-medium text-gray-700">{newEmail}</span>
                 </p>
 
                 <InputField
@@ -122,10 +138,14 @@ export default function GantiEmailPage() {
                   disabled={isLoading}
                   className="w-full py-3 rounded-lg disabled:opacity-50"
                 >
-                  {isLoading ? 'Memverifikasi...' : 'Verifikasi & Ganti Email'}
+                  {isLoading ? "Memverifikasi..." : "Verifikasi & Ganti Email"}
                 </Button>
 
-                <ButtonPutih type="button" onClick={handleReset} className="w-full py-3 rounded-lg">
+                <ButtonPutih
+                  type="button"
+                  onClick={handleReset}
+                  className="w-full py-3 rounded-lg"
+                >
                   Kembali
                 </ButtonPutih>
               </div>
@@ -134,7 +154,11 @@ export default function GantiEmailPage() {
             {/* STEP 3 */}
             {step === 3 && (
               <div className="text-center space-y-4">
-                <ButtonPutih type="button" onClick={handleSelesai} className="w-full py-3 rounded-lg">
+                <ButtonPutih
+                  type="button"
+                  onClick={handleSelesai}
+                  className="w-full py-3 rounded-lg"
+                >
                   Selesai
                 </ButtonPutih>
               </div>

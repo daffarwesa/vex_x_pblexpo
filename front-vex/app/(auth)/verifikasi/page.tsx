@@ -1,14 +1,11 @@
 'use client';
-// React
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-// Component
+import { notFound, useRouter } from 'next/navigation';
 import { Button, ButtonPutih } from '@/components/shared/ui/Button';
-// API
 import { Verify, Resend } from './apiVerify';
 
 export default function VerifikasiPage() {
-  // handel
+  // notFound();
   const [otpError, setOtpError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);

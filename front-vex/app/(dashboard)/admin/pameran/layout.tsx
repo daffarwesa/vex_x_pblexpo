@@ -3,9 +3,8 @@ import "@/app/globals.css";
 import Navbar from "@/components/layout/Navbar";
 import NavAdmin from "@/components/shared/ui/NavAdmin";
 import Footer from "@/components/layout/Footer";
-
 export const metadata: Metadata = {
-  title: "V-EX | Admin",
+  title: "V-EX | Admin Dashboard",
   description: "Virtual Exhibition",
 };
 

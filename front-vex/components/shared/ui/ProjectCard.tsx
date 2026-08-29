@@ -11,13 +11,14 @@ export interface ProjectCard {
   bannerImage: string;
   bannerSmall?: string;
   title: string;
-  category: string;
-  likes: number;
-  karya: number;
-  date: string;
-  stats: {
-    startDate: string;
-    endDate: string | null;
+  category?: string;
+  likes?: number;
+  karya?: number;
+  date?: string;
+  year?: string | number;
+  stats?: {
+    startDate?: string;
+    endDate?: string | null;
   };
 }
 
@@ -30,7 +31,9 @@ export default function ProjectCard({ project, className }: ProjectData) {
   const [hovered, setHovered] = useState(false);
 
   const today = new Date();
-  const startDate = new Date(project.stats?.startDate);
+  const startDateStr = project.stats?.startDate || project.date;
+  const startDate = startDateStr ? new Date(startDateStr) : new Date();
+
   // endDate null → tidak ada batas tutup, cukup cek sudah dibuka
   const isOpen = project.stats?.endDate
     ? (() => {
@@ -39,13 +42,26 @@ export default function ProjectCard({ project, className }: ProjectData) {
         return today >= startDate && today <= end;
       })()
     : today >= startDate;
+
+  // Resolusi tahun dengan fallback aman
+  const displayYear =
+    project.year ||
+    (() => {
+      const raw = project.date || project.stats?.startDate;
+      if (!raw) return "";
+      const match = String(raw).match(/\b(19\d\d|20\d\d)\b/);
+      if (match) return match[1];
+      const d = new Date(raw);
+      return !isNaN(d.getTime()) ? String(d.getFullYear()) : "";
+    })();
+
   return (
     <div
-      className={`relative overflow-hidden cursor-pointer ${className ?? ""}`}
+      className={`relative overflow-hidden cursor-pointer rounded-lg border border-gray-200 bg-white p-2 shadow-md hover:shadow-lg transition-shadow duration-300 ${className ?? ""}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div className="relative aspect-video w-full overflow-hidden rounded-sm shadow-[0px_1px_3px_rgba(0,0,0,1)]">
+      <div className="relative aspect-video w-full overflow-hidden rounded-sm">
         <Image
           src={project.bannerSmall || project.bannerImage}
           alt={project.title}
@@ -83,15 +99,13 @@ export default function ProjectCard({ project, className }: ProjectData) {
 
       {/* DETAIL */}
       <div className="mt-2">
-        <h3 className="text-sm font-poppins line-clamp-2">{project.title}</h3>
-        <div className="mt-2 flex items-center gap-3 text-xs">
-          <span className="flex items-center gap-1">
-            <FaHeart />
-            {project.likes} Likes
-          </span>
-          <span className="flex items-center gap-1">
-            <BsStars />
-            {project.karya} Karya
+        <h3 className="text-md font-medium font-poppins line-clamp-2">
+          {project.title}
+        </h3>
+        <div className="mt-2 flex items-center gap-1.5 text-xs">
+          <FaCalendar className="text-gray-400 text-[13px]" />
+          <span className="text-gray-500 font-semibold text-[12px]">
+            {displayYear}
           </span>
         </div>
       </div>

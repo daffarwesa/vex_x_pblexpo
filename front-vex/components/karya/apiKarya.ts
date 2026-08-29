@@ -13,7 +13,33 @@ export async function GetKarya() {
 // DAFTAR SEMUA KARYA (ADMIN)
 // =============================
 export async function GetKaryaAdmin() {
-  const res = await url.get("/api/admin/karya");
+  const res = await url.get("/api/auth/karya");
+  return res.data;
+}
+
+// =============================
+// DETAIL SATU KARYA (ADMIN)
+// =============================
+export async function GetDetailKaryaAdmin(id: number) {
+  const res = await url.get(`/api/auth/karya/${id}`);
+  return res.data;
+}
+
+// =============================
+// AMBIL KATEGORI LIST
+// =============================
+export async function GetKategoriList() {
+  const res = await url.get("/api/kategori");
+  return res.data;
+}
+
+// =============================
+// TAMBAH KARYA ADMIN
+// =============================
+export async function PostKaryaAdmin(formData: FormData) {
+  const res = await url.post("/api/auth/karya", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 }
 
@@ -30,6 +56,16 @@ export async function GetModelStan() {
 // =============================
 export async function PostKarya(formData: FormData) {
   const res = await url.post("/api/creator/karya", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+}
+
+// =============================
+// UPDATE KARYA ADMIN
+// =============================
+export async function UpdateKaryaAdmin(id: number, formData: FormData) {
+  const res = await url.post(`/api/auth/karya/${id}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
@@ -118,6 +154,6 @@ export async function BatalkanPredikatKarya(id_karya: number) {
 // HAPUS KARYA (ADMIN ONLY)
 // =============================
 export async function DeleteKarya(id: number) {
-  const res = await url.delete(`/api/admin/karya/${id}`);
+  const res = await url.delete(`/api/auth/karya/${id}`);
   return res.data;
 }

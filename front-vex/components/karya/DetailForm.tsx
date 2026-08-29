@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { KaryaItem } from "../../types/karya";
-import { GetPameranTersedia } from "@/components/karya/apiKarya";
+import { GetKategoriList } from "@/components/karya/apiKarya";
+import { GetPameran } from "@/components/pameran/apiPameran";
 
 interface Props {
   form: KaryaItem;
@@ -16,6 +17,12 @@ interface PameranOption {
   id: number;
   title: string;
   isClosedCurrent?: boolean;
+}
+
+interface KategoriOption {
+  id_kategori: number;
+  kode_kategori: string;
+  nama_kategori: string;
 }
 
 const inputClass =
@@ -47,10 +54,24 @@ export default function DetailForm({
   readOnly,
 }: Props) {
   const [pameranList, setPameranList] = useState<PameranOption[]>([]);
+  const [kategoriList, setKategoriList] = useState<KategoriOption[]>([]);
   const [loadingPameran, setLoadingPameran] = useState(true);
   const [pameranError, setPameranError] = useState(false);
 
   useEffect(() => {
+    // Fetch Kategori
+    const fetchKategori = async () => {
+      try {
+        const res = await GetKategoriList();
+        if (res.status === "success" && Array.isArray(res.data)) {
+          setKategoriList(res.data);
+        }
+      } catch (err) {
+        console.error("Gagal memuat kategori:", err);
+      }
+    };
+    fetchKategori();
+
     if (readOnly) {
       // KPS/Admin: tidak perlu fetch dropdown, pakai currentPameran langsung
       if (currentPameran) {
@@ -63,17 +84,22 @@ export default function DetailForm({
     const fetchPameran = async () => {
       setPameranError(false);
       try {
-        const res = await GetPameranTersedia();
-        const list: PameranOption[] = res.pameran ?? [];
+        const res = await GetPameran();
+        const list: PameranOption[] = res.pameran ?? res.data ?? [];
+
+        const normalizedList: PameranOption[] = list.map((item: any) => ({
+          id: item.id ?? item.id_pameran,
+          title: item.title ?? item.judul,
+        }));
 
         if (currentPameran) {
-          const sudahAda = list.some((p) => p.id === currentPameran.id);
+          const sudahAda = normalizedList.some((p) => p.id === currentPameran.id);
           if (!sudahAda) {
-            list.unshift({ ...currentPameran, isClosedCurrent: true });
+            normalizedList.unshift({ ...currentPameran, isClosedCurrent: true });
           }
         }
 
-        setPameranList(list);
+        setPameranList(normalizedList);
       } catch (err) {
         console.error("Gagal memuat pameran:", err);
         if (currentPameran) {
@@ -86,11 +112,10 @@ export default function DetailForm({
     };
 
     fetchPameran();
-  }, [currentPameran]);
+  }, [currentPameran, readOnly]);
 
   return (
     <div className="flex flex-col gap-4 mt-4">
-      {/* Pameran */}
       {/* Pameran */}
       <div>
         <Label text="Pameran" required />
@@ -99,7 +124,6 @@ export default function DetailForm({
         </p>
 
         {readOnly ? (
-          // KPS/Admin: tampilkan sebagai teks, tidak bisa diubah
           <div
             className={`${inputClass} border-gray-200 bg-gray-50 text-gray-700`}
           >
@@ -135,6 +159,27 @@ export default function DetailForm({
         <FieldError message={errors.pameranId} />
       </div>
 
+      {/* Kategori */}
+      <div>
+        <Label text="Kategori" required />
+        <p className="text-xs text-gray-400 mt-1">Pilih kategori karya PBL</p>
+        <select
+          value={form.category ?? ""}
+          onChange={(e) => onChange("category", e.target.value)}
+          className={fieldClass(errors.category)}
+        >
+          <option value="" disabled>
+            -- Pilih Kategori --
+          </option>
+          {kategoriList.map((k) => (
+            <option key={k.id_kategori} value={String(k.id_kategori)}>
+              {k.kode_kategori} - {k.nama_kategori}
+            </option>
+          ))}
+        </select>
+        <FieldError message={errors.category} />
+      </div>
+
       {/* Judul */}
       <div>
         <Label text="Judul" required />
@@ -149,17 +194,17 @@ export default function DetailForm({
         <FieldError message={errors.title} />
       </div>
 
-      {/* Link YouTube */}
+      {/* Link Video Demo */}
       <div>
-        <Label text="Link Youtube" required />
+        <Label text="Link Video" required />
         <p className="text-xs text-gray-400 mt-1">
-          Masukkan link video demo (contoh: https://youtube.com/...)
+          Link yang didukung: YouTube atau Google Drive
         </p>
         <input
           type="text"
           value={form.link}
           onChange={(e) => onChange("link", e.target.value)}
-          placeholder="https://youtube.com/watch?v=..."
+          placeholder="Masukkan link video YouTube atau Google Drive (contoh: https://youtube.com/... atau https://drive.google.com/...)"
           className={fieldClass(errors.link)}
         />
         <FieldError message={errors.link} />

@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 // ICON
-import { HiMenu, HiX, HiOutlineMail } from 'react-icons/hi';
-import { FaUser, FaLock } from 'react-icons/fa';
-import { FiLogOut } from 'react-icons/fi';
+import { HiMenu, HiX, HiOutlineMail } from "react-icons/hi";
+import { FaUser, FaLock } from "react-icons/fa";
+import { FiLogOut } from "react-icons/fi";
 // COMPONENT
-import { Logo, TextNav } from '@/components/shared/ui/Components';
-import { Button } from '@/components/shared/ui/Button';
+import { Logo, TextNav } from "@/components/shared/ui/Components";
+import { Button } from "@/components/shared/ui/Button";
 
 interface NavItem {
   title: string;
@@ -29,78 +29,50 @@ export default function Navbar({ menuItems }: NavbarProps) {
 
   const { user, logout, loading } = useAuth();
 
-  // if (loading) {
-  //   return (
-  //     <nav className="bg-white px-6 shadow-sm">
-  //       <div className="autoMid flex h-[70px] items-center justify-between">
-  //         <div className="flex animate-pulse items-center gap-3">
-  //           <div className="h-10 w-30 rounded bg-gray-200" />
-  //         </div>
-  //         <div className="hidden md:flex animate-pulse items-center gap-6">
-  //           {Array.from({ length: 3 }).map((_, i) => (
-  //             <div key={i} className="space-y-2">
-  //               <div className="h-4 w-28 rounded bg-gray-200" />
-  //               <div className="h-2 w-16 rounded bg-gray-200" />
-  //             </div>
-  //           ))}
-  //         </div>
-  //         <div className="flex animate-pulse items-center gap-3">
-  //           <div className="hidden sm:block h-9 w-24 rounded bg-gray-200" />
-  //           <div className="h-9 w-9 rounded-full bg-gray-200" />
-  //         </div>
-  //       </div>
-  //     </nav>
-  //   );
-  // }
+  const isLogin = Boolean(user);
 
-  const isLogin = !!user;
+  const defaultMenu: NavItem[] = [
+    { title: "HOMEPAGE", subtitle: "MAIN", link: "/" },
+    { title: "EXHIBITION", subtitle: "3D BOOTH", link: "/pameran" },
+  ];
 
-const defaultMenu: NavItem[] = [
-  { title: 'HOMEPAGE', subtitle: 'MAIN', link: '/' },
-  { title: 'EXHIBITON', subtitle: '3D BOOTH', link: '/pameran' },
-];
+  const resolvedMenu: NavItem[] = loading
+    ? defaultMenu
+    : isLogin
+      ? [
+        { title: "HOMEPAGE", subtitle: "MAIN", link: "/" },
+        { title: "EXHIBITION", subtitle: "3D BOOTH", link: "/admin/pameran" },
+        // { title: "STATISTICS", subtitle: "ADMIN", link: "/admin/statistik" },
+      ]
+      : (menuItems ?? defaultMenu);
 
-const resolvedMenu: NavItem[] = loading
-  ? defaultMenu
-  : user?.role === 'Admin'
-  ? [
-      { title: 'HOMEPAGE', subtitle: 'MAIN', link: '/' },
-      { title: 'EXHIBITION', subtitle: '3D BOOTH', link: '/admin/pameran' },
-      { title: 'DASHBOARD', subtitle: 'ADMIN', link: '/admin/pengguna' },
-    ]
-  : user?.role === 'Creator'
-  ? [
-      { title: 'HOMEPAGE', subtitle: 'MAIN', link: '/' },
-      { title: 'EXHIBITION', subtitle: '3D BOOTH', link: '/pameran' },
-      { title: 'DASHBOARD', subtitle: 'CREATOR', link: '/ketua-pbl/karya' },
-    ]
-  : menuItems ?? defaultMenu;
-  // ===== AUTH DESKTOP =====
-const AuthDesktop = () => {
-  if (loading) {
-    return (
+  /*
+    AUTH DESKTOP BUTTON
+  */
+  const AuthDesktop = () => {
+    if (loading) {
+      return (
+        <div className="px-5 py-2 w-20 h-10 rounded-md bg-gray-200 animate-pulse" />
+      );
+    }
 
-      <div className="px-5 py-2 w-20 h-10 rounded-md bg-gray-200 animate-pulse" />
-       
+    return isLogin ? (
+      <button
+        onClick={() => setOpenProfile(true)}
+        className="w-10 h-10 flex items-center justify-center rounded-full bg-main-blue text-white hover:scale-110 transition-all duration-300 shadow-md"
+      >
+        <FaUser size={20} className="rounded-full" />
+      </button>
+    ) : (
+      <Button
+        link="/login"
+        className="px-5 py-2 text-sm font-bold rounded-md hover:scale-110 transition"
+      >
+        Login
+      </Button>
     );
-  }
+  };
 
-  return isLogin ? (
-    <button
-      onClick={() => setOpenProfile(true)}
-      className="w-10 h-10 flex items-center justify-center rounded-full bg-main-blue text-white hover:scale-110 transition-all duration-300 shadow-md"
-    >
-      <FaUser size={24} className="rounded-full" />
-    </button>
-  ) : (
-    <Button
-      link="/login"
-      className="px-5 py-2 text-sm font-bold rounded-md hover:scale-110 transition"
-    >
-      Login
-    </Button>
-  );
-};
   // ===== AUTH MOBILE =====
   const AuthMobile = () =>
     isLogin ? (
@@ -111,11 +83,14 @@ const AuthDesktop = () => {
         }}
         className="flex items-center justify-center gap-2 py-3 bg-main-blue text-white rounded-lg"
       >
-        <FaUser size={22} className="rounded-full" />
+        <FaUser size={20} className="rounded-full" />
         <span>Profile</span>
       </button>
     ) : (
-      <Button link="/login" className="w-full py-3 text-sm font-bold rounded-md">
+      <Button
+        link="/login"
+        className="w-full py-3 text-sm font-bold rounded-md"
+      >
         Login
       </Button>
     );
@@ -135,31 +110,42 @@ const AuthDesktop = () => {
           {/* DESKTOP MENU */}
           <div className="hidden lg:flex items-center gap-10 select-none">
             {resolvedMenu.map((item, index) => (
-              <TextNav key={index} link={item.link} title={item.title} subtitle={item.subtitle} />
+              <TextNav
+                key={index}
+                link={item.link}
+                title={item.title}
+                subtitle={item.subtitle}
+              />
             ))}
           </div>
 
           {/* AUTH DESKTOP */}
-
           <div className="hidden lg:block">
             <AuthDesktop />
           </div>
 
           {/* BURGER */}
-          <button onClick={() => setOpen(!open)} className="lg:hidden text-main-blue text-3xl">
+          <button
+            onClick={() => setOpen(!open)}
+            className="lg:hidden text-main-blue text-3xl"
+          >
             {open ? <HiX /> : <HiMenu />}
           </button>
         </div>
 
         {/* MOBILE MENU */}
         <div
-          className={`lg:hidden overflow-hidden transition-all duration-300 ${
-            open ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
-          }`}
+          className={`lg:hidden overflow-hidden transition-all duration-300 ${open ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+            }`}
         >
           <div className="px-4 pb-5 flex flex-col gap-4">
             {resolvedMenu.map((item, index) => (
-              <TextNav key={index} link={item.link} title={item.title} subtitle={item.subtitle} />
+              <TextNav
+                key={index}
+                link={item.link}
+                title={item.title}
+                subtitle={item.subtitle}
+              />
             ))}
             <AuthMobile />
           </div>
@@ -168,21 +154,19 @@ const AuthDesktop = () => {
 
       {/* PROFILE SIDEBAR */}
       <div
-        className={`fixed inset-0 z-50 transition-all duration-300 ${
-          openProfile ? 'visible opacity-100' : 'invisible opacity-0'
-        }`}
+        className={`fixed inset-0 z-50 transition-all duration-300 ${openProfile ? "visible opacity-100" : "invisible opacity-0"
+          }`}
       >
         {/* OVERLAY */}
-        <div onClick={() => setOpenProfile(false)} className="absolute inset-0 bg-black/40 -sm" />
+        <div
+          onClick={() => setOpenProfile(false)}
+          className="absolute inset-0 bg-black/40"
+        />
 
         {/* DRAWER */}
         <div
-          className={`fixed top-0 right-0 z-60
-  h-screen w-[85%] max-w-[380px]
-  bg-white shadow-2xl p-4
-  transform transition-transform duration-300
-  rounded-l-2xl
-  ${openProfile ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`fixed top-0 right-0 z-60 h-screen w-[85%] max-w-[380px] bg-white shadow-2xl p-4 transform transition-transform duration-300 rounded-l-2xl
+        ${openProfile ? "translate-x-0" : "translate-x-full"}`}
         >
           <div className="flex flex-col h-full">
             {/* HEADER */}
@@ -193,15 +177,20 @@ const AuthDesktop = () => {
                 </div>
 
                 <div className="overflow-hidden">
-                  <p className="font-semibold text-sm sm:text-base truncate">{user?.nama || 'User'}</p>
+                  <p className="font-semibold text-sm sm:text-base truncate">
+                    {user?.nama || "Admin"}
+                  </p>
 
                   <p className="text-xs text-gray-500 truncate max-w-[180px] sm:max-w-[220px]">
-                    {user?.email || 'user@mail.com'}
+                    {user?.email || "admin@example.com"}
                   </p>
                 </div>
               </div>
 
-              <button className="cursor-pointer shrink-0" onClick={() => setOpenProfile(false)}>
+              <button
+                className="cursor-pointer shrink-0"
+                onClick={() => setOpenProfile(false)}
+              >
                 <HiX size={24} />
               </button>
             </div>
@@ -213,7 +202,7 @@ const AuthDesktop = () => {
                 className="p-3 flex items-center gap-3 hover:bg-gray-100 transition border-b rounded-lg"
               >
                 <FaLock size={18} />
-                <span className="text-sm sm:text-base">Change Password</span>
+                <span className="text-sm sm:text-base">Ganti Kata Sandi</span>
               </Link>
 
               <Link
@@ -221,7 +210,7 @@ const AuthDesktop = () => {
                 className="p-3 flex items-center gap-3 hover:bg-gray-100 transition border-b rounded-lg mt-2"
               >
                 <HiOutlineMail size={22} />
-                <span className="text-sm sm:text-base">Change Email</span>
+                <span className="text-sm sm:text-base">Ganti Email</span>
               </Link>
             </div>
 
@@ -229,15 +218,14 @@ const AuthDesktop = () => {
             <div className="mt-auto pt-4 border-t">
               <button
                 onClick={() => {
-                  const yakin = confirm('Are you sure?');
+                  const yakin = confirm("Apakah Anda yakin ingin keluar?");
 
                   if (!yakin) return;
 
                   logout();
                   setOpenProfile(false);
-                  router.push('/');
                 }}
-                className="w-full p-3 flex items-center justify-center gap-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition active:scale-95 text-sm sm:text-base"
+                className="w-full p-3 flex items-center justify-center gap-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition active:scale-95 text-sm sm:text-base cursor-pointer"
               >
                 <FiLogOut />
                 Logout
