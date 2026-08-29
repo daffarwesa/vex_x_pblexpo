@@ -98,6 +98,7 @@ Route::middleware('auth:sanctum')->group(function () {
 //-----------------------
 
 Route::prefix('experience')->group(function () {
+    Route::get('/player-model', [GameAssetController::class, 'servePlayerModel']);
     Route::get('/game-assets', [GameAssetController::class, 'index']);
     Route::get('/3d-models/{id}', [GameAssetController::class, 'get3DModel']);
     Route::get('/hall-model/{modelId}', [GameAssetController::class, 'serveHallModel']);

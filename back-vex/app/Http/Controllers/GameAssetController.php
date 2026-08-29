@@ -51,7 +51,7 @@ class GameAssetController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Origin' => config('app.frontend_url'),
             'Access-Control-Allow-Methods' => 'GET, OPTIONS',
             'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
@@ -75,7 +75,7 @@ class GameAssetController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Origin' => config('app.frontend_url'),
             'Access-Control-Allow-Methods' => 'GET, OPTIONS',
             'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
@@ -107,7 +107,7 @@ class GameAssetController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Origin' => config('app.frontend_url'),
             'Access-Control-Allow-Methods' => 'GET, OPTIONS',
             'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
@@ -307,9 +307,15 @@ class GameAssetController extends Controller
             abort(502, 'Gagal mengambil gambar');
         }
 
+        $contentType = $response->header('Content-Type');
+
+        if (!$contentType || !str_starts_with($contentType, 'image/')) {
+            abort(415, 'File bukan gambar');
+        }
+
         return response($response->body(), 200)
-            ->header('Content-Type', $response->header('Content-Type', 'image/jpeg'))
-            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Content-Type', $contentType)
+            ->header('Access-Control-Allow-Origin', config('app.frontend_url'))
             ->header('Cache-Control', 'public, max-age=86400');
     }
 }
