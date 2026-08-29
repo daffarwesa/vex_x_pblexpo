@@ -36,6 +36,7 @@ Route::post('/pameran/{slug}/kunjungan', [PameranPublicController::class, 'catat
 Route::post('/kunjungan', [StatistikController::class, 'store']);
 Route::get('/karya/{id_karya}', [KaryaPublicController::class, 'show']);
 Route::get('/karya/predikat/{predikat}', [KaryaPublicController::class, 'getByPredikat']);
+Route::get('/karya/best/{isBest}', [KaryaPublicController::class, 'getByBest']);
 
 // Login admin
 Route::post('/login', [AdminController::class, 'login']);
