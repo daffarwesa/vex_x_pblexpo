@@ -108,7 +108,7 @@ export default function Player({
   /* PLAYER */
   /* ===================== */
 
-  const position = useRef(new THREE.Vector3(330, 10, 14));
+  const position = useRef(new THREE.Vector3(-740, 10, 8));
   const velocityY = useRef(0);
   const grounded = useRef(false);
 
