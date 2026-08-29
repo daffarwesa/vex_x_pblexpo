@@ -8,7 +8,7 @@ export const redis = new Redis({
   connectTimeout: 1000,
   lazyConnect: true,
   retryStrategy(times) {
-    if (times > 2) return null; // jangan retry terus menerus jika redis offline
+    if (times > 2) return null; 
     return 1000;
   },
 });

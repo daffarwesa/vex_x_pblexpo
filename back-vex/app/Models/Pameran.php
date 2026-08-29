@@ -110,11 +110,12 @@ class Pameran extends Model
     public function getBannerImageAttribute()
     {
         $banner = $this->attributes['banner'] ?? '';
-        if (!$banner) return '';
+
+        if (!$banner) {return '';}
         if (str_starts_with($banner, 'http://') || str_starts_with($banner, 'https://')) {
             return $banner;
         }
-        return 'http://localhost:8000/storage/' . ltrim($banner, '/');
+        return rtrim(config('app.url'), '/') . '/storage/' . ltrim($banner, '/');
     }
 
     public function getLikesAttribute()

@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -16,22 +18,23 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: "https",
-        hostname: "drive.google.com",
+        protocol: 'https',
+        hostname: 'drive.google.com',
+        pathname: '/**',
       },
     ],
-    dangerouslyAllowLocalIP: true, // hanya untuk development!
+    dangerouslyAllowLocalIP: true,
   },
 
   async rewrites() {
     return [
       {
         source: '/storage/:path*',
-        destination: 'http://localhost:8000/storage/:path*',
+        destination: `${API_URL}/storage/:path*`,
       },
       {
         source: '/api/:path*',
-        destination: 'http://localhost:8000/api/:path*',
+        destination: `${API_URL}/api/:path*`,
       },
     ];
   },
