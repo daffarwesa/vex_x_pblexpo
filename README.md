@@ -3,24 +3,26 @@
 <br/>
 
 <!-- Animated Title via SVG -->
-<img src="https://readme-typing-svg.herokuapp.com?font=Cabinet+Grotesk&weight=900&size=72&duration=3000&pause=1000&color=A78BFA&center=true&vCenter=true&width=600&height=100&lines=V-EX" alt="V-EX" />
+<img src="https://readme-typing-svg.herokuapp.com?font=Cabinet+Grotesk&weight=900&size=72&duration=3000&pause=1000&color=A78BFA&center=true&vCenter=true&width=600&height=100&lines=V-EX+" alt="V-EX+" />
 
 <img src="https://readme-typing-svg.herokuapp.com?font=Satoshi&weight=600&size=22&duration=2000&pause=800&color=38BDF8&center=true&vCenter=true&width=600&height=50&lines=Virtual+Exhibition+Platform;Interactive+3D+Experience;PBL+Showcase+%E2%80%94+Polibatam+TRPL" alt="Subtitle" />
 
 <br/><br/>
 
 <!-- Badges -->
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Next.js](https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-000000?style=for-the-badge&logo=threedotjs&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS_v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 ![Laravel](https://img.shields.io/badge/Laravel_13-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP_8.3-777BB4?style=for-the-badge&logo=php&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 
 <br/>
 
-[![GitHub](https://img.shields.io/badge/GitHub-V--EX-7C3AED?style=flat-square&logo=github)](https://github.com/Graaphr/V-EX)
-![License](https://img.shields.io/badge/License-Educational-34D399?style=flat-square)
+[![License](https://img.shields.io/badge/License-Educational-34D399?style=flat-square)](#-lisensi)
 ![Status](https://img.shields.io/badge/Status-Active-A78BFA?style=flat-square)
 
 <br/>
@@ -29,19 +31,18 @@
 
 </div>
 
-## 🌌 Tentang V-EX
+## 🌌 Tentang V-EX+
 
-> **V-EX** adalah platform pameran virtual berbasis web yang dirancang untuk menampilkan proyek PBL mahasiswa dalam lingkungan pameran **3D yang imersif dan interaktif** — karena normal exhibitions were too boring, humans decided to render them in 3D. 😹
+> **V-EX+** adalah platform pameran virtual 3D modern berbasis web yang dirancang untuk menampilkan proyek Project-Based Learning (PBL) mahasiswa dalam lingkungan pameran **3D yang imersif, interaktif, dan real-time**.
 
 Platform ini memungkinkan pengunjung untuk:
 
-- 🏛️ **Explore 3D exhibition halls** yang dirender real-time
-- 🖼️ **View project showcases** dengan detail lengkap
-- ❤️ **Like & comment** pada proyek favorit
-- 🔎 **Search & filter** berdasarkan tahun, kategori, dan semester
-- 🌍 **Akses dari mana saja** — no physical presence required
-
-> Bukan PDF kesepian yang terjebak di Google Drive. 🥀
+- 🏛️ **Eksplorasi 3D Exhibition Hall** secara first-person & third-person menggunakan WebGL (Three.js / React Three Fiber)
+- 👥 **Multiplayer Presence** melihat pergerakan dan nama pengunjung lain di dalam room pameran via Redis
+- 🖼️ **Showcase Karya & Virtual Booth** lengkap dengan banner, poster digital, deskripsi, video demo YouTube, dan link project
+- 🏆 **Penilaian & Kurasi Karya** (Juara 1, Juara 2, dan Best of Work)
+- 📊 **Statistik & Analitik Kunjungan** real-time dengan grafik range (jam, hari, minggu, bulan)
+- 🔒 **Sistem Autentikasi Admin yang Aman** menggunakan Laravel Sanctum, validasi OTP CSPRNG, dan perlindungan Anti-Brute Force
 
 ---
 
@@ -50,13 +51,13 @@ Platform ini memungkinkan pengunjung untuk:
 <div align="center">
 
 | Fitur | Deskripsi |
-|-------|-----------|
-| 🎨 **3D Exhibition** | Walk around virtual booths, real-time rendering via Three.js |
-| 🖼️ **Project Showcase** | Poster, cover image, demo video, deskripsi, team info |
-| ❤️ **Community Interaction** | Like, comment, vote proyek terbaik |
-| 🔎 **Smart Search** | Filter by year, kategori, semester, title |
-| 👤 **Role Management** | Admin, Creator, Pengunjung |
-| 🔒 **Secure Auth** | Role-based access control via Laravel |
+|---|---|
+| 🎮 **3D Virtual Hall & Booths** | Eksplorasi 3D Hall, interaksi booth (Tekan E / Klik), avatar 3D GLB, dan audio BGM/Footsteps |
+| 👥 **Realtime Multiplayer Sync** | Tracking posisi dan rotasi player secara realtime dengan backend Redis |
+| 🖼️ **Katalog & Detail Karya** | Viewer poster resolusi tinggi, streaming video YouTube, dan Google Drive proxy aman |
+| 🏅 **Sistem Kurasi & Peringkat** | Penetapan predikat juara dan badge penghargaan per pameran |
+| 📈 **Dashboard & Statistik Admin** | Visualisasi data traffic kunjungan menggunakan Recharts dengan filter tanggal dinamis |
+| 🛡️ **Hardened AppSec** | Rate limiting, CORS terisolasi, proteksi SSRF, HSTS, CSP, dan mitigasi Path Traversal |
 
 </div>
 
@@ -66,200 +67,107 @@ Platform ini memungkinkan pengunjung untuk:
 
 <div align="center">
 
-| Teknologi | Layer | Kegunaan |
-|-----------|-------|----------|
-| ⚛️ **React.js** | Frontend | UI Component Library |
-| ▲ **Next.js 15** | Frontend | SSR/SSG Framework |
-| 💅 **TailwindCSS** | Frontend | Utility-First Styling |
-| 🎲 **Three.js** | Frontend | 3D Exhibition Rendering |
-| 🐘 **Laravel 13** | Backend | RESTful API Framework |
-| 🗄️ **MySQL** | Database | Relational Database |
-| 🐙 **GitHub** | DevOps | Version Control |
+| Layer | Teknologi | Versi | Kegunaan |
+|---|---|---|---|
+| **Frontend** | Next.js (App Router) | `16.2+` | Full-stack React Framework (SSR/SSG) |
+| **Frontend** | React | `19.2` | Core UI Component Library |
+| **Frontend** | TypeScript | `5.x` | Type Safety & Developer Experience |
+| **Frontend** | Tailwind CSS | `v4.x` | Modern Utility-First CSS Styling |
+| **3D Engine** | Three.js / R3F / Drei | `0.183+` | 3D Canvas Rendering & Physics Controller |
+| **Backend** | Laravel | `13.x` | Core RESTful API & Sanctum Authentication |
+| **Runtime** | PHP | `8.3+` | Server-Side Language Engine |
+| **Database** | MySQL | `8.x` | Relational Storage (Pameran, Karya, Admin, Kunjungan) |
+| **Cache/Sync** | Redis (ioredis / phpredis) | `7.x` | Real-time Player Presence & OTP Storage |
 
 </div>
 
 ---
 
-## 🛠️ Panduan Instalasi
-
-### 📦 1. Clone Repository
-
-```bash
-git clone https://github.com/Graaphr/V-EX.git pbl-vex
-cd pbl-vex
-```
-
----
-
-### 🎨 2. Frontend Setup
-
-```bash
-cd front-vex
-npm install       # Install ~400 packages 💀 Modern JS ecosystem moment
-npm run dev       # http://localhost:5173 atau http://localhost:3000
-```
-
-> **Install 400 packages demi satu tombol.** Welcome to JavaScript. 💀
-
----
-
-### ⚙️ 3. Backend Setup
-
-```bash
-cd ../back-vex
-composer install
-```
-
-**Configure environment:**
-```bash
-# Linux / Git Bash
-cp .env.example .env
-
-# Windows CMD
-copy .env.example .env
-```
-
-**Generate app key:**
-```bash
-php artisan key:generate
-```
-
----
-
-### 🗄️ 4. Database Configuration
-
-Buka `.env` dan update konfigurasi:
-
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=vex_db
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
----
-
-### 🚀 5. Migrate & Serve
-
-```bash
-php artisan migrate
-php artisan serve    # http://127.0.0.1:8000
-```
-
----
-
-## 📁 Project Structure
+## 📁 Struktur Repositori
 
 ```
-pbl-vex/
+VEX-EXPO/
+├── front-vex/                  # 🎨 Next.js 16 Frontend
+│   ├── app/                    # App Router (Pameran, Admin, Play 3D, Auth)
+│   │   ├── (auth)/             # Login, Verifikasi OTP, Ganti Password
+│   │   ├── (dashboard)/admin/  # Dashboard Manajemen Pameran, Karya, Statistik
+│   │   ├── (play)/exhibition/  # 3D WebGL Canvas & Game Viewport
+│   │   └── api-internal/       # Server-side Next.js Routes (Player Sync, Local Uploads)
+│   ├── components/             # Reusable UI & 3D Three.js Components
+│   ├── context/                # AuthContext (Sanctum Session & State Management)
+│   ├── lib/                    # Axios API Client & Redis Connection Manager
+│   └── public/                 # Static Assets, 3D GLB Models, Icons, Data
 │
-├── front-vex/              # 🎨 Frontend React / Next.js
-│   ├── src/
-│   │   ├── components/     # Reusable UI components
-│   │   ├── pages/          # Next.js pages & routing
-│   │   ├── three/          # Three.js 3D scenes & environments
-│   │   └── styles/         # TailwindCSS configuration
-│   └── package.json
+├── back-vex/                   # ⚙️ Laravel 13 Backend API
+│   ├── app/Http/Controllers/   # API Controllers (Admin, Karya, Pameran, GameAsset, Statistik)
+│   ├── app/Models/             # Eloquent Models (Admin, Pameran, Karya, Stan, Kunjungan)
+│   ├── app/Services/           # OtpService (CSPRNG), Steganography, Mail
+│   ├── config/                 # App, CORS, Sanctum, Database Configurations
+│   ├── database/migrations/    # Database Schema Migrations & Seeders
+│   └── routes/api.php          # Protected & Public REST API Endpoints + Rate Limiters
 │
-├── back-vex/               # ⚙️ Laravel Backend
-│   ├── app/
-│   │   ├── Http/Controllers/
-│   │   ├── Models/
-│   │   └── Middleware/
-│   ├── database/migrations/
-│   ├── routes/
-│   └── .env.example
-│
+├── DEPLOYMENT_GUIDE.md         # 🚀 Panduan Lengkap Deployment Production (Nginx, PM2, SSL)
 └── README.md
 ```
 
 ---
 
-## 🎮 User Roles
+## 🛠️ Panduan Memulai Cepat (Local Development)
 
-<div align="center">
-
-| Role | Akses |
-|------|-------|
-| 👑 **Admin** | Manage exhibition, users, dan semua konten platform |
-| 📤 **Creator** | Upload, manage proyek, dan memilih karya terbaik |
-| 👁️ **Pengunjung** | View, like, comment, dan vote proyek |
-
-</div>
+### 📋 Prasyarat
+- **Node.js**: `v20.x` atau lebih baru
+- **PHP**: `v8.3` atau lebih baru + Composer
+- **MySQL Server** (melalui Laragon / XAMPP / Native)
+- **Redis Server** (Port 6379, opsional untuk fitur multiplayer)
 
 ---
 
-## ⚠️ Common Errors
-
-<details>
-<summary>💥 Composer Error — <code>vendor/autoload.php</code> missing</summary>
+### 1️⃣ Setup Backend (Laravel)
 
 ```bash
+cd back-vex
+
+# 1. Pasang dependensi PHP
 composer install
-```
 
-**Possible causes:**
-- Composer belum ter-install
-- Instalasi gagal di tengah jalan
-- PHP extension yang dibutuhkan tidak ada
+# 2. Salin environment file
+cp .env.example .env
 
-> Laravel initiation ritual. Everyone suffers at least once. 😭
+# 3. Generate Encryption Key
+php artisan key:generate
 
-</details>
+# 4. Buat symbolic link storage untuk file publik
+php artisan storage:link
 
-<details>
-<summary>🗄️ Database Error — <code>SQLSTATE[42S02]</code></summary>
-
-```bash
-# Buat database vex_db dulu di MySQL
-# Kemudian:
+# 5. Jalankan migrasi database
 php artisan migrate
+
+# 6. Jalankan local development server (Port 8000)
+php artisan serve
 ```
 
-**Checklist:**
-- [ ] Database `vex_db` sudah dibuat
-- [ ] `.env` sudah dikonfigurasi dengan benar
-- [ ] MySQL service sedang berjalan
+> **Catatan:** Pastikan konfigurasi database di `back-vex/.env` (`DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`) sesuai dengan MySQL Anda.
 
-</details>
+---
 
-<details>
-<summary>📦 NPM Error — packages kolaps emosional</summary>
+### 2️⃣ Setup Frontend (Next.js)
+
+Buka terminal baru:
 
 ```bash
-npm install --force
-# atau
-npm audit fix
+cd front-vex
+
+# 1. Pasang dependensi Node.js
+npm install
+
+# 2. Salin environment file
+cp .env.example .env.local
+
+# 3. Jalankan Next.js development server (Port 3000)
+npm run dev
 ```
 
-> JavaScript packages collapse emotionally every 3 business days. 💔
-
-</details>
-
----
-
-## 🎨 UI/UX Goals
-
-V-EX fokus pada:
-
-- ✅ **Clean modern interface** — minimalist dashboard design
-- ✅ **Interactive 3D experience** — immersive exploration
-- ✅ **Smooth animations** — buttery transitions
-- ✅ **User-friendly navigation** — no learning curve
-- ✅ **Mobile-friendly** — responsive di semua device
-
----
-
-## 🌍 Tujuan Proyek
-
-V-EX dibuat untuk menjadi **digital exhibition ecosystem** bagi mahasiswa Polibatam — membantu:
-
-- 🎓 **Mahasiswa** mempresentasikan proyek secara profesional
-- 🌐 **Pengunjung** mengeksplorasi proyek secara interaktif  
-- 🏛️ **Institusi** memodernisasi pameran akademik
-- 👥 **Tim PBL** mendapat lebih banyak eksposur
+Buka browser di **`http://localhost:3000`** 🎉
 
 ---
 
@@ -267,16 +175,16 @@ V-EX dibuat untuk menjadi **digital exhibition ecosystem** bagi mahasiswa Poliba
 
 <div align="center">
 
-Dikembangkan oleh tim **TRPL — Politeknik Negeri Batam**
+Dikembangkan dengan dedikasi oleh tim **TRPL — Politeknik Negeri Batam**:
 
-| Nama |
-|------|
-| Muhammad Daffa' Choir |
-| Terra Faqih Satria Madjid |
-| Fajri Nur Prasetyo |
-| Afif Hamzah Siregar |
-| Hani Arta Gultom |
-| Devika Humayra |
+| Nama | Role / Kontribusi |
+|---|---|
+| **Muhammad Daffa' Choir** | Project Lead & Full-Stack Engineer |
+| **Terra Faqih Satria Madjid** | 3D Experience & Frontend Engineer |
+| **Fajri Nur Prasetyo** | Backend & Database Architect |
+| **Afif Hamzah Siregar** | UI/UX Designer & Frontend |
+| **Hani Arta Gultom** | Quality Assurance & Technical Documentation |
+| **Devika Humayra** | Asset Designer & Content Curator |
 
 </div>
 
@@ -284,18 +192,12 @@ Dikembangkan oleh tim **TRPL — Politeknik Negeri Batam**
 
 ## 📜 Lisensi
 
-Proyek ini dikembangkan untuk keperluan **edukasi dan Project Based Learning (PBL)**.
-
----
+Proyek ini dikembangkan untuk keperluan **edukasi, riset, dan Project-Based Learning (PBL) Politeknik Negeri Batam**.
 
 <div align="center">
 
 <br/>
 
-<img src="https://readme-typing-svg.herokuapp.com?font=Cabinet+Grotesk&weight=800&size=20&duration=3000&pause=1000&color=A78BFA&center=true&vCenter=true&width=600&height=50&lines=V-EX+is+more+than+just+a+website.;It+transforms+project+showcases...;...into+immersive+digital+experiences.+%F0%9F%9A%80" alt="Final note" />
-
-<br/>
-
-**Politeknik Negeri Batam · Technology Software Engineering · 2026**
+**Politeknik Negeri Batam · Teknologi Rekayasa Perangkat Lunak · 2026**
 
 </div>

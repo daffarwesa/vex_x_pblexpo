@@ -1,0 +1,51 @@
+# Root .gitignore for VEX-EXPO
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# OS and IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Next.js build and dependencies
+front-vex/node_modules/
+front-vex/.next/
+front-vex/out/
+front-vex/build/
+front-vex/*.tsbuildinfo
+front-vex/dump.rdb
+front-vex/*.rdb
+
+# Laravel dependencies and caches
+back-vex/vendor/
+back-vex/node_modules/
+back-vex/storage/*.key
+back-vex/storage/framework/cache/*
+!back-vex/storage/framework/cache/.gitignore
+back-vex/storage/framework/sessions/*
+!back-vex/storage/framework/sessions/.gitignore
+back-vex/storage/framework/views/*
+!back-vex/storage/framework/views/.gitignore
+back-vex/storage/logs/*
+!back-vex/storage/logs/.gitignore
+back-vex/bootstrap/cache/*
+!back-vex/bootstrap/cache/.gitignore
+back-vex/public/storage
+back-vex/public/hot
+
+# Logs & temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
