@@ -234,18 +234,20 @@ export default function HomePage() {
       </section>
 
       {/* SECTION 1.5 - In Collaboration With (logo strip) */}
-      <section className="bg-[#3612C7] w-full">
-        <div className="autoMid py-14 sm:py-16 lg:py-20 flex flex-col items-center gap-6 sm:gap-8">
+      <section className="bg-main-blue w-full">
+        <div className="autoMid py-14 sm:py-16 lg:py-15 flex flex-col items-center gap-6 sm:gap-8">
 
           <div className="grid grid-cols-4 gap-6 sm:gap-12 lg:gap-20 items-center w-full max-w-4xl">
             {collaborators.map((logo, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
+              // <div className='bg-white p-[100px] rounded-full'>
               <img
                 key={i}
                 src={logo.src}
                 alt={logo.alt}
-                className="w-full h-10 sm:h-16 lg:h-20 object-contain opacity-90 hover:opacity-100 transition-opacity duration-300"
+                className="w-full rounded-full bg-white h-10 sm:h-16 z-4 lg:h-40 p-2 object-contain opacity-100 hover:opacity-120 transition-opacity duration-300" 
               />
+
+            // </div>
             ))}
           </div>
         </div>

@@ -10,7 +10,7 @@
 
 @layer components {
   .hover-text {
-    @apply hover:text-gray-400 transition-all cursor-pointer;
+    @apply transition-all cursor-pointer;
   }
 
   .footer-links .hover-text:hover {
