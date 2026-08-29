@@ -87,10 +87,10 @@ class AdminKaryaController extends Controller
 
         $finalAdminId = $adminId ?? \App\Models\Admin::first()?->id_admin;
 
-        // Jika stan tidak dikirim, otomatis buatkan/ambil stan untuk pameran ini
+        // Jika stan tidak dikirim, otomatis buatkan stan baru untuk karya ini di pameran terkait
         $stanId = $validated['id_stan'] ?? null;
         if (!$stanId) {
-            $stan = \App\Models\Stan::firstOrCreate([
+            $stan = \App\Models\Stan::create([
                 'id_pameran' => $validated['id_pameran'],
             ]);
             $stanId = $stan->id_stan;
@@ -181,7 +181,12 @@ class AdminKaryaController extends Controller
             Storage::disk('public')->delete($karya->gambar_poster);
         }
 
+        $stanId = $karya->id_stan;
         $karya->delete();
+
+        if ($stanId) {
+            \App\Models\Stan::where('id_stan', $stanId)->delete();
+        }
 
         return response()->json([
             'status' => 'success',

@@ -48,7 +48,6 @@ interface BestOfSelectorProps {
 /* ===================== */
 
 const DEFAULT_PLACEHOLDER_LABELS = ["Innovation", "Design", "System"];
-const DEFAULT_PLACEHOLDER_LABELS = ["Innovation", "Design", "System"];
 
 /**
  * Background used when a category doesn't have a work yet.

@@ -20,7 +20,12 @@ const customDomains = (process.env.NEXT_PUBLIC_REMOTE_IMAGE_DOMAINS || '')
   .map((d) => d.trim())
   .filter(Boolean);
 
-const defaultRemotePatterns = [
+const defaultRemotePatterns: Array<{
+  protocol: 'http' | 'https';
+  hostname: string;
+  port?: string;
+  pathname: string;
+}> = [
   {
     protocol: apiProto,
     hostname: apiHost,

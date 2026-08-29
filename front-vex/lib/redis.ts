@@ -27,8 +27,9 @@ if (process.env.NODE_ENV !== "production") {
 
 export async function isRedisReady(): Promise<boolean> {
   try {
-    if (redis.status === "ready") return true;
-    if (redis.status === "wait" || redis.status === "close" || redis.status === "end") {
+    const status: string = redis.status;
+    if (status === "ready") return true;
+    if (status === "wait" || status === "close" || status === "end") {
       await redis.connect();
     }
     return redis.status === "ready" || redis.status === "connecting" || redis.status === "connect";
