@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import DetailPoster from "@/components/karya/DetailPoster";
+import DetailPoster, { PosterMode, extractDriveDirectUrl } from "@/components/karya/DetailPoster";
 import DetailForm from "@/components/karya/DetailForm";
 import { Button, ButtonPutih } from "@/components/shared/ui/Button";
 import { showToast } from "@/components/shared/ui/ToastNotification";
@@ -28,7 +28,9 @@ function normalizeUrl(raw: string): string {
 
 function validate(
   form: KaryaItem,
+  posterMode: PosterMode,
   posterFile: File | null,
+  posterDriveUrl: string,
 ): Record<string, string> {
   const errors: Record<string, string> = {};
 
@@ -48,7 +50,16 @@ function validate(
     }
   }
 
-  if (!posterFile) errors.poster = "Gambar poster wajib diunggah.";
+  // Validasi Opsi Poster (Mutual Exclusive)
+  if (posterMode === "file") {
+    if (!posterFile) errors.poster = "File poster wajib diunggah.";
+  } else {
+    if (!posterDriveUrl.trim()) {
+      errors.poster = "Link Google Drive poster wajib diisi.";
+    } else if (!posterDriveUrl.includes("drive.google.com") && !posterDriveUrl.startsWith("http")) {
+      errors.poster = "Masukkan link Google Drive yang valid.";
+    }
+  }
 
   return errors;
 }
@@ -95,8 +106,10 @@ export default function AddKaryaPage({ onCancel, onSuccess }: AddKaryaProps) {
   const router = useRouter();
 
   const [form, setForm] = useState<KaryaItem>(initialForm);
+  const [posterMode, setPosterMode] = useState<PosterMode>("file");
   const [posterPreview, setPosterPreview] = useState("");
   const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [posterDriveUrl, setPosterDriveUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -110,6 +123,33 @@ export default function AddKaryaPage({ onCancel, onSuccess }: AddKaryaProps) {
   const handleChange = (field: keyof KaryaItem, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     clearFieldError(field as string);
+  };
+
+  const handleModeChange = (mode: PosterMode) => {
+    setPosterMode(mode);
+    clearFieldError("poster");
+    if (mode === "file") {
+      setPosterDriveUrl("");
+      if (posterFile) {
+        setPosterPreview(URL.createObjectURL(posterFile));
+      } else {
+        setPosterPreview("");
+      }
+    } else {
+      setPosterFile(null);
+      if (posterDriveUrl) {
+        setPosterPreview(extractDriveDirectUrl(posterDriveUrl));
+      } else {
+        setPosterPreview("");
+      }
+    }
+  };
+
+  const handleDriveUrlChange = (url: string) => {
+    setPosterDriveUrl(url);
+    clearFieldError("poster");
+    const directUrl = extractDriveDirectUrl(url);
+    setPosterPreview(directUrl);
   };
 
   const handleImageUpload = (
@@ -148,7 +188,7 @@ export default function AddKaryaPage({ onCancel, onSuccess }: AddKaryaProps) {
   };
 
   const handleSave = async () => {
-    const validationErrors = validate(form, posterFile);
+    const validationErrors = validate(form, posterMode, posterFile, posterDriveUrl);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       showToast("Lengkapi semua data terlebih dahulu.", "warning");
@@ -164,7 +204,12 @@ export default function AddKaryaPage({ onCancel, onSuccess }: AddKaryaProps) {
       formData.append("judul", form.title.trim());
       formData.append("deskripsi", form.description?.trim() ?? "");
       formData.append("tautan", normalizeUrl(form.link ?? ""));
-      formData.append("gambar_poster", posterFile!);
+
+      if (posterMode === "file") {
+        formData.append("gambar_poster", posterFile!);
+      } else {
+        formData.append("gambar_poster", extractDriveDirectUrl(posterDriveUrl));
+      }
 
       const result = await PostKaryaAdmin(formData);
 
@@ -208,8 +253,12 @@ export default function AddKaryaPage({ onCancel, onSuccess }: AddKaryaProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <div className="lg:sticky lg:top-6">
             <DetailPoster
+              mode={posterMode}
+              onModeChange={handleModeChange}
               preview={posterPreview}
-              onUpload={handleImageUpload}
+              onUploadFile={handleImageUpload}
+              driveUrl={posterDriveUrl}
+              onDriveUrlChange={handleDriveUrlChange}
               error={errors.poster}
             />
           </div>

@@ -82,7 +82,7 @@ class AdminKaryaController extends Controller
             'judul'         => 'required|string|max:255',
             'deskripsi'     => 'required|string',
             'tautan'        => 'required|string|max:255',
-            'gambar_poster' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'gambar_poster' => 'required',
         ]);
 
         $finalAdminId = $adminId ?? \App\Models\Admin::first()?->id_admin;
@@ -96,7 +96,12 @@ class AdminKaryaController extends Controller
             $stanId = $stan->id_stan;
         }
 
-        $path = $request->file('gambar_poster')->store('karya/poster', 'public');
+        // Cek apakah gambar_poster berupa UploadedFile atau String (URL/Google Drive)
+        if ($request->hasFile('gambar_poster')) {
+            $path = $request->file('gambar_poster')->store('karya/poster', 'public');
+        } else {
+            $path = (string) $request->gambar_poster;
+        }
 
         $karya = Karya::create([
             'id_admin'      => $finalAdminId,
@@ -137,14 +142,16 @@ class AdminKaryaController extends Controller
             'judul'         => 'sometimes|string|max:255',
             'deskripsi'     => 'sometimes|string',
             'tautan'        => 'sometimes|string|max:255',
-            'gambar_poster' => 'sometimes|image|mimes:jpg,jpeg,png|max:2048',
+            'gambar_poster' => 'sometimes',
         ]);
 
         if ($request->hasFile('gambar_poster')) {
-            if ($karya->gambar_poster) {
+            if ($karya->gambar_poster && !str_starts_with($karya->gambar_poster, 'http')) {
                 Storage::disk('public')->delete($karya->gambar_poster);
             }
             $validated['gambar_poster'] = $request->file('gambar_poster')->store('karya/poster', 'public');
+        } elseif ($request->filled('gambar_poster')) {
+            $validated['gambar_poster'] = (string) $request->gambar_poster;
         }
 
         $karya->update($validated);

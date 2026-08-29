@@ -7,46 +7,47 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 /* ===================== */
 
 export interface BestOfCategoryItem {
-    label: string;
-    title: string;
-    description: string;
+  label: string;
+  title: string;
+  description: string;
 
-    /**
-     * Poster image.
-     *
-     * Supports:
-     * - Normal image URL
-     * - Google Drive share link
-     */
-    image: string;
+  /**
+   * Poster image.
+   *
+   * Supports:
+   * - Normal image URL
+   * - Google Drive share link
+   */
+  image: string;
 }
 
 interface BestOfSelectorProps {
-    data: BestOfCategoryItem[];
-    className?: string;
+  data: BestOfCategoryItem[];
+  className?: string;
 
-    /**
-     * Auto-rotate delay in milliseconds.
-     * Set to 0 to disable autoplay.
-     * Default: 5000ms
-     */
-    autoplayDelay?: number;
+  /**
+   * Auto-rotate delay in milliseconds.
+   * Set to 0 to disable autoplay.
+   * Default: 5000ms
+   */
+  autoplayDelay?: number;
 
-    /**
-     * Categories that should always be shown.
-     *
-     * Default:
-     * Innovation
-     * Design
-     * System
-     */
-    placeholderLabels?: string[];
+  /**
+   * Categories that should always be shown.
+   *
+   * Default:
+   * Innovation
+   * Design
+   * System
+   */
+  placeholderLabels?: string[];
 }
 
 /* ===================== */
 /* CONSTANTS */
 /* ===================== */
 
+const DEFAULT_PLACEHOLDER_LABELS = ["Innovation", "Design", "System"];
 const DEFAULT_PLACEHOLDER_LABELS = ["Innovation", "Design", "System"];
 
 /**
@@ -105,8 +106,8 @@ function buildSlots(
 ): Slot[] {
     const byLabel = new Map(data.map((item) => [item.label, item]));
 
-    const slots = placeholderLabels.map((label) => {
-        const existingItem = byLabel.get(label);
+  const slots = placeholderLabels.map((label) => {
+    const existingItem = byLabel.get(label);
 
         if (existingItem) {
             return { ...existingItem, isPlaceholder: false };
@@ -129,7 +130,7 @@ function buildSlots(
         .filter((item) => !placeholderLabels.includes(item.label))
         .map((item) => ({ ...item, isPlaceholder: false }));
 
-    return [...slots, ...extras];
+  return [...slots, ...extras];
 }
 
 /* ===================== */
@@ -149,21 +150,21 @@ function buildSlots(
 function extractDriveFileId(url: string): string | null {
     if (!url) return null;
 
-    const patterns = [
-        /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
-        /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
-        /[?&]id=([a-zA-Z0-9_-]+)/,
-    ];
+  const patterns = [
+    /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+  ];
 
-    for (const pattern of patterns) {
-        const match = url.match(pattern);
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
 
-        if (match?.[1]) {
-            return match[1];
-        }
+    if (match?.[1]) {
+      return match[1];
     }
+  }
 
-    return null;
+  return null;
 }
 
 /**
@@ -182,9 +183,9 @@ function isGoogleDriveLink(url: string): boolean {
 function getGoogleDrivePreviewUrl(url: string): string | null {
     const fileId = extractDriveFileId(url);
 
-    if (!fileId) return null;
+  if (!fileId) return null;
 
-    return `https://drive.google.com/file/d/${fileId}/preview`;
+  return `https://drive.google.com/file/d/${fileId}/preview`;
 }
 
 /* ===================== */
@@ -295,10 +296,10 @@ function AutoplayProgressBar({
 /* ===================== */
 
 export default function BestOfSelector({
-    data,
-    className,
-    autoplayDelay = 5000,
-    placeholderLabels = DEFAULT_PLACEHOLDER_LABELS,
+  data,
+  className,
+  autoplayDelay = 5000,
+  placeholderLabels = DEFAULT_PLACEHOLDER_LABELS,
 }: BestOfSelectorProps) {
     const [activeIndex, setActiveIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
@@ -324,8 +325,8 @@ export default function BestOfSelector({
         [data, placeholderLabels],
     );
 
-    const length = slots.length;
-    const hasMultipleItems = length > 1;
+  const length = slots.length;
+  const hasMultipleItems = length > 1;
 
     /* ===================== */
     /* REDUCED MOTION */
@@ -377,9 +378,9 @@ export default function BestOfSelector({
         };
     }, []);
 
-    /* ===================== */
-    /* INDEX SAFETY */
-    /* ===================== */
+  /* ===================== */
+  /* INDEX SAFETY */
+  /* ===================== */
 
     useEffect(() => {
         if (length > 0 && activeIndex >= length) {
@@ -387,9 +388,9 @@ export default function BestOfSelector({
         }
     }, [activeIndex, length]);
 
-    /* ===================== */
-    /* SELECT CATEGORY */
-    /* ===================== */
+  /* ===================== */
+  /* SELECT CATEGORY */
+  /* ===================== */
 
     const handleSelect = useCallback((index: number) => {
         setActiveIndex(index);
@@ -424,31 +425,31 @@ export default function BestOfSelector({
         }
     };
 
-    /* ===================== */
-    /* CIRCULAR POSITION */
-    /* ===================== */
+  /* ===================== */
+  /* CIRCULAR POSITION */
+  /* ===================== */
 
-    /**
-     * Returns:
-     *
-     * -1 = left
-     *  0 = center / active
-     *  1 = right
-     *
-     * This keeps the carousel circular.
-     */
-    const circularOffset = (index: number) => {
-        let diff = index - activeIndex;
+  /**
+   * Returns:
+   *
+   * -1 = left
+   *  0 = center / active
+   *  1 = right
+   *
+   * This keeps the carousel circular.
+   */
+  const circularOffset = (index: number) => {
+    let diff = index - activeIndex;
 
         if (diff > length / 2) diff -= length;
         if (diff < -length / 2) diff += length;
 
-        return diff;
-    };
+    return diff;
+  };
 
-    /* ===================== */
-    /* RENDER */
-    /* ===================== */
+  /* ===================== */
+  /* RENDER */
+  /* ===================== */
 
     return (
         <div
@@ -488,9 +489,9 @@ export default function BestOfSelector({
                 })}
             </div>
 
-            {/* ===================== */}
-            {/* POSTER TRIO */}
-            {/* ===================== */}
+      {/* ===================== */}
+      {/* POSTER TRIO */}
+      {/* ===================== */}
 
             <div
                 role="group"

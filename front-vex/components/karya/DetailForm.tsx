@@ -194,17 +194,17 @@ export default function DetailForm({
         <FieldError message={errors.title} />
       </div>
 
-      {/* Link YouTube */}
+      {/* Link Video Demo */}
       <div>
-        <Label text="Link Youtube" required />
+        <Label text="Link Video" required />
         <p className="text-xs text-gray-400 mt-1">
-          Masukkan link video demo (contoh: https://youtube.com/...)
+          Link yang didukung: YouTube atau Google Drive
         </p>
         <input
           type="text"
           value={form.link}
           onChange={(e) => onChange("link", e.target.value)}
-          placeholder="https://youtube.com/watch?v=..."
+          placeholder="Masukkan link video YouTube atau Google Drive (contoh: https://youtube.com/... atau https://drive.google.com/...)"
           className={fieldClass(errors.link)}
         />
         <FieldError message={errors.link} />

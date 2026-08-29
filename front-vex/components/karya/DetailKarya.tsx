@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DetailThumbnail from "@/components/karya/DetailThumbnail";
-import DetailPoster from "@/components/karya/DetailPoster";
+import DetailPoster, { PosterMode, extractDriveDirectUrl } from "@/components/karya/DetailPoster";
 import DetailPreview from "@/components/karya/DetailPreview";
 import DetailForm from "@/components/karya/DetailForm";
 import DetailAction from "@/components/karya/DetailAction";
@@ -93,10 +93,10 @@ export default function DetailKarya({ id }: Props) {
   const isReadOnly = false;
 
   const [form, setForm] = useState<KaryaItem | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState("");
+  const [posterMode, setPosterMode] = useState<PosterMode>("file");
   const [posterPreview, setPosterPreview] = useState("");
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [posterDriveUrl, setPosterDriveUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showConfirm, setShowConfirm] = useState(false);
@@ -168,6 +168,10 @@ export default function DetailKarya({ id }: Props) {
 
           setForm(found);
           setPosterPreview(found.image);
+          if (item.gambar_poster && item.gambar_poster.startsWith("http")) {
+            setPosterMode("drive");
+            setPosterDriveUrl(item.gambar_poster);
+          }
 
           if (found.pameranId) {
             setCurrentPameran({
@@ -198,38 +202,60 @@ export default function DetailKarya({ id }: Props) {
     }
   };
 
+  const handleModeChange = (mode: PosterMode) => {
+    setPosterMode(mode);
+    setErrors((prev) => {
+      const e = { ...prev };
+      delete e.poster;
+      return e;
+    });
+    if (mode === "file") {
+      setPosterDriveUrl("");
+      if (posterFile) {
+        setPosterPreview(URL.createObjectURL(posterFile));
+      } else {
+        setPosterPreview(form?.image || "");
+      }
+    } else {
+      setPosterFile(null);
+      if (posterDriveUrl) {
+        setPosterPreview(extractDriveDirectUrl(posterDriveUrl));
+      } else {
+        setPosterPreview("");
+      }
+    }
+  };
+
+  const handleDriveUrlChange = (url: string) => {
+    setPosterDriveUrl(url);
+    setErrors((prev) => {
+      const e = { ...prev };
+      delete e.poster;
+      return e;
+    });
+    setPosterPreview(extractDriveDirectUrl(url));
+  };
+
   const handleImageUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "thumbnail" | "poster",
   ) => {
     if (isReadOnly) return;
     const file = e.target.files?.[0];
     if (!file) return;
     const preview = URL.createObjectURL(file);
-    if (type === "thumbnail") {
-      setThumbnailPreview(preview);
-      setThumbnailFile(file);
-      setErrors((prev) => {
-        const e = { ...prev };
-        delete e.thumbnail;
-        return e;
-      });
-    }
-    if (type === "poster") {
-      setPosterPreview(preview);
-      setPosterFile(file);
-      setErrors((prev) => {
-        const e = { ...prev };
-        delete e.poster;
-        return e;
-      });
-    }
+    setPosterPreview(preview);
+    setPosterFile(file);
+    setErrors((prev) => {
+      const e = { ...prev };
+      delete e.poster;
+      return e;
+    });
   };
 
   const handleSave = async () => {
     if (!form) return;
 
-    const validationErrors = validate(form, thumbnailFile, posterFile, true);
+    const validationErrors = validate(form, null, posterFile, true);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       showToast("Lengkapi semua data terlebih dahulu.", "warning");
@@ -245,7 +271,12 @@ export default function DetailKarya({ id }: Props) {
       formData.append("judul", form.title.trim());
       formData.append("deskripsi", form.description?.trim() ?? "");
       formData.append("tautan", normalizeUrl(form.link ?? ""));
-      if (posterFile) formData.append("gambar_poster", posterFile);
+      
+      if (posterMode === "file" && posterFile) {
+        formData.append("gambar_poster", posterFile);
+      } else if (posterMode === "drive" && posterDriveUrl) {
+        formData.append("gambar_poster", extractDriveDirectUrl(posterDriveUrl));
+      }
 
       const result = await UpdateKaryaAdmin(form.id, formData);
       if (result.status !== "success") {
@@ -547,8 +578,12 @@ export default function DetailKarya({ id }: Props) {
             {/* Gambar */}
             <div className="lg:sticky lg:top-6">
               <DetailPoster
+                mode={posterMode}
+                onModeChange={handleModeChange}
                 preview={posterPreview}
-                onUpload={(e) => handleImageUpload(e, "poster")}
+                onUploadFile={handleImageUpload}
+                driveUrl={posterDriveUrl}
+                onDriveUrlChange={handleDriveUrlChange}
                 error={errors.poster}
               />
             </div>
