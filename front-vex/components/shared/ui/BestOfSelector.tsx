@@ -47,7 +47,7 @@ interface BestOfSelectorProps {
 /* CONSTANTS */
 /* ===================== */
 
-const DEFAULT_PLACEHOLDER_LABELS = ["Innovation", "Design", "System"];
+const DEFAULT_PLACEHOLDER_LABELS = ["Innovation to Industry", "Partnership for Downstreaming", "Creativity", "Readiness for Market", "Business Potential", "Scalability", "Commercial Impact"];
 
 /**
  * Background used when a category doesn't have a work yet.
@@ -56,7 +56,7 @@ const DEFAULT_PLACEHOLDER_LABELS = ["Innovation", "Design", "System"];
  * component, the fallback has exactly the same poster dimensions
  * and overlay treatment as a real work.
  */
-const FALLBACK_IMAGE = "/image/BGSection3.png";
+const FALLBACK_IMAGE = "/image/BGlogopblexpo.webp";
 
 /**
  * How long after a manual tab/poster click before autoplay
@@ -309,7 +309,7 @@ function AutoplayProgressBar({
 export default function BestOfSelector({
   data,
   className,
-  autoplayDelay = 5000,
+  autoplayDelay = 2700,
   placeholderLabels = DEFAULT_PLACEHOLDER_LABELS,
 }: BestOfSelectorProps) {
   const [activeIndex, setActiveIndex] = useState(0);

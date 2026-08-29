@@ -1,9 +1,11 @@
 "use client";
 // components
-import { Card } from '@/components/shared/ui/Components';
-import { Button } from '@/components/shared/ui/Button';
-import Carousel, { CarouselKaryaItem } from '@/components/shared/ui/Carousel';
-import BestOfSelector, { BestOfCategoryItem } from '@/components/shared/ui/BestOfSelector';
+import { Card } from "@/components/shared/ui/Components";
+import { Button } from "@/components/shared/ui/Button";
+import Carousel, { CarouselKaryaItem } from "@/components/shared/ui/Carousel";
+import BestOfSelector, {
+  BestOfCategoryItem,
+} from "@/components/shared/ui/BestOfSelector";
 // icons
 import {
   BiCube,
@@ -52,12 +54,22 @@ const collaborators = [
   { src: "/image/logo-collab-4.png", alt: "Collaborator 4" },
 ];
 
-// is_best: 1 = Innovation, 2 = Design, 3 = System
-const BEST_OF_LABELS: Record<1 | 2 | 3, string> = {
-  1: "Innovation",
-  2: "Design",
-  3: "System",
+const BEST_OF_IDS = [1, 2, 3, 4, 5, 6, 7] as const;
+
+type BestOfId = (typeof BEST_OF_IDS)[number];
+
+// is_best: 1-7 sesuai urutan kategori Best Of
+const BEST_OF_LABELS: Record<BestOfId, string> = {
+  1: "Innovation to Industry",
+  2: "Partnership for Downstreaming",
+  3: "Creativity",
+  4: "Readiness for Market",
+  5: "Business Potential",
+  6: "Scalability",
+  7: "Commercial Impact",
 };
+
+const BEST_OF_PLACEHOLDER_LABELS = Object.values(BEST_OF_LABELS);
 
 // Ubah data karya dari API (KaryaPredikatItem) menjadi bentuk yang dipakai Carousel
 function mapKaryaToCarouselItem(karya: KaryaPredikatItem): CarouselKaryaItem {
@@ -67,7 +79,8 @@ function mapKaryaToCarouselItem(karya: KaryaPredikatItem): CarouselKaryaItem {
 
   if (karya.gambar_poster) {
     poster =
-      karya.gambar_poster.startsWith("http") || karya.gambar_poster.startsWith("/")
+      karya.gambar_poster.startsWith("http") ||
+      karya.gambar_poster.startsWith("/")
         ? karya.gambar_poster
         : `${base}/${karya.gambar_poster}`;
   }
@@ -81,14 +94,18 @@ function mapKaryaToCarouselItem(karya: KaryaPredikatItem): CarouselKaryaItem {
 }
 
 // Ubah data karya (is_best) dari API menjadi bentuk yang dipakai BestOfSelector
-function mapKaryaToBestOf(karya: KaryaBestOfItem, label: string): BestOfCategoryItem {
+function mapKaryaToBestOf(
+  karya: KaryaBestOfItem,
+  label: string,
+): BestOfCategoryItem {
   const base =
     process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://localhost:8000/storage";
   let image = "/image/BGSection3.png";
 
   if (karya.gambar_poster) {
     image =
-      karya.gambar_poster.startsWith("http") || karya.gambar_poster.startsWith("/")
+      karya.gambar_poster.startsWith("http") ||
+      karya.gambar_poster.startsWith("/")
         ? karya.gambar_poster
         : `${base}/${karya.gambar_poster}`;
   }
@@ -104,7 +121,9 @@ function mapKaryaToBestOf(karya: KaryaBestOfItem, label: string): BestOfCategory
 export default function HomePage() {
   const [bestWork, setBestWork] = useState<CarouselKaryaItem[]>([]);
   const [favoriteWork, setFavoriteWork] = useState<CarouselKaryaItem[]>([]);
-  const [bestOfCategories, setBestOfCategories] = useState<BestOfCategoryItem[]>([]);
+  const [bestOfCategories, setBestOfCategories] = useState<
+    BestOfCategoryItem[]
+  >([]);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const activeMedia = releaseMedia[activeMediaIndex];
   const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -215,29 +234,25 @@ export default function HomePage() {
       .catch((err) => console.error("Failed to fetch favorite work:", err));
   }, []);
 
-  // Fetch karya "Best Of" (is_best: 1 = Innovation, 2 = Design, 3 = System)
+  // Fetch karya "Best Of" untuk ke-7 kategori
   useEffect(() => {
-    Promise.all([
-      GetKaryaBestOfAktif(1),
-      GetKaryaBestOfAktif(2),
-      GetKaryaBestOfAktif(3),
-    ])
-      .then(([innovation, design, system]) => {
+    Promise.all(BEST_OF_IDS.map((id) => GetKaryaBestOfAktif(id)))
+      .then((results) => {
         const items: BestOfCategoryItem[] = [];
 
-        if (innovation.status === "success" && innovation.data[0]) {
-          items.push(mapKaryaToBestOf(innovation.data[0], BEST_OF_LABELS[1]));
-        }
-        if (design.status === "success" && design.data[0]) {
-          items.push(mapKaryaToBestOf(design.data[0], BEST_OF_LABELS[2]));
-        }
-        if (system.status === "success" && system.data[0]) {
-          items.push(mapKaryaToBestOf(system.data[0], BEST_OF_LABELS[3]));
-        }
+        results.forEach((result, i) => {
+          const id = BEST_OF_IDS[i];
+
+          if (result.status === "success" && result.data[0]) {
+            items.push(mapKaryaToBestOf(result.data[0], BEST_OF_LABELS[id]));
+          }
+        });
 
         setBestOfCategories(items);
       })
-      .catch((err) => console.error("Failed to fetch best of categories:", err));
+      .catch((err) =>
+        console.error("Failed to fetch best of categories:", err),
+      );
   }, []);
 
   return (
@@ -260,11 +275,10 @@ export default function HomePage() {
       </section>
 
       {/* SECTION 1.5 - In Collaboration With (logo strip) */}
-<section className="bg-main-blue w-full">
-  <div className="autoMid py-12 sm:py-16 lg:py-20 flex flex-col items-center">
-
-    <div
-      className="
+      <section className="bg-main-blue w-full">
+        <div className="autoMid py-12 sm:py-16 lg:py-20 flex flex-col items-center">
+          <div
+            className="
         grid
         grid-cols-2
         sm:grid-cols-4
@@ -277,11 +291,11 @@ export default function HomePage() {
         w-full
         max-w-6xl
       "
-    >
-      {collaborators.map((logo, i) => (
-        <div
-          key={i}
-          className="
+          >
+            {collaborators.map((logo, i) => (
+              <div
+                key={i}
+                className="
             w-28 h-28
             sm:w-34 sm:h-34
             md:w-42 md:h-42
@@ -295,19 +309,17 @@ export default function HomePage() {
             lg:p-6
             shadow-lg
           "
-        >
-          <img
-            src={logo.src}
-            alt={logo.alt}
-            className="w-full h-full object-contain"
-          />
+              >
+                <img
+                  src={logo.src}
+                  alt={logo.alt}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      ))}
-    </div>
-
-  </div>
-</section>
-
+      </section>
 
       {/* SECTION 2 - Release Announcement (Steam-style: click a thumbnail to swap the main preview) */}
       <section id="release" className="bg-[#3612C7] w-full scroll-mt-24">
@@ -548,7 +560,8 @@ export default function HomePage() {
         <div
           className="
       autoMid
-      py-[68px]
+      py-10
+      sm:py-[68px]
       px-4
       sm:px-6
       lg:px-0
@@ -557,7 +570,6 @@ export default function HomePage() {
       items-center
       gap-8
       sm:gap-10
-      min-h-[780px]
       sm:min-h-[850px]
       md:min-h-[930px]
     "
@@ -566,10 +578,12 @@ export default function HomePage() {
             <p className="font-poppins font-bold text-4xl lg:text-5xl leading-none">
               BEST OF
             </p>
-        
           </div>
 
-          <BestOfSelector data={bestOfCategories} />
+          <BestOfSelector
+            data={bestOfCategories}
+            placeholderLabels={BEST_OF_PLACEHOLDER_LABELS}
+          />
         </div>
       </section>
 
@@ -579,8 +593,12 @@ export default function HomePage() {
         <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] flex flex-col items-center gap-10 px-4 sm:px-6 lg:px-0 lg:grid lg:grid-cols-8 lg:items-start">
           {/* Title - mobile only, centered, first */}
           <div className="order-1 lg:hidden text-main-blue text-center">
-            <p className="font-poppins font-thin text-4xl leading-none">CHAMPIONS OF</p>
-            <p className="font-tilt-wrap font-bold text-4xl leading-none">12 CATEGORY</p>
+            <p className="font-poppins font-thin text-4xl leading-none">
+              CHAMPIONS OF
+            </p>
+            <p className="font-tilt-wrap font-bold text-4xl leading-none">
+              12 CATEGORY
+            </p>
           </div>
 
           {/* Carousel */}
@@ -597,8 +615,12 @@ export default function HomePage() {
           {/* Desktop: title + description combined (unchanged) */}
           <div className="hidden lg:flex lg:order-1 lg:col-span-5 flex-col gap-8">
             <div className="text-main-blue">
-              <p className="font-poppins font-thin text-5xl lg:text-6xl leading-none">CHAMPIONS OF </p>
-              <p className="font-tilt-wrap font-bold text-5xl lg:text-6xl leading-none">12 CATEGORY</p>
+              <p className="font-poppins font-thin text-5xl lg:text-6xl leading-none">
+                CHAMPIONS OF{" "}
+              </p>
+              <p className="font-tilt-wrap font-bold text-5xl lg:text-6xl leading-none">
+                12 CATEGORY
+              </p>
             </div>
             <div className="grid gap-5 max-w-[500px]">
               {[
@@ -638,8 +660,12 @@ export default function HomePage() {
         <div className="autoMid pt-[68px] pb-[78px] min-h-[580px] flex flex-col items-center gap-10 px-4 sm:px-6 lg:px-0 lg:grid lg:grid-cols-8 lg:items-start">
           {/* Title - mobile only, centered, first */}
           <div className="order-1 lg:hidden text-main-blue text-center">
-            <p className="font-poppins font-thin text-4xl leading-none">SECOND CHAMPIONS</p>
-            <p className="font-tilt-wrap font-bold text-4xl leading-none">OF 12 CATEGORY</p>
+            <p className="font-poppins font-thin text-4xl leading-none">
+              SECOND CHAMPIONS
+            </p>
+            <p className="font-tilt-wrap font-bold text-4xl leading-none">
+              OF 12 CATEGORY
+            </p>
           </div>
 
           {/* Carousel */}
@@ -656,8 +682,12 @@ export default function HomePage() {
           {/* Desktop: title + description combined (unchanged) */}
           <div className="hidden lg:flex lg:order-2 lg:col-span-5 flex-col gap-8">
             <div className="text-main-blue flex flex-col items-end text-right">
-              <p className="font-poppins font-thin text-5xl lg:text-6xl leading-none">SECOND CHAMPIONS</p>
-              <p className="font-tilt-wrap font-bold text-5xl lg:text-6xl leading-none">OF 12 CATEGORY</p>
+              <p className="font-poppins font-thin text-5xl lg:text-6xl leading-none">
+                SECOND CHAMPIONS
+              </p>
+              <p className="font-tilt-wrap font-bold text-5xl lg:text-6xl leading-none">
+                OF 12 CATEGORY
+              </p>
             </div>
             <div className="grid gap-5">
               {[
