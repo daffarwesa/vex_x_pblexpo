@@ -692,11 +692,11 @@ function RemotePlayerMesh({ player, modelUrl }: { player: RemotePlayer; modelUrl
           rotation.y group di atas (yang ngikutin arah hadap karakter).
           Sebelumnya Text ikut muter bareng badan, jadi kelihatan kepotong/
           kebalik pas karakter nengok ke arah tertentu. */}
-      <Billboard position={[0, 1, 0]}>
+      {/* <Billboard position={[0, 1, 0]}>
         <Text fontSize={0.28} color="black" anchorX="center" anchorY="middle">
           {player.name}
         </Text>
-      </Billboard>
+      </Billboard> */}
     </group>
   );
 }
