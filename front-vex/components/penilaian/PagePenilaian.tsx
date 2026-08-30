@@ -163,13 +163,26 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
     fetchData();
   }, []);
 
-  // Helper poster url
+  // Helper poster url (dukung file lokal storage & direct Google Drive image)
   const getPosterSrc = (karya: PenilaianItem) => {
-    if (!karya.gambar_poster) return "/images/placeholder-karya.jpg";
-    if (karya.gambar_poster.startsWith("http")) return karya.gambar_poster;
+    if (!karya.gambar_poster) return "/image/defaultposter.png";
+    const raw = karya.gambar_poster.trim();
+
+    // Jika link Google Drive, ekstrak file ID menjadi direct image URL
+    if (raw.includes("drive.google.com")) {
+      const match =
+        raw.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+        raw.match(/id=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        return `https://lh3.googleusercontent.com/d/${match[1]}`;
+      }
+    }
+
+    if (raw.startsWith("http")) return raw;
+
     const base =
       process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://localhost:8000/storage";
-    return `${base}/${karya.gambar_poster}`;
+    return `${base}/${raw}`;
   };
 
   // Group karya per kategori
