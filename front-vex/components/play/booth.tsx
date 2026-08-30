@@ -37,15 +37,20 @@ function loadCachedTexture(
 // bisa dipakai langsung sebagai texture WebGL (beda dari <img>/<Image>
 // biasa yang tidak butuh CORS). Di-proxy lewat backend sendiri supaya
 // dapat header Access-Control-Allow-Origin yang benar.
-function toProxiedUrl(url: string): string {
+export function toProxiedUrl(url: string): string {
   if (!url) return "";
   const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   
-  if (url.includes("drive.google.com")) {
+  if (url.includes("drive.google.com") || url.includes("googleusercontent.com") || url.includes("docs.google.com")) {
     return `${base}/api/experience/proxy-image?url=${encodeURIComponent(url)}`;
   }
   if (url.startsWith("/storage/")) {
-    return `${base}${url}`;
+    const path = url.replace(/^\/storage\//, "");
+    return `${base}/api/experience/poster/${path}`;
+  }
+  if (url.includes("/storage/")) {
+    const parts = url.split("/storage/");
+    return `${base}/api/experience/poster/${parts[1].replace(/^\//, "")}`;
   }
   return url;
 }

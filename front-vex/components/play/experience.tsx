@@ -5,7 +5,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 
-import Booth from "./booth";
+import Booth, { toProxiedUrl } from "./booth";
 import Player from "./player";
 import CameraSwitcher from "./cameraSwitcher";
 import { sharedTextureLoader } from "@/components/shared/ui/LoadingManager";
@@ -372,7 +372,7 @@ function ExperienceInner({
         }) ?? null;
 
         if (karya?.poster) {
-          loadTextureSafe(karya.poster, (tex) => {
+          loadTextureSafe(toProxiedUrl(karya.poster), (tex) => {
             disposeMaterial(obj);
             obj.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
           }, true);

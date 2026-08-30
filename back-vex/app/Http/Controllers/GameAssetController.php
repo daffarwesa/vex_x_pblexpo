@@ -52,7 +52,7 @@ class GameAssetController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => config('app.frontend_url'),
+            'Access-Control-Allow-Origin' => '*',
             'Access-Control-Allow-Methods' => 'GET, OPTIONS',
             'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
@@ -74,7 +74,44 @@ class GameAssetController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'image/png',
-            'Access-Control-Allow-Origin' => config('app.frontend_url'),
+            'Access-Control-Allow-Origin' => '*',
+            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
+            'Access-Control-Allow-Headers' => '*',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    // ====================
+    // SERVE POSTER IMAGE (DENGAN CORS HEADER UNTUK THREE.JS)
+    // ====================
+    public function servePoster($path)
+    {
+        // Proteksi path traversal
+        $cleanPath = str_replace('..', '', $path);
+        $cleanPath = ltrim($cleanPath, '/');
+
+        // Cek path langsung (misal: karya/poster/xxx.png)
+        $fullPath = storage_path('app/public/' . $cleanPath);
+
+        // Fallback jika hanya nama file
+        if (!file_exists($fullPath)) {
+            $fullPath = storage_path('app/public/karya/poster/' . basename($cleanPath));
+        }
+
+        // Fallback ke public/storage
+        if (!file_exists($fullPath)) {
+            $fullPath = public_path('storage/' . $cleanPath);
+        }
+
+        if (!file_exists($fullPath) || is_dir($fullPath)) {
+            return response()->json(['error' => 'File poster tidak ditemukan'], 404);
+        }
+
+        $mime = mime_content_type($fullPath) ?: 'image/png';
+
+        return response()->file($fullPath, [
+            'Content-Type' => $mime,
+            'Access-Control-Allow-Origin' => '*',
             'Access-Control-Allow-Methods' => 'GET, OPTIONS',
             'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
@@ -98,7 +135,7 @@ class GameAssetController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => config('app.frontend_url'),
+            'Access-Control-Allow-Origin' => '*',
             'Access-Control-Allow-Methods' => 'GET, OPTIONS',
             'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
@@ -130,7 +167,7 @@ class GameAssetController extends Controller
 
         return response()->file($path, [
             'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => config('app.frontend_url'),
+            'Access-Control-Allow-Origin' => '*',
             'Access-Control-Allow-Methods' => 'GET, OPTIONS',
             'Access-Control-Allow-Headers' => '*',
             'Cache-Control' => 'public, max-age=86400',
@@ -227,11 +264,20 @@ class GameAssetController extends Controller
 
         // Kalau sudah berupa URL penuh lainnya (http/https), pakai apa adanya
         if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            // Jika merujuk ke storage lokal, arahkan ke endpoint experience poster agar ada CORS header
+            if (str_contains($value, '/storage/')) {
+                $parts = explode('/storage/', $value);
+                return url('/api/experience/poster/' . ltrim($parts[1], '/'));
+            }
             return $value;
         }
 
-        // Selain itu anggap file yang diupload lokal ke storage
-        return '/storage/' . $value;
+        // Selain itu anggap file yang diupload lokal ke storage — di-serve lewat experience/poster
+        $cleanValue = ltrim($value, '/');
+        if (str_starts_with($cleanValue, 'storage/')) {
+            $cleanValue = substr($cleanValue, 8);
+        }
+        return url('/api/experience/poster/' . $cleanValue);
     }
 
     // ========================================
@@ -318,48 +364,56 @@ class GameAssetController extends Controller
     {
         $url = $request->query('url');
 
-        // Cuma izinkan proxy untuk Google Drive, biar nggak disalahgunakan
-        // jadi open proxy untuk situs sembarangan.
-        if (!$url || !str_starts_with($url, 'https://drive.google.com/')) {
+        // Cuma izinkan proxy untuk domain Google Drive / Google User Content
+        $isAllowed = $url && (
+            str_starts_with($url, 'https://drive.google.com/') ||
+            str_starts_with($url, 'https://lh3.googleusercontent.com/') ||
+            str_starts_with($url, 'https://docs.google.com/')
+        );
+
+        if (!$isAllowed) {
             abort(400, 'URL tidak valid');
         }
 
-        // Nonaktifkan redirect — mencegah SSRF via redirect dari Google Drive
-        // ke URL internal atau URL yang tidak diharapkan.
-        $response = Http::timeout(10)
-            ->withOptions(['allow_redirects' => false])
-            ->get($url);
+        try {
+            $response = Http::timeout(15)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                ])
+                ->withOptions([
+                    'allow_redirects' => [
+                        'max' => 5,
+                        'protocols' => ['https'],
+                        'strict' => false,
+                    ],
+                ])
+                ->get($url);
 
-        // Tolak jika server mengembalikan redirect (3xx)
-        if ($response->redirect()) {
-            abort(400, 'Redirect tidak diizinkan');
+            if (!$response->successful()) {
+                abort(502, 'Gagal mengambil gambar dari sumber eksternal');
+            }
+
+            // Batasi ukuran response — cegah memory exhaustion dari file besar
+            $maxSize = 10 * 1024 * 1024; // 10 MB
+            $body = $response->body();
+            if (strlen($body) > $maxSize) {
+                abort(413, 'File terlalu besar (maks 10 MB)');
+            }
+
+            $contentType = $response->header('Content-Type') ?? 'image/jpeg';
+
+            // Jika content type bukan image, tetap cek magic bytes atau izinkan format gambar umum
+            if (!str_starts_with($contentType, 'image/')) {
+                $contentType = 'image/jpeg';
+            }
+
+            return response($body, 200)
+                ->header('Content-Type', $contentType)
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Cache-Control', 'public, max-age=86400');
+        } catch (\Throwable $e) {
+            \Log::error('Proxy image error: ' . $e->getMessage(), ['url' => $url]);
+            abort(502, 'Gagal memproses gambar');
         }
-
-        if (!$response->successful()) {
-            abort(502, 'Gagal mengambil gambar');
-        }
-
-        // Batasi ukuran response — cegah memory exhaustion dari file besar
-        $contentLength = (int) $response->header('Content-Length');
-        $maxSize       = 10 * 1024 * 1024; // 10 MB
-        if ($contentLength > $maxSize) {
-            abort(413, 'File terlalu besar (maks 10 MB)');
-        }
-
-        $contentType = $response->header('Content-Type');
-
-        if (!$contentType || !str_starts_with($contentType, 'image/')) {
-            abort(415, 'File bukan gambar');
-        }
-
-        // Validasi ulang ukuran body yang sebenarnya diterima
-        $body = $response->body();
-        if (strlen($body) > $maxSize) {
-            abort(413, 'File terlalu besar (maks 10 MB)');
-        }
-
-        return response($body, 200)
-            ->header('Content-Type', $contentType)
-            ->header('Cache-Control', 'public, max-age=86400');
     }
 }

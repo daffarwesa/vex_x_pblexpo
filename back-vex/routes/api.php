@@ -114,6 +114,7 @@ Route::prefix('experience')->middleware('throttle:60,1')->group(function () {
     Route::get('/hall-model/{modelId}', [GameAssetController::class, 'serveHallModel']);
     Route::get('/booth-model/{filename}', [GameAssetController::class, 'serveBoothModel']);
     Route::get('/num/{filename}', [GameAssetController::class, 'serveNumImage']);
+    Route::get('/poster/{path}', [GameAssetController::class, 'servePoster'])->where('path', '.*');
     Route::get('/karya/pameran/{id_pameran}', [GameAssetController::class, 'karyaByPameran']);
     // Proxy image: lebih ketat — 30 req/menit per IP
     Route::get('/proxy-image', [GameAssetController::class, 'proxyImage'])
