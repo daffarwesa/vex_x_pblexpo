@@ -139,11 +139,18 @@ export default function DetailKarya({ id }: Props) {
           const bulan = tanggalMulai ? new Date(tanggalMulai).getMonth() + 1 : 0;
           const semester = bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
 
-          const posterUrl = item.gambar_poster
-            ? item.gambar_poster.startsWith("http")
-              ? item.gambar_poster
-              : `${storageBase}/${item.gambar_poster}`
-            : "";
+          const rawPoster = item.gambar_poster ? String(item.gambar_poster).trim() : "";
+          let posterUrl = "";
+
+          if (rawPoster) {
+            if (rawPoster.includes("drive.google.com")) {
+              posterUrl = extractDriveDirectUrl(rawPoster);
+            } else if (rawPoster.startsWith("http")) {
+              posterUrl = rawPoster;
+            } else {
+              posterUrl = `${storageBase}/${rawPoster}`;
+            }
+          }
 
           const found: KaryaItem = {
             id: item.id_karya,
@@ -167,10 +174,13 @@ export default function DetailKarya({ id }: Props) {
           };
 
           setForm(found);
-          setPosterPreview(found.image);
-          if (item.gambar_poster && item.gambar_poster.startsWith("http")) {
+          setPosterPreview(posterUrl);
+
+          if (rawPoster.includes("drive.google.com") || rawPoster.startsWith("http")) {
             setPosterMode("drive");
-            setPosterDriveUrl(item.gambar_poster);
+            setPosterDriveUrl(rawPoster);
+          } else if (rawPoster) {
+            setPosterMode("file");
           }
 
           if (found.pameranId) {
