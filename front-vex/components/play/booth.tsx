@@ -39,12 +39,7 @@ function loadCachedTexture(
 // dapat header Access-Control-Allow-Origin yang benar.
 function toProxiedUrl(url: string): string {
   if (!url) return url;
-  // Beberapa link Google Drive muncul dalam format domain yang beda-beda
-  // (drive.google.com/... ATAU lh3.googleusercontent.com/d/...), keduanya
-  // sama-sama tidak kirim header CORS jadi harus di-proxy.
-  const isGoogleHosted =
-    url.includes("drive.google.com") || url.includes("googleusercontent.com");
-  if (isGoogleHosted) {
+  if (url.includes("drive.google.com")) {
     const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
     return `${base}/api/experience/proxy-image?url=${encodeURIComponent(url)}`;
   }
@@ -213,24 +208,8 @@ export default function Booth({
   }, [scene, idKarya, numBaseUrl]);
 
   useEffect(() => {
-    if (!posterMesh.current) return;
+    if (!poster || !posterMesh.current) return;
     let cancelled = false;
-
-    // Placeholder lokal dulu, ringan & instant — panel tidak kelihatan
-    // kosong/pecah sementara player belum cukup deket buat trigger load
-    // texture asli (lihat useFrame di atas).
-    loadCachedTexture("/image/defaultposter.png", (tex) => {
-      if (cancelled || !posterMesh.current) return;
-      (posterMesh.current.material as THREE.Material)?.dispose?.();
-      posterMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
-    });
-
-    if (!shouldLoad) return () => { cancelled = true; };
-
-    // Kalau poster kosong, tetap pakai default (sudah di-set di atas).
-    // Tidak perlu di-proxy kalau bukan link Google Drive.
-    if (!poster) return () => { cancelled = true; };
-
     loadCachedTexture(toProxiedUrl(poster), (tex) => {
       if (cancelled || !posterMesh.current) return;
       (posterMesh.current.material as THREE.Material)?.dispose?.();
@@ -240,19 +219,8 @@ export default function Booth({
   }, [poster, scene, shouldLoad]);
 
   useEffect(() => {
-    if (!sampulMesh.current) return;
+    if (!sampul || !sampulMesh.current) return;
     let cancelled = false;
-
-    // Placeholder lokal dulu, sama seperti poster di atas.
-    loadCachedTexture("/image/defaultbanner.png", (tex) => {
-      if (cancelled || !sampulMesh.current) return;
-      (sampulMesh.current.material as THREE.Material)?.dispose?.();
-      sampulMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
-    }, true);
-
-    if (!shouldLoad) return () => { cancelled = true; };
-    if (!sampul) return () => { cancelled = true; };
-
     loadCachedTexture(toProxiedUrl(sampul), (tex) => {
       if (cancelled || !sampulMesh.current) return;
       (sampulMesh.current.material as THREE.Material)?.dispose?.();

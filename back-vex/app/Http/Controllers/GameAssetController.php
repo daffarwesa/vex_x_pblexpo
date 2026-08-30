@@ -321,29 +321,9 @@ class GameAssetController extends Controller
     {
         $url = $request->query('url');
 
-        if (!$url) {
-            abort(400, 'URL tidak valid');
-        }
-
-        // Cuma izinkan proxy untuk host Google yang memang dipakai untuk
-        // thumbnail/gambar (drive.google.com & lh3.googleusercontent.com),
-        // biar nggak disalahgunakan jadi open proxy untuk situs sembarangan.
-        // Validasi berdasarkan host asli (bukan cuma prefix string) supaya
-        // tidak bisa dikelabui pakai trik semacam
-        // "https://drive.google.com.evil.com/...".
-        $host = parse_url($url, PHP_URL_HOST);
-        $scheme = parse_url($url, PHP_URL_SCHEME);
-
-        $allowedHosts = [
-            'drive.google.com',
-            'lh3.googleusercontent.com',
-        ];
-
-        $isAllowed = $scheme === 'https'
-            && $host !== null
-            && in_array(strtolower($host), $allowedHosts, true);
-
-        if (!$isAllowed) {
+        // Cuma izinkan proxy untuk Google Drive, biar nggak disalahgunakan
+        // jadi open proxy untuk situs sembarangan.
+        if (!$url || !str_starts_with($url, 'https://drive.google.com/')) {
             abort(400, 'URL tidak valid');
         }
 
