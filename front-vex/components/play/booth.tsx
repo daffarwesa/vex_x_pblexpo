@@ -39,7 +39,12 @@ function loadCachedTexture(
 // dapat header Access-Control-Allow-Origin yang benar.
 function toProxiedUrl(url: string): string {
   if (!url) return url;
-  if (url.includes("drive.google.com")) {
+  // Beberapa link Google Drive muncul dalam format domain yang beda-beda
+  // (drive.google.com/... ATAU lh3.googleusercontent.com/d/...), keduanya
+  // sama-sama tidak kirim header CORS jadi harus di-proxy.
+  const isGoogleHosted =
+    url.includes("drive.google.com") || url.includes("googleusercontent.com");
+  if (isGoogleHosted) {
     const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
     return `${base}/api/experience/proxy-image?url=${encodeURIComponent(url)}`;
   }
@@ -178,9 +183,12 @@ export default function Booth({
   }, [scene, idKarya, numBaseUrl]);
 
   useEffect(() => {
-    if (!poster || !posterMesh.current) return;
+    if (!posterMesh.current) return;
+    // Kalau poster kosong, pakai gambar default dari public/image —
+    // tidak perlu di-proxy karena bukan link Google Drive.
+    const posterSrc = poster ? toProxiedUrl(poster) : "/image/defaultposter.png";
     let cancelled = false;
-    loadCachedTexture(toProxiedUrl(poster), (tex) => {
+    loadCachedTexture(posterSrc, (tex) => {
       if (cancelled || !posterMesh.current) return;
       (posterMesh.current.material as THREE.Material)?.dispose?.();
       posterMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
@@ -189,9 +197,11 @@ export default function Booth({
   }, [poster, scene]);
 
   useEffect(() => {
-    if (!sampul || !sampulMesh.current) return;
+    if (!sampulMesh.current) return;
+    // Sama seperti poster: kalau sampul kosong, fallback ke default lokal.
+    const sampulSrc = sampul ? toProxiedUrl(sampul) : "/image/defaultbanner.png";
     let cancelled = false;
-    loadCachedTexture(toProxiedUrl(sampul), (tex) => {
+    loadCachedTexture(sampulSrc, (tex) => {
       if (cancelled || !sampulMesh.current) return;
       (sampulMesh.current.material as THREE.Material)?.dispose?.();
       sampulMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
