@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useCallback } from "react";
+import { useEffect, useMemo, useRef, useCallback, useState } from "react";
 import { useGLTF } from "@react-three/drei";
-import { useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { sharedTextureLoader } from "@/components/shared/ui/LoadingManager";
 import { PrimaryMaterial, createSecondaryMaterial } from "@/components/play/boothMaterials";
@@ -99,6 +99,36 @@ export default function Booth({
   const posterMesh = useRef<THREE.Mesh | null>(null);
   const sampulMesh = useRef<THREE.Mesh | null>(null);
 
+  const { camera, scene: world } = useThree();
+
+  /* ===================== */
+  /* LAZY LOAD BERDASARKAN JARAK                                           */
+  /* Dulu semua booth (bisa sampai 161) langsung fetch poster+sampul saat  */
+  /* mount, jadi ratusan request nembak bareng dan bikin scene freeze.     */
+  /* Sekarang texture ASLI baru di-load begitu player masuk radius         */
+  /* LOAD_DISTANCE dari booth ini. Placeholder lokal tetap ditampilkan     */
+  /* dari awal (lihat dua useEffect di bawah) supaya panel tidak kelihatan */
+  /* kosong sebelum player mendekat.                                      */
+  /* ===================== */
+  const LOAD_DISTANCE = 20; // meter
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const boothWorldPos = useMemo(
+    () => new THREE.Vector3(...position),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [position[0], position[1], position[2]]
+  );
+  const distCheckTimer = useRef(0);
+
+  useFrame((_, delta) => {
+    if (shouldLoad) return; // sudah ke-trigger, tidak perlu cek lagi
+    distCheckTimer.current += delta;
+    if (distCheckTimer.current < 0.3) return; // throttle, tidak perlu tiap frame
+    distCheckTimer.current = 0;
+    if (camera.position.distanceTo(boothWorldPos) < LOAD_DISTANCE) {
+      setShouldLoad(true);
+    }
+  });
+
   useEffect(() => {
     scene.traverse((obj: any) => {
       if (!obj.isMesh) return;
@@ -184,32 +214,53 @@ export default function Booth({
 
   useEffect(() => {
     if (!posterMesh.current) return;
-    // Kalau poster kosong, pakai gambar default dari public/image —
-    // tidak perlu di-proxy karena bukan link Google Drive.
-    const posterSrc = poster ? toProxiedUrl(poster) : "/image/defaultposter.png";
     let cancelled = false;
-    loadCachedTexture(posterSrc, (tex) => {
+
+    // Placeholder lokal dulu, ringan & instant — panel tidak kelihatan
+    // kosong/pecah sementara player belum cukup deket buat trigger load
+    // texture asli (lihat useFrame di atas).
+    loadCachedTexture("/image/defaultposter.png", (tex) => {
+      if (cancelled || !posterMesh.current) return;
+      (posterMesh.current.material as THREE.Material)?.dispose?.();
+      posterMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
+    });
+
+    if (!shouldLoad) return () => { cancelled = true; };
+
+    // Kalau poster kosong, tetap pakai default (sudah di-set di atas).
+    // Tidak perlu di-proxy kalau bukan link Google Drive.
+    if (!poster) return () => { cancelled = true; };
+
+    loadCachedTexture(toProxiedUrl(poster), (tex) => {
       if (cancelled || !posterMesh.current) return;
       (posterMesh.current.material as THREE.Material)?.dispose?.();
       posterMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
     });
     return () => { cancelled = true; };
-  }, [poster, scene]);
+  }, [poster, scene, shouldLoad]);
 
   useEffect(() => {
     if (!sampulMesh.current) return;
-    // Sama seperti poster: kalau sampul kosong, fallback ke default lokal.
-    const sampulSrc = sampul ? toProxiedUrl(sampul) : "/image/defaultbanner.png";
     let cancelled = false;
-    loadCachedTexture(sampulSrc, (tex) => {
+
+    // Placeholder lokal dulu, sama seperti poster di atas.
+    loadCachedTexture("/image/defaultbanner.png", (tex) => {
+      if (cancelled || !sampulMesh.current) return;
+      (sampulMesh.current.material as THREE.Material)?.dispose?.();
+      sampulMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
+    }, true);
+
+    if (!shouldLoad) return () => { cancelled = true; };
+    if (!sampul) return () => { cancelled = true; };
+
+    loadCachedTexture(toProxiedUrl(sampul), (tex) => {
       if (cancelled || !sampulMesh.current) return;
       (sampulMesh.current.material as THREE.Material)?.dispose?.();
       sampulMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
     }, true);
     return () => { cancelled = true; };
-  }, [sampul, scene]);
+  }, [sampul, scene, shouldLoad]);
 
-  const { camera, scene: world } = useThree();
   const occlusionRay = useRef(new THREE.Raycaster());
   const MAX_INTERACT_DISTANCE = 8;
 

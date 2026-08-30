@@ -216,7 +216,10 @@ class GameAssetController extends Controller
     // ========================================
     private function getPosterUrl($value)
     {
-        if (!$value) {
+        // Seeder pakai '-' sebagai placeholder untuk data yang belum diisi.
+        // Perlakukan sama seperti kosong/null, supaya frontend jatuh ke
+        // defaultposter.png alih-alih coba load '/storage/-' (404).
+        if (!$value || trim($value) === '-') {
             return null;
         }
 
@@ -239,7 +242,7 @@ class GameAssetController extends Controller
     // ========================================
     private function getSampulThumbnail($url)
     {
-        if (!$url) {
+        if (!$url || trim($url) === '-') {
             return null;
         }
 

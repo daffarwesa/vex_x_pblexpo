@@ -22,6 +22,13 @@ return new class extends Migration {
             $table->text('deskripsi');
             $table->string('tautan');
             $table->string('gambar_poster');
+            // Path lokal (storage/app/public/...) hasil download + resize dari
+            // gambar_poster (Google Drive) / tautan (YouTube atau Google
+            // Drive) lewat `php artisan karya:sync-assets`. Kalau terisi,
+            // GameAssetController pakai file lokal ini alih-alih fetch/proxy
+            // ke Google secara live tiap request.
+            $table->string('poster_local')->nullable();
+            $table->string('sampul_local')->nullable();
             $table->enum('predikat', ['1', '2'])->nullable()->default(null);
             $table->enum('is_best', ['1', '2', '3', '4', '5', '6', '7'])->nullable()->default(null);
         });
