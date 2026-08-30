@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Karya;
 use App\Models\Pameran;
 
@@ -277,9 +279,9 @@ class GameAssetController extends Controller
             return null;
         }
 
-        // Endpoint thumbnail tidak resmi Google Drive.
-        // sz=w1000 mengatur lebar thumbnail (bisa disesuaikan, misal w500, w1000, dst).
-        return "https://drive.google.com/thumbnail?id={$fileId}&sz=w1000";
+        // Endpoint thumbnail Google Drive.
+        // sz=w400 optimal & cepat untuk thumbnail booth 3D (ukuran ~30-50KB vs ~800KB).
+        return "https://drive.google.com/thumbnail?id={$fileId}&sz=w400";
     }
 
     // ========================
@@ -344,21 +346,34 @@ class GameAssetController extends Controller
             abort(400, 'URL tidak valid');
         }
 
-        $response = Http::timeout(10)->get($url);
+        // Cache hasil download image di server selama 7 hari
+        $cacheKey = 'proxy_img_' . md5($url);
+        $cachedData = Cache::remember($cacheKey, 60 * 60 * 24 * 7, function () use ($url) {
+            $response = Http::timeout(12)->get($url);
 
-        if (!$response->successful()) {
+            if (!$response->successful()) {
+                return null;
+            }
+
+            $contentType = $response->header('Content-Type');
+            if (!$contentType || !str_starts_with($contentType, 'image/')) {
+                return null;
+            }
+
+            return [
+                'body' => base64_encode($response->body()),
+                'type' => $contentType,
+            ];
+        });
+
+        if (!$cachedData) {
+            Cache::forget($cacheKey);
             abort(502, 'Gagal mengambil gambar');
         }
 
-        $contentType = $response->header('Content-Type');
-
-        if (!$contentType || !str_starts_with($contentType, 'image/')) {
-            abort(415, 'File bukan gambar');
-        }
-
-        return response($response->body(), 200)
-            ->header('Content-Type', $contentType)
-            ->header('Access-Control-Allow-Origin', config('app.frontend_url'))
-            ->header('Cache-Control', 'public, max-age=86400');
+        return response(base64_decode($cachedData['body']), 200)
+            ->header('Content-Type', $cachedData['type'])
+            ->header('Access-Control-Allow-Origin', config('app.frontend_url') ?? '*')
+            ->header('Cache-Control', 'public, max-age=604800, immutable');
     }
 }

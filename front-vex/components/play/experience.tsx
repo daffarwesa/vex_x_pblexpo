@@ -84,6 +84,8 @@ function loadCachedTexture(
     (tex) => {
       tex.flipY = flipY;
       tex.colorSpace = THREE.SRGBColorSpace;
+      tex.generateMipmaps = false;
+      tex.minFilter = THREE.LinearFilter;
       textureCache.set(path, tex);
       onLoad(tex);
     },
@@ -374,7 +376,11 @@ function ExperienceInner({
         }) ?? null;
 
         if (karya?.poster) {
-          loadTextureSafe(karya.poster, (tex) => {
+          const posterUrl = karya.poster.includes("drive.google.com") || karya.poster.includes("googleusercontent.com")
+            ? `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/experience/proxy-image?url=${encodeURIComponent(karya.poster)}`
+            : karya.poster;
+
+          loadTextureSafe(posterUrl, (tex) => {
             disposeMaterial(obj);
             obj.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
           }, true);
@@ -474,6 +480,7 @@ function ExperienceInner({
           cameraMode={cameraMode}
           mobile={mobile}
           numBaseUrl={numBaseUrl}
+          playerPositionRef={playerPositionRef}
           openPoster={openPoster}
           openTautan={openTautan}
         />

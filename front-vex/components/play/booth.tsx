@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useCallback } from "react";
+import { useEffect, useMemo, useRef, useCallback, useState } from "react";
 import { useGLTF } from "@react-three/drei";
-import { useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { sharedTextureLoader } from "@/components/shared/ui/LoadingManager";
 import { PrimaryMaterial, createSecondaryMaterial } from "@/components/play/boothMaterials";
@@ -25,6 +25,8 @@ function loadCachedTexture(
     (tex) => {
       tex.flipY = flipY;
       tex.colorSpace = THREE.SRGBColorSpace;
+      tex.generateMipmaps = false;
+      tex.minFilter = THREE.LinearFilter;
       textureCache.set(path, tex);
       onLoad(tex);
     },
@@ -75,6 +77,7 @@ type BoothProps = {
   cameraMode?: "first" | "third";
   mobile?: boolean;
   numBaseUrl?: string | null;
+  playerPositionRef?: React.MutableRefObject<THREE.Vector3>;
   openPoster: (src: string, booth: string) => void;
   openTautan: (url: string, booth: string) => void;
 };
@@ -84,10 +87,29 @@ export default function Booth({
   quaternion = [0, 0, 0, 1],
   boothName, poster, sampul, tautan, modelPath,
   idKarya, idKategori, cameraMode, mobile, numBaseUrl,
+  playerPositionRef,
   openPoster, openTautan,
 }: BoothProps) {
   const gltf = useGLTF(modelPath);
   const scene = useMemo(() => gltf.scene.clone(), [gltf]);
+
+  // Jarak render & LOD texture (di HP radius lebih hemat)
+  const [isInRange, setIsInRange] = useState(false);
+  const [isNearForTexture, setIsNearForTexture] = useState(false);
+  const boothWorldPos = useMemo(() => new THREE.Vector3(...position), [position]);
+
+  const RENDER_RADIUS = mobile ? 22 : 32;
+  const TEXTURE_RADIUS = mobile ? 14 : 22;
+
+  useFrame((_, delta) => {
+    if (!playerPositionRef?.current) return;
+    const distSq = boothWorldPos.distanceToSquared(playerPositionRef.current);
+    const inRange = distSq < RENDER_RADIUS * RENDER_RADIUS;
+    const nearTex = distSq < TEXTURE_RADIUS * TEXTURE_RADIUS;
+
+    if (inRange !== isInRange) setIsInRange(inRange);
+    if (nearTex !== isNearForTexture) setIsNearForTexture(nearTex);
+  });
 
   // Gabungkan quaternion asli dari boothpoints DENGAN offset yaw tetap,
   // supaya arah depan booth.glb sinkron dengan arah yang dimaksud hall.
@@ -164,7 +186,7 @@ export default function Booth({
       numBaseUrl,
     });
 
-    if (!numMesh || idKarya == null || !numBaseUrl) return;
+    if (!numMesh || idKarya == null || !numBaseUrl || !isNearForTexture) return;
 
     let cancelled = false;
     loadCachedTexture(`${numBaseUrl.replace(/\/$/, "")}/${idKarya}.png`, (tex) => {
@@ -180,10 +202,10 @@ export default function Booth({
     return () => {
       cancelled = true;
     };
-  }, [scene, idKarya, numBaseUrl]);
+  }, [scene, idKarya, numBaseUrl, isNearForTexture]);
 
   useEffect(() => {
-    if (!posterMesh.current) return;
+    if (!posterMesh.current || !isNearForTexture) return;
     // Kalau poster kosong, pakai gambar default dari public/image —
     // tidak perlu di-proxy karena bukan link Google Drive.
     const posterSrc = poster ? toProxiedUrl(poster) : "/image/defaultposter.png";
@@ -194,10 +216,10 @@ export default function Booth({
       posterMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
     });
     return () => { cancelled = true; };
-  }, [poster, scene]);
+  }, [poster, scene, isNearForTexture]);
 
   useEffect(() => {
-    if (!sampulMesh.current) return;
+    if (!sampulMesh.current || !isNearForTexture) return;
     // Sama seperti poster: kalau sampul kosong, fallback ke default lokal.
     const sampulSrc = sampul ? toProxiedUrl(sampul) : "/image/defaultbanner.png";
     let cancelled = false;
@@ -207,7 +229,7 @@ export default function Booth({
       sampulMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
     }, true);
     return () => { cancelled = true; };
-  }, [sampul, scene]);
+  }, [sampul, scene, isNearForTexture]);
 
   const { camera, scene: world } = useThree();
   const occlusionRay = useRef(new THREE.Raycaster());
@@ -248,8 +270,8 @@ export default function Booth({
   };
 
   return (
-    <group position={position} quaternion={quaternionObj}>
-      <primitive object={scene} position={[0, 0, -1.2]} onClick={handleClick} />
+    <group position={position} quaternion={quaternionObj} visible={isInRange}>
+      {isInRange && <primitive object={scene} position={[0, 0, -1.2]} onClick={handleClick} />}
     </group>
   );
 }

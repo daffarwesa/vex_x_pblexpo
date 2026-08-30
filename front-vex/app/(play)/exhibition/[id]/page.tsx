@@ -339,7 +339,16 @@ export default function ExhibitionPage() {
       {(!isMobile || !isPortrait) && (
         <>
           {playerName && (
-            <Canvas ref={canvasRef} camera={{ position: [0, 2, 5], fov: 75 }} gl={{ preserveDrawingBuffer: true }}>
+            <Canvas
+              ref={canvasRef}
+              dpr={isMobile ? [1, 1.25] : [1, 1.5]}
+              camera={{ position: [0, 2, 5], fov: 75 }}
+              gl={{
+                preserveDrawingBuffer: false,
+                powerPreference: "high-performance",
+                antialias: !isMobile,
+              }}
+            >
               <LoaderWatcher dataReady={dataReady} onProgress={setAssetProgress} onLoaded={handleAssetsLoaded} />
               <Suspense fallback={null}>
                 <Experience
