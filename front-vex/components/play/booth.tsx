@@ -270,8 +270,10 @@ export default function Booth({
   };
 
   return (
-    <group position={position} quaternion={quaternionObj} visible={isInRange}>
-      {isInRange && <primitive object={scene} position={[0, 0, -1.2]} onClick={handleClick} />}
+    <group position={position} quaternion={quaternionObj}>
+      {/* Primitive scene selalu ter-mount agar colliders terdeteksi oleh player raycast,
+          tetapi child visual berat (poster, panel) hanya me-load texture saat dekat */}
+      <primitive object={scene} position={[0, 0, -1.2]} onClick={handleClick} visible={isInRange} />
     </group>
   );
 }

@@ -473,22 +473,18 @@ const HEARTBEAT_INTERVAL = 3;
     /* ===================== */
     /* WALL COLLISION */
     /* ===================== */
-    // Note: colliders.current hanya berisi objek ber-tag "collider" (hall,
-    // booth, dst). Mesh player lain sudah dikeluarkan sejak proses scan di
-    // atas, jadi raycast ini TIDAK PERNAH menabrak player lain — antar
-    // player otomatis saling tembus, sementara tembok/objek collider tetap
-    // menghalangi seperti biasa.
-
     moveDirVec.current.copy(nextVec.current).sub(position.current);
+    const moveDist = moveDirVec.current.length();
 
-    if (moveDirVec.current.length() > 0) {
+    if (moveDist > 0) {
       moveDirVec.current.normalize();
 
       originVec.current.copy(position.current);
       originVec.current.y -= 1;
 
       raycaster.current.set(originVec.current, moveDirVec.current);
-      raycaster.current.far = COLLISION_DISTANCE;
+      // Deteksi jarak dinamis berdasarkan kecepatan gerak agar tidak tunneling saat sprint
+      raycaster.current.far = Math.max(COLLISION_DISTANCE, moveDist + 0.3);
 
       const hits = raycaster.current.intersectObjects(colliders.current, true);
 
@@ -537,12 +533,20 @@ const HEARTBEAT_INTERVAL = 3;
     }
 
     /* ===================== */
-    /* GRAVITY */
+    /* GRAVITY & VOID SAFETY NET */
     /* ===================== */
 
     if (!grounded.current) {
       velocityY.current -= GRAVITY * dt;
       position.current.y += velocityY.current * dt;
+
+      // Jaring Pengaman Void: Jika player jatuh menembus lantai (y < -15),
+      // otomatis respawn kembali ke posisi awal pameran
+      if (position.current.y < -15) {
+        position.current.set(-740, 10, 8);
+        velocityY.current = 0;
+        grounded.current = true;
+      }
     }
 
     /* ===================== */
