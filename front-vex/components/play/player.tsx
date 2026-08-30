@@ -674,11 +674,11 @@ if (saveTimer.current >= 0.2 && playerName !== "Loading...") {
           {/* Dibungkus Billboard supaya pas dilihat teman dari sudut mana  */}
           {/* pun, nametag-nya tetap menghadap kamera mereka (bukan ikut    */}
           {/* muter sesuai rotation.y group ini).                          */}
-          <Billboard position={[0, 2.5, 0]}>
+          {/* <Billboard position={[0, 2.5, 0]}>
             <Text fontSize={0.28} color="red" anchorX="center" anchorY="middle" >
               {playerName}
             </Text>
-          </Billboard>
+          </Billboard> */}
         </group>
       )}
     </>
