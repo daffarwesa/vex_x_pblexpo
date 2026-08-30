@@ -339,7 +339,16 @@ export default function ExhibitionPage() {
       {(!isMobile || !isPortrait) && (
         <>
           {playerName && (
-            <Canvas ref={canvasRef} camera={{ position: [0, 2, 5], fov: 75 }} gl={{ preserveDrawingBuffer: true }}>
+            <Canvas
+              ref={canvasRef}
+              dpr={isMobile ? [1, 1.25] : [1, 1.5]}
+              camera={{ position: [0, 2, 5], fov: 75 }}
+              gl={{
+                preserveDrawingBuffer: false,
+                powerPreference: "high-performance",
+                antialias: !isMobile,
+              }}
+            >
               <LoaderWatcher dataReady={dataReady} onProgress={setAssetProgress} onLoaded={handleAssetsLoaded} />
               <Suspense fallback={null}>
                 <Experience
@@ -523,16 +532,23 @@ export default function ExhibitionPage() {
                 setEmbedOpen(false);
                 relockPointer();
               }}
-              className="absolute top-2 right-2 z-10 w-9 h-9 rounded-full bg-black/70 text-white text-lg font-bold flex items-center justify-center"
+              className="absolute top-2 right-2 z-10 w-9 h-9 rounded-full bg-black/70 text-white text-lg font-bold flex items-center justify-center hover:bg-black"
             >
               ✕
             </button>
-            <iframe
-              src={toEmbedUrl(embedUrl)}
-              className="w-full h-full rounded-xl"
-              allowFullScreen
-              allow="autoplay; encrypted-media"
-            />
+            {toEmbedUrl(embedUrl) ? (
+              <iframe
+                src={toEmbedUrl(embedUrl)}
+                className="w-full h-full rounded-xl"
+                allowFullScreen
+                allow="autoplay; encrypted-media"
+              />
+            ) : (
+              <div className="w-full h-full rounded-xl bg-zinc-900 border border-white/10 flex flex-col items-center justify-center p-6 text-center text-white space-y-2">
+                <p className="text-lg font-bold">Not Available Video</p>
+                <p className="text-xs text-white/50">This work does not include any YouTube or Google Drive video links.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -754,21 +770,26 @@ function firstName(nama: string | null | undefined): string {
 
 function toEmbedUrl(url: string): string {
   if (!url) return "";
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === "-" || !trimmed.startsWith("http")) return "";
 
   // Google Drive: /file/d/{id}/view atau ?id={id} → harus jadi /preview
   // supaya bisa di-embed di iframe (format /view diblokir Google).
-  if (url.includes("drive.google.com")) {
-    const match = url.match(/\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
+  if (trimmed.includes("drive.google.com")) {
+    const match = trimmed.match(/\/d\/([^/]+)/) || trimmed.match(/[?&]id=([^&]+)/);
     if (match) return `https://drive.google.com/file/d/${match[1]}/preview`;
-    return url;
+    return "";
   }
 
-  if (url.includes("youtube.com/embed/")) return url;
-  const short = url.match(/youtu\.be\/([^?&]+)/);
+  if (trimmed.includes("youtube.com/embed/")) return trimmed;
+  const short = trimmed.match(/youtu\.be\/([^?&]+)/);
   if (short) return `https://www.youtube.com/embed/${short[1]}`;
-  const watch = url.match(/[?&]v=([^&]+)/);
+  const watch = trimmed.match(/[?&]v=([^&]+)/);
   if (watch) return `https://www.youtube.com/embed/${watch[1]}`;
-  return url;
+  const shorts = trimmed.match(/youtube\.com\/shorts\/([^?&]+)/);
+  if (shorts) return `https://www.youtube.com/embed/${shorts[1]}`;
+
+  return "";
 }
 
 /* ======================= */
@@ -1193,7 +1214,7 @@ function PosterViewer({
           </p>
 
           {/* TOMBOL TONTON VIDEO */}
-          {info.tautan && (
+          {info.tautan && toEmbedUrl(info.tautan) && (
             <button
               onClick={() => onOpenTautan(info.tautan!)}
               className="w-full h-11 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold flex items-center justify-center gap-2 transition-colors"

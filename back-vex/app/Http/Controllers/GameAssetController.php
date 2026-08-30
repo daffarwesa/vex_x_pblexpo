@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Karya;
 use App\Models\Pameran;
 
@@ -323,9 +325,9 @@ class GameAssetController extends Controller
             return null;
         }
 
-        // Endpoint thumbnail tidak resmi Google Drive.
-        // sz=w1000 mengatur lebar thumbnail (bisa disesuaikan, misal w500, w1000, dst).
-        return "https://drive.google.com/thumbnail?id={$fileId}&sz=w1000";
+        // Endpoint thumbnail Google Drive.
+        // sz=w400 optimal & cepat untuk thumbnail booth 3D (ukuran ~30-50KB vs ~800KB).
+        return "https://drive.google.com/thumbnail?id={$fileId}&sz=w400";
     }
 
     // ========================
@@ -364,56 +366,60 @@ class GameAssetController extends Controller
     {
         $url = $request->query('url');
 
-        // Cuma izinkan proxy untuk domain Google Drive / Google User Content
-        $isAllowed = $url && (
-            str_starts_with($url, 'https://drive.google.com/') ||
-            str_starts_with($url, 'https://lh3.googleusercontent.com/') ||
-            str_starts_with($url, 'https://docs.google.com/')
-        );
+        if (!$url) {
+            abort(400, 'URL tidak valid');
+        }
+
+        // Cuma izinkan proxy untuk host Google yang memang dipakai untuk
+        // thumbnail/gambar (drive.google.com & lh3.googleusercontent.com),
+        // biar nggak disalahgunakan jadi open proxy untuk situs sembarangan.
+        // Validasi berdasarkan host asli (bukan cuma prefix string) supaya
+        // tidak bisa dikelabui pakai trik semacam
+        // "https://drive.google.com.evil.com/...".
+        $host = parse_url($url, PHP_URL_HOST);
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+
+        $allowedHosts = [
+            'drive.google.com',
+            'lh3.googleusercontent.com',
+        ];
+
+        $isAllowed = $scheme === 'https'
+            && $host !== null
+            && in_array(strtolower($host), $allowedHosts, true);
 
         if (!$isAllowed) {
             abort(400, 'URL tidak valid');
         }
 
-        try {
-            $response = Http::timeout(15)
-                ->withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                ])
-                ->withOptions([
-                    'allow_redirects' => [
-                        'max' => 5,
-                        'protocols' => ['https'],
-                        'strict' => false,
-                    ],
-                ])
-                ->get($url);
+        // Cache hasil download image di server selama 7 hari
+        $cacheKey = 'proxy_img_' . md5($url);
+        $cachedData = Cache::remember($cacheKey, 60 * 60 * 24 * 7, function () use ($url) {
+            $response = Http::timeout(12)->get($url);
 
             if (!$response->successful()) {
-                abort(502, 'Gagal mengambil gambar dari sumber eksternal');
+                return null;
             }
 
-            // Batasi ukuran response — cegah memory exhaustion dari file besar
-            $maxSize = 10 * 1024 * 1024; // 10 MB
-            $body = $response->body();
-            if (strlen($body) > $maxSize) {
-                abort(413, 'File terlalu besar (maks 10 MB)');
+            $contentType = $response->header('Content-Type');
+            if (!$contentType || !str_starts_with($contentType, 'image/')) {
+                return null;
             }
 
-            $contentType = $response->header('Content-Type') ?? 'image/jpeg';
+            return [
+                'body' => base64_encode($response->body()),
+                'type' => $contentType,
+            ];
+        });
 
-            // Jika content type bukan image, tetap cek magic bytes atau izinkan format gambar umum
-            if (!str_starts_with($contentType, 'image/')) {
-                $contentType = 'image/jpeg';
-            }
-
-            return response($body, 200)
-                ->header('Content-Type', $contentType)
-                ->header('Access-Control-Allow-Origin', '*')
-                ->header('Cache-Control', 'public, max-age=86400');
-        } catch (\Throwable $e) {
-            \Log::error('Proxy image error: ' . $e->getMessage(), ['url' => $url]);
-            abort(502, 'Gagal memproses gambar');
+        if (!$cachedData) {
+            Cache::forget($cacheKey);
+            abort(502, 'Gagal mengambil gambar');
         }
+
+        return response(base64_decode($cachedData['body']), 200)
+            ->header('Content-Type', $cachedData['type'])
+            ->header('Access-Control-Allow-Origin', config('app.frontend_url') ?? '*')
+            ->header('Cache-Control', 'public, max-age=604800, immutable');
     }
 }
