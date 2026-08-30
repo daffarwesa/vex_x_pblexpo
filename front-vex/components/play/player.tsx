@@ -211,17 +211,14 @@ const HEARTBEAT_INTERVAL = 3;
       world.traverse((obj: any) => {
         if (!obj.isMesh) return;
 
-        // Mesh milik player (badan player sendiri di mode third-person,
-        // ATAU badan remote player lain) TIDAK pernah dianggap collider
-        // maupun floor. Ini yang bikin antar player saling tembus — cuma
-        // objek ber-tag "collider" dari hall/booth yang tetap menghalangi.
+        // Mesh player dan mesh booth TIDAK pernah dianggap sebagai lantai/floor
         if (obj.userData?.isPlayer) return;
 
         if (obj.userData?.collider) {
           colliderArr.push(obj);
           obj.visible = false;
         } else {
-          // Anything mesh-like that isn't a collider is a floor candidate.
+          // Hanya mesh lantai hall / tangga yang menjadi floor candidate
           floorArr.push(obj);
         }
       });
@@ -495,16 +492,17 @@ const HEARTBEAT_INTERVAL = 3;
     }
 
     /* ===================== */
-    /* FLOOR CHECK (cached floor meshes — no full-scene raycast) */
+    /* FLOOR CHECK (cached floor meshes with high ray origin for stairs & slopes) */
     /* ===================== */
 
     grounded.current = false;
 
     floorOriginVec.current.copy(position.current);
-    floorOriginVec.current.y += 0.2;
+    // Raycast lantai ditembakkan dari 0.5m di atas kaki agar tidak mendeteksi atap
+    floorOriginVec.current.y += 0.5;
 
     raycaster.current.set(floorOriginVec.current, downVec.current);
-    raycaster.current.far = 50;
+    raycaster.current.far = 40;
 
     const floorHits = raycaster.current
       .intersectObjects(floorMeshes.current, true)
@@ -515,7 +513,8 @@ const HEARTBEAT_INTERVAL = 3;
       const floorY = floorHits[0].point.y;
       const targetY = floorY + PLAYER_HEIGHT;
 
-      if (velocityY.current <= 0 && position.current.y <= targetY + 0.2) {
+      // Mendeteksi injakan anak tangga atau tanah
+      if (velocityY.current <= 0 && position.current.y <= targetY + 0.3) {
         grounded.current = true;
         velocityY.current = 0;
         setJumping?.(false);
