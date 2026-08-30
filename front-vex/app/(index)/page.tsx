@@ -38,11 +38,11 @@ const releaseMedia: ReleaseMediaItem[] = [
     thumbnail: `https://img.youtube.com/vi/${RELEASE_VIDEO_ID}/hqdefault.jpg`,
     title: "Release Trailer",
   },
-  { type: "image", src: "/image/BGSection3.png", title: "Screenshot 1" },
-  { type: "image", src: "/image/BGSection3.png", title: "Screenshot 2" },
-  { type: "image", src: "/image/BGSection3.png", title: "Screenshot 3" },
-  { type: "image", src: "/image/BGSection3.png", title: "Screenshot 4" },
-  { type: "image", src: "/image/BGSection3.png", title: "Screenshot 5" },
+  { type: "image", src: "/image/BGPreview1.png", title: "Screenshot 1" },
+  { type: "image", src: "/image/BGPreview2.png", title: "Screenshot 2" },
+  { type: "image", src: "/image/BGPreview3.png", title: "Screenshot 3" },
+  { type: "image", src: "/image/BGPreview4.png", title: "Screenshot 4" },
+  { type: "image", src: "/image/BGPreview5.png", title: "Screenshot 5" },
 ];
 
 // Logos shown in the "In Collaboration With" strip. Replace src with your real
