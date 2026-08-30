@@ -162,7 +162,7 @@ class KaryaSeeder extends Seeder
                 'id_kategori' => 7,
                 'judul' => 'Aeroxy-AI',
                 'deskripsi' => '-',
-                'tautan' => 'https://www.youtube.com/embed/dX7AhHAxc5E',
+                'tautan' => 'https://youtu.be/dX7AhHAxc5E?si=1AH1YYpRlY2jPhxQ',
                 'gambar_poster' => 'https://drive.google.com/file/d/1PsuSE4z1meWWegK4vZNwfxOEKIG0WThd/view?usp=drive_link',
                 'predikat' => null,
                 'is_best' => null,
