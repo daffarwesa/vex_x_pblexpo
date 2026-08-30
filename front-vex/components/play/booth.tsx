@@ -9,6 +9,45 @@ import { PrimaryMaterial, createSecondaryMaterial } from "@/components/play/boot
 
 const textureCache = new Map<string, THREE.Texture>();
 
+// Helper Canvas Generator untuk placeholder Poster / Video jika karya belum mengunggah poster/video
+function createTextPlaceholderTexture(title: string, subtitle: string, isPoster = true): THREE.Texture {
+  const canvas = document.createElement("canvas");
+  canvas.width = isPoster ? 512 : 768;
+  canvas.height = isPoster ? 682 : 432;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    // Gradient Background Modern
+    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    grad.addColorStop(0, "#0F172A");
+    grad.addColorStop(1, "#1E293B");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Border
+    ctx.strokeStyle = "#334155";
+    ctx.lineWidth = 12;
+    ctx.strokeRect(6, 6, canvas.width - 12, canvas.height - 12);
+
+    // Text Title
+    ctx.fillStyle = "#F8FAFC";
+    ctx.font = isPoster ? "bold 34px sans-serif" : "bold 38px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(title, canvas.width / 2, canvas.height / 2 - 20);
+
+    // Text Subtitle
+    ctx.fillStyle = "#94A3B8";
+    ctx.font = isPoster ? "20px sans-serif" : "22px sans-serif";
+    ctx.fillText(subtitle, canvas.width / 2, canvas.height / 2 + 25);
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.generateMipmaps = false;
+  tex.minFilter = THREE.LinearFilter;
+  return tex;
+}
+
 function loadCachedTexture(
   path: string,
   onLoad: (tex: THREE.Texture) => void,
@@ -124,6 +163,7 @@ export default function Booth({
   useEffect(() => {
     scene.traverse((obj: any) => {
       if (!obj.isMesh) return;
+      // obj.userData.isBooth = true; // Tandai agar tidak pernah dianggap floor/lantai di player.tsx
       if (obj.name?.toLowerCase().includes("collider")) {
         obj.visible = false;
         obj.userData.collider = true;
@@ -206,10 +246,17 @@ export default function Booth({
 
   useEffect(() => {
     if (!posterMesh.current || !isNearForTexture) return;
-    // Kalau poster kosong, pakai gambar default dari public/image —
-    // tidak perlu di-proxy karena bukan link Google Drive.
-    const posterSrc = poster ? toProxiedUrl(poster) : "/image/defaultposter.png";
     let cancelled = false;
+
+    if (!poster) {
+      // Tampilkan placeholder bahasa Inggris jika poster kosong
+      const fallbackTex = createTextPlaceholderTexture("NO POSTER", "No Poster Available", true);
+      (posterMesh.current.material as THREE.Material)?.dispose?.();
+      posterMesh.current.material = new THREE.MeshBasicMaterial({ map: fallbackTex, toneMapped: false });
+      return;
+    }
+
+    const posterSrc = toProxiedUrl(poster);
     loadCachedTexture(posterSrc, (tex) => {
       if (cancelled || !posterMesh.current) return;
       (posterMesh.current.material as THREE.Material)?.dispose?.();
@@ -220,16 +267,24 @@ export default function Booth({
 
   useEffect(() => {
     if (!sampulMesh.current || !isNearForTexture) return;
-    // Sama seperti poster: kalau sampul kosong, fallback ke default lokal.
-    const sampulSrc = sampul ? toProxiedUrl(sampul) : "/image/defaultbanner.png";
     let cancelled = false;
+
+    if (!sampul && !tautan) {
+      // Tampilkan placeholder bahasa Inggris jika video/demo belum ada
+      const fallbackTex = createTextPlaceholderTexture("NO VIDEO", "No Video Available", false);
+      (sampulMesh.current.material as THREE.Material)?.dispose?.();
+      sampulMesh.current.material = new THREE.MeshBasicMaterial({ map: fallbackTex, toneMapped: false });
+      return;
+    }
+
+    const sampulSrc = sampul ? toProxiedUrl(sampul) : toProxiedUrl(poster);
     loadCachedTexture(sampulSrc, (tex) => {
       if (cancelled || !sampulMesh.current) return;
       (sampulMesh.current.material as THREE.Material)?.dispose?.();
       sampulMesh.current.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
     }, true);
     return () => { cancelled = true; };
-  }, [sampul, scene, isNearForTexture]);
+  }, [sampul, tautan, poster, scene, isNearForTexture]);
 
   const { camera, scene: world } = useThree();
   const occlusionRay = useRef(new THREE.Raycaster());

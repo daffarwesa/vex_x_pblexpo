@@ -205,6 +205,19 @@ function ExperienceInner({
   const loader = useRef(sharedTextureLoader);
 
   const { scene } = useGLTF(hallModel);
+  const { gl, camera } = useThree();
+
+  /* ===================== */
+  /* SHADER WARMUP & PRECOMPILE (Hilangkan Stutter Saat Masuk) */
+  /* ===================== */
+  useEffect(() => {
+    if (scene && gl && camera) {
+      // Pre-compile seluruh shader program di GPU sebelum player mulai gerak
+      try {
+        gl.compile(scene, camera);
+      } catch {}
+    }
+  }, [scene, gl, camera]);
 
   /* ===================== */
   /* HALL MATERIALS: WHITE / BLUE / RED / MAROON                          */
