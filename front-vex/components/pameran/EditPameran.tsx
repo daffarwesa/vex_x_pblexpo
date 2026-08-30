@@ -6,6 +6,7 @@ import { PameranForm } from "@/types/pameran";
 import FormPameran from "./FormPameran";
 import { GetDetailPameran, UpdatePameran, DeletePameran, clearPameranCache } from "./apiPameran";
 import { showToast } from "@/components/shared/ui/ToastNotification";
+import { getStorageUrl } from "@/lib/utils";
 
 type FormErrors = Partial<Record<keyof PameranForm | "image", string>>;
 
@@ -123,7 +124,7 @@ export default function EditPameran() {
           image: null,
         });
 
-        const rawBanner = p.bannerImage || p.banner || "";
+        const rawBanner = getStorageUrl(p.bannerImage || p.banner || "");
         setPreview(rawBanner);
       } catch (err) {
         console.error(err);

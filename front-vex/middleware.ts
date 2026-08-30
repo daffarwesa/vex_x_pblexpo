@@ -10,7 +10,8 @@ export function middleware(request: NextRequest) {
 
   // Jika mencoba akses halaman admin tanpa token & session admin
   if (isAdminPage && (!isLoggedIn || !token || token.trim().length < 10)) {
-    const loginUrl = new URL('/login', request.url);
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/login';
     return NextResponse.redirect(loginUrl);
   }
 

@@ -282,8 +282,9 @@ const HEARTBEAT_INTERVAL = 3;
   /* ===================== */
 
   useEffect(() => {
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/expo";
     const removePlayer = () => {
-      fetch(`/api-internal/player?id=${playerId}`, {
+      fetch(`${basePath}/api-internal/player?id=${playerId}`, {
         method: "DELETE",
       }).catch(() => {});
     };
@@ -610,9 +611,8 @@ if (saveTimer.current >= 0.2 && playerName !== "Loading...") {
       rotation: rotationY.current,
     };
 
-    if (heartbeatDue) heartbeatTimer.current = 0;
-
-    fetch("/api-internal/player", {
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/expo";
+    fetch(`${basePath}/api-internal/player`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

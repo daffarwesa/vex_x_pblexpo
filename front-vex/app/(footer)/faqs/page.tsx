@@ -41,6 +41,8 @@ const faqs = [
   },
 ];
 
+import Link from "next/link";
+
 export default function FaqsPage() {
   return (
     <div className="flex flex-col gap-8">
@@ -51,9 +53,9 @@ export default function FaqsPage() {
 
       <p className="font-poppins font-light text-gray-600 max-w-2xl">
         Couldn't find the answer you're looking for? Contact us through the{" "}
-        <a href="/contact-us" className="text-main-blue font-medium underline underline-offset-2">
+        <Link href="/contact-us" className="text-main-blue font-medium underline underline-offset-2">
           Contact Us
-        </a>{" "}
+        </Link>{" "}
         page.
       </p>
 

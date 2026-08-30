@@ -67,6 +67,7 @@ const defaultRemotePatterns: Array<{
 ];
 
 const nextConfig: NextConfig = {
+  basePath: '/expo',
   images: {
     remotePatterns: defaultRemotePatterns,
     dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production',
@@ -79,8 +80,18 @@ const nextConfig: NextConfig = {
         destination: `${API_URL}/storage/:path*`,
       },
       {
+        source: '/storage/:path*',
+        destination: `${API_URL}/storage/:path*`,
+        basePath: false,
+      },
+      {
         source: '/api/:path*',
         destination: `${API_URL}/api/:path*`,
+      },
+      {
+        source: '/api/:path*',
+        destination: `${API_URL}/api/:path*`,
+        basePath: false,
       },
     ];
   },

@@ -8,6 +8,7 @@ import {
   BiSolidRightArrow,
   BiSolidLeftArrow,
 } from "react-icons/bi";
+import { getStorageUrl } from "@/lib/utils";
 
 /* ===================== */
 /* TYPE */
@@ -180,7 +181,7 @@ export default function Carousel({
         }`}
       >
         <Image
-          src="/image/BGlogopblexpo.webp"
+          src="/expo/image/BGlogopblexpo.webp"
           alt="No Projects Yet"
           fill
           className="object-cover"
@@ -212,12 +213,12 @@ export default function Carousel({
       >
         <div className="flex h-full w-full">
           {data.map((item, index) => {
-            const imageSrc =
+            const rawSrc =
               item.poster ||
               item.posterMedium ||
               item.banner ||
-              item.bannerLarge ||
-              "/image/BGSection3.png";
+              item.bannerLarge;
+            const imageSrc = rawSrc ? getStorageUrl(rawSrc) : "/expo/image/BGSection3.png";
 
             return (
               <div

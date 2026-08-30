@@ -73,19 +73,19 @@ export default function Footer() {
               </h3>
               <ul className="text-white/70 space-y-2 text-sm sm:text-base">
                 <li>
-                  <LinkAksesEks
+                  <LinkAkses
                     link={"/terms-conditions"}
                     title="Terms & Conditions"
                   />
                 </li>
                 <li>
-                  <LinkAksesEks
+                  <LinkAkses
                     link={"/privacy-policy"}
                     title="Privacy Policy"
                   />
                 </li>
                 <li>
-                  <LinkAksesEks link={"/contact-us"} title="Contact Us" />
+                  <LinkAkses link={"/contact-us"} title="Contact Us" />
                 </li>
               </ul>
             </div>

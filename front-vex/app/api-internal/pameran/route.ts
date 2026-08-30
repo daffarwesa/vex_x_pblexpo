@@ -172,7 +172,7 @@ export async function PUT(req: Request) {
 
       fs.writeFileSync(path.join(imageDir, fileName), buffer);
 
-      bannerImage = `/image/${fileName}`;
+      bannerImage = `/expo/image/${fileName}`;
     }
 
     data[index] = {

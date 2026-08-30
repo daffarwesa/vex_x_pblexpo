@@ -67,7 +67,7 @@ export function Card({ link, title, className, ...props }: dataCard) {
 export function TextNav({ link, title, subtitle, className, ...props }: LinkAkses) {
   return (
     <Link
-      href={link || '/icon/logo-vex.svg'}
+      href={link || '/expo/icon/logo-vex.svg'}
       className={`
         group relative text-18 hover:text-main-blue py-4
         flex flex-col items-start lg:items-center
@@ -96,7 +96,7 @@ export function TextNav({ link, title, subtitle, className, ...props }: LinkAkse
 // Footer.tsx
 export function LinkAkses({ link, title, className, ...props }: LinkAkses) {
   return (
-    <Link href={link || '/icon/logo-vex.svg'} className="hover-text" {...props}>
+    <Link href={link || '/expo/icon/logo-vex.svg'} className="hover-text" {...props}>
       {title}
     </Link>
   );
@@ -105,7 +105,7 @@ export function LinkAkses({ link, title, className, ...props }: LinkAkses) {
 // Footer.tsx
 export function LinkAksesEks({ link, title, children, className, ...props }: LinkAkses) {
   return (
-    <a href={link || '/icon/logo-vex.svg'} className="hover-text" {...props}>
+    <a href={link || '/expo/icon/logo-vex.svg'} className="hover-text" {...props}>
       {title}
       {children}
     </a>
@@ -113,7 +113,7 @@ export function LinkAksesEks({ link, title, children, className, ...props }: Lin
 }
 
 // ini harus menggunakan group di parentnya
-export function Tooltip({children,} : {children:React.ReactNode;}){
+export function Tooltip({ children, }: { children: React.ReactNode; }) {
   return (
     <div className="pointer-events-none absolute -top-11 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-main-blue opacity-0 shadow-lg/40 transition-all duration-200 group-hover:-top-12 group-hover:opacity-100">
       {children}

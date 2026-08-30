@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { GetModelStan, GetStanTersedia } from "@/components/karya/apiKarya";
 
 interface StanOption {
@@ -96,20 +97,19 @@ export default function DetailPreview({
         Detail<span className="text-red-500">*</span>
       </p>
 
-      <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl w-full h-[300px] flex items-center justify-center overflow-hidden">
-        <img
+      <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl w-full h-[300px] flex items-center justify-center overflow-hidden relative">
+        <Image
           src={
             selectedModel
-              ? `/image/img-${selectedModel.nama_model
+              ? `/expo/image/img-${selectedModel.nama_model
                   .toLowerCase()
                   .replace(/\s+/g, "-")}.svg`
-              : "/image/img-stan-a.svg"
+              : "/expo/image/img-stan-a.svg"
           }
           alt="booth"
-          className="h-full w-full object-contain p-4"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/image/img-stan-a.svg";
-          }}
+          fill
+          unoptimized
+          className="object-contain p-4"
         />
       </div>
 

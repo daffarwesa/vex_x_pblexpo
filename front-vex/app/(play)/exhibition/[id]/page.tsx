@@ -422,7 +422,7 @@ export default function ExhibitionPage() {
           Background pakai gambar frontend (bukan hitam polos), dengan
           progress bar putih full-width dipin di tepi bawah layar. */}
       {!assetsLoaded && (!isMobile || !isPortrait) && (
-        <div className="fixed inset-0 z-[999999] bg-[url(/image/BGLoading.png)] bg-cover bg-center flex flex-col items-center justify-center px-6">
+        <div className="fixed inset-0 z-[999999] bg-[url(/expo/image/BGLoading.png)] bg-cover bg-center flex flex-col items-center justify-center px-6">
           {/* Teks "Loading exhibition..." — nempel tepat di atas progress
               bar, rata kiri (bukan center kayak konten lain di layar ini).
               Titik-titiknya cycling muncul-hilang satu-satu (typing-dots
@@ -478,12 +478,12 @@ export default function ExhibitionPage() {
             <button
               onClick={() => {
                 exitPointerLockSafe();
-                fetch(`/api-internal/player?id=${playerId}`, { method: "DELETE" }).catch(() => { });
+                deletePlayer(playerId);
                 sessionStorage.removeItem("playerId");
                 sessionStorage.removeItem("playerName");
                 document.cookie = "username=; path=/; max-age=0";
                 const isAdmin = Cookies.get("is_admin_logged_in") === "true" || !!localStorage.getItem("token");
-                window.location.href = isAdmin ? "/admin/pameran" : "/pameran";
+                router.push(isAdmin ? "/admin/pameran" : "/pameran");
               }}
               className="w-full h-12 rounded-xl bg-red-500 hover:bg-red-600 font-bold transition-colors"
             >
@@ -1123,14 +1123,21 @@ function PosterViewer({
 
   const resolveImageSrc = (url: string) => {
     if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      if (url.includes("drive.google.com") || url.includes("googleusercontent.com")) {
+        const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        return `${base}/api/experience/proxy-image?url=${encodeURIComponent(url)}`;
+      }
+      return url;
+    }
     const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     if (url.startsWith("/storage/")) {
       return `${base}${url}`;
     }
-    if (url.includes("drive.google.com")) {
-      return `${base}/api/experience/proxy-image?url=${encodeURIComponent(url)}`;
+    if (url.startsWith("storage/")) {
+      return `${base}/${url}`;
     }
-    return url;
+    return `${base}/storage/${url.replace(/^\/+/, '')}`;
   };
 
   const wheel = (e: React.WheelEvent) => {

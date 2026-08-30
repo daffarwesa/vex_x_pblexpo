@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getStorageUrl } from "@/lib/utils";
 
 /* ===================== */
 /* TYPE */
@@ -56,7 +57,7 @@ const DEFAULT_PLACEHOLDER_LABELS = ["Innovation to Industry", "Partnership for D
  * component, the fallback has exactly the same poster dimensions
  * and overlay treatment as a real work.
  */
-const FALLBACK_IMAGE = "/image/BGlogopblexpo.webp";
+const FALLBACK_IMAGE = "/expo/image/BGlogopblexpo.webp";
 
 /**
  * How long after a manual tab/poster click before autoplay
@@ -245,7 +246,7 @@ function PosterImage({ src, alt }: { src: string; alt: string }) {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={imgRef}
-        src={src || FALLBACK_IMAGE}
+        src={getStorageUrl(src) || FALLBACK_IMAGE}
         alt={alt}
         loading="lazy"
         onLoad={() => setIsLoaded(true)}

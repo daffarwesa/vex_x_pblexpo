@@ -289,7 +289,8 @@ function ExperienceInner({
       if (failCount > 3) return;
 
       try {
-        const res = await fetch("/api-internal/player");
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/expo";
+        const res = await fetch(`${basePath}/api-internal/player`);
         if (!res.ok) {
           failCount++;
           return;
@@ -346,15 +347,17 @@ function ExperienceInner({
       if (!obj.isMesh) return;
       const name = obj.name?.toLowerCase() || "";
 
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/expo";
+
       if (name.startsWith("paneldisplay")) {
         const num = parseInt(name.replace("paneldisplay", "")[1]);
-        if (!isNaN(num)) loadTextureSafe(`/prodi/${folder}/${num}.png`, (tex) => {
+        if (!isNaN(num)) loadTextureSafe(`${basePath}/prodi/${folder}/${num}.png`, (tex) => {
           disposeMaterial(obj);
           obj.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
         });
       }
       if (name === "panel") {
-        loadTextureSafe(`/prodi/${folder}/${folder}.png`, (tex) => {
+        loadTextureSafe(`${basePath}/prodi/${folder}/${folder}.png`, (tex) => {
           disposeMaterial(obj);
           obj.material = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
         });

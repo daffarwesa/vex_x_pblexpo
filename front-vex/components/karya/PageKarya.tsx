@@ -10,6 +10,7 @@ import { TahunType } from "@/components/shared/filter/SelectTahun";
 import { SemesterType } from "@/components/shared/filter/SelectSemester";
 import { useAuth } from "@/context/AuthContext";
 import { GetKarya, GetKaryaAdmin, GetKaryaSemua } from "./apiKarya";
+import { getStorageUrl } from "@/lib/utils";
 
 interface Props {
   href: string;
@@ -64,10 +65,10 @@ export default function PageKarya({ href }: Props) {
             description: item.deskripsi,
             category: item.stan?.pameran?.kategori ?? item.pameran?.kategori ?? item.category ?? "",
             image: item.gambar_poster
-              ? `${storageBase}/${item.gambar_poster}`
+              ? getStorageUrl(item.gambar_poster)
               : item.image ?? "",
             thumbnail: item.gambar_sampul
-              ? `${storageBase}/${item.gambar_sampul}`
+              ? getStorageUrl(item.gambar_sampul)
               : item.thumbnail ?? "",
             link: item.tautan ?? item.link ?? "",
             year: tanggalMulai.slice(0, 4) || item.year || "",

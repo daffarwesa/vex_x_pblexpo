@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 // components
 import { Card } from "@/components/shared/ui/Components";
 import { Button } from "@/components/shared/ui/Button";
@@ -23,6 +24,7 @@ import {
   KaryaPredikatItem,
   KaryaBestOfItem,
 } from "./api";
+import { getStorageUrl } from "@/lib/utils";
 
 const RELEASE_VIDEO_ID = "bLdFe6G7OC8";
 const RELEASE_AUTOPLAY_DELAY = 5000;
@@ -38,20 +40,20 @@ const releaseMedia: ReleaseMediaItem[] = [
     thumbnail: `https://img.youtube.com/vi/${RELEASE_VIDEO_ID}/hqdefault.jpg`,
     title: "Release Trailer",
   },
-  { type: "image", src: "/image/BGSection3.png", title: "Screenshot 1" },
-  { type: "image", src: "/image/BGSection3.png", title: "Screenshot 2" },
-  { type: "image", src: "/image/BGSection3.png", title: "Screenshot 3" },
-  { type: "image", src: "/image/BGSection3.png", title: "Screenshot 4" },
-  { type: "image", src: "/image/BGSection3.png", title: "Screenshot 5" },
+  { type: "image", src: "/expo/image/BGSection3.png", title: "Screenshot 1" },
+  { type: "image", src: "/expo/image/BGSection3.png", title: "Screenshot 2" },
+  { type: "image", src: "/expo/image/BGSection3.png", title: "Screenshot 3" },
+  { type: "image", src: "/expo/image/BGSection3.png", title: "Screenshot 4" },
+  { type: "image", src: "/expo/image/BGSection3.png", title: "Screenshot 5" },
 ];
 
 // Logos shown in the "In Collaboration With" strip. Replace src with your real
 // partner/collaborator logo paths.
 const collaborators = [
-  { src: "/image/logo-collab-1.png", alt: "Collaborator 1" },
-  { src: "/image/logo-collab-2.png", alt: "Collaborator 2" },
-  { src: "/image/logo-collab-3.png", alt: "Collaborator 3" },
-  { src: "/image/logo-collab-4.png", alt: "Collaborator 4" },
+  { src: "/expo/image/logo-collab-1.png", alt: "Collaborator 1" },
+  { src: "/expo/image/logo-collab-2.png", alt: "Collaborator 2" },
+  { src: "/expo/image/logo-collab-3.png", alt: "Collaborator 3" },
+  { src: "/expo/image/logo-collab-4.png", alt: "Collaborator 4" },
 ];
 
 const BEST_OF_IDS = [1, 2, 3, 4, 5, 6, 7] as const;
@@ -73,17 +75,9 @@ const BEST_OF_PLACEHOLDER_LABELS = Object.values(BEST_OF_LABELS);
 
 // Ubah data karya dari API (KaryaPredikatItem) menjadi bentuk yang dipakai Carousel
 function mapKaryaToCarouselItem(karya: KaryaPredikatItem): CarouselKaryaItem {
-  const base =
-    process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://localhost:8000/storage";
-  let poster = "/image/BGSection3.png";
-
-  if (karya.gambar_poster) {
-    poster =
-      karya.gambar_poster.startsWith("http") ||
-      karya.gambar_poster.startsWith("/")
-        ? karya.gambar_poster
-        : `${base}/${karya.gambar_poster}`;
-  }
+  const poster = karya.gambar_poster
+    ? getStorageUrl(karya.gambar_poster)
+    : "/expo/image/BGSection3.png";
 
   return {
     id: karya.id_karya,
@@ -98,17 +92,9 @@ function mapKaryaToBestOf(
   karya: KaryaBestOfItem,
   label: string,
 ): BestOfCategoryItem {
-  const base =
-    process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://localhost:8000/storage";
-  let image = "/image/BGSection3.png";
-
-  if (karya.gambar_poster) {
-    image =
-      karya.gambar_poster.startsWith("http") ||
-      karya.gambar_poster.startsWith("/")
-        ? karya.gambar_poster
-        : `${base}/${karya.gambar_poster}`;
-  }
+  const image = karya.gambar_poster
+    ? getStorageUrl(karya.gambar_poster)
+    : "/expo/image/BGSection3.png";
 
   return {
     label,
@@ -261,7 +247,7 @@ export default function HomePage() {
       {/* Separate mobile artwork below sm: — the wide diagonal desktop crop doesn't survive a phone viewport.
           Swap /image/BGSection1-mobile.png for your real mobile crop, then re-check the button's left/bottom % against it. */}
       <section className="relative w-full overflow-hidden">
-        <div className="relative w-full aspect-[4/5] sm:aspect-video bg-[url(/image/BGSection1-mobile.png)] sm:bg-[url(/image/BGSection1.png)] bg-cover bg-center">
+        <div className="relative w-full aspect-[4/5] sm:aspect-video bg-[url(/expo/image/BGSection1-mobile.png)] sm:bg-[url(/expo/image/BGSection1.png)] bg-cover bg-center">
           {/* Explore button: hidden on phone, visible from sm: up */}
           <div className="hidden sm:block absolute sm:left-[3%] sm:bottom-[33%]">
             <Button
@@ -310,11 +296,15 @@ export default function HomePage() {
             shadow-lg
           "
               >
-                <img
-                  src={logo.src}
-                  alt={logo.alt}
-                  className="w-full h-full object-contain"
-                />
+                <div className="relative w-full h-full">
+                  <Image
+                    src={logo.src}
+                    alt={logo.alt}
+                    fill
+                    unoptimized
+                    className="object-contain"
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -334,12 +324,15 @@ export default function HomePage() {
                   allowFullScreen
                 />
               ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={activeMedia.src}
-                  alt={activeMedia.title}
-                  className="w-full h-full object-cover"
-                />
+                <div className="relative w-full h-full">
+                  <Image
+                    src={activeMedia.src}
+                    alt={activeMedia.title}
+                    fill
+                    unoptimized
+                    className="object-cover"
+                  />
+                </div>
               )}
             </div>
 
@@ -415,11 +408,12 @@ export default function HomePage() {
                   className={`shrink-0 w-[220px] sm:w-[260px] aspect-video rounded-md overflow-hidden shadow-lg relative transition
                     ${i === activeMediaIndex ? "ring-2 ring-white" : "ring-1 ring-white/20 opacity-70 hover:opacity-100"}`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={item.type === "video" ? item.thumbnail : item.src}
                     alt={item.title}
-                    className="w-full h-full object-cover"
+                    fill
+                    unoptimized
+                    className="object-cover"
                   />
                   {item.type === "video" && (
                     <span className="absolute inset-0 flex items-center justify-center bg-black/20">
@@ -441,9 +435,9 @@ export default function HomePage() {
       {/* Mobile order: title (centered) -> image -> description/button. Desktop: unchanged 2-column layout. */}
       <section
         id="karya"
-        className="relative bg-main-blue sm:bg-[url(/image/BGSection3.png)] bg-cover bg-center w-full scroll-mt-24"
+        className="relative bg-main-blue sm:bg-[url(/expo/image/BGSection3.png)] bg-cover bg-center w-full scroll-mt-24"
       >
-        <div className="autoMid px-4 sm:px-6 lg:px-[20px] py-[80px] lg:py-[180px] min-h-[740px] flex flex-col items-center gap-10 lg:grid lg:grid-cols-2 lg:items-start">
+        <div className="autoMid py-[48px] px-4 sm:px-6 lg:px-0 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center min-h-[460px]">
           {/* Title - mobile only, centered, first */}
           <div className="order-1 lg:hidden text-white text-center leading-none">
             <p className="font-poppins font-thin text-4xl leading-none">
@@ -457,7 +451,7 @@ export default function HomePage() {
           {/* Image */}
           <div className="order-2 lg:order-2 relative w-full">
             <Card
-              link="/image/BG1.svg"
+              link="/expo/image/BG1.svg"
               title="lobby"
               className="w-full h-full object-cover rounded-xl"
             />
@@ -542,12 +536,12 @@ export default function HomePage() {
           {/* Badges: always side-by-side, even on phone */}
           <div className="order-2 lg:order-1 grid grid-cols-2 gap-4 sm:gap-6 items-stretch">
             <Card
-              link="/image/BestBadge.svg"
+              link="/expo/image/BestBadge.svg"
               title="best badge"
               className="w-full aspect-[4/3] object-cover rounded-xl h-full"
             />
             <Card
-              link="/image/SecondBestBadge.svg"
+              link="/expo/image/SecondBestBadge.svg"
               title="favorite badge"
               className="w-full aspect-[4/3] object-cover rounded-xl h-full"
             />
@@ -726,12 +720,12 @@ export default function HomePage() {
         <div className="autoMid min-h-[460px] py-[48px] px-4 sm:px-6 lg:px-0 grid grid-cols-1 lg:grid-cols-10 gap-10 lg:gap-20 items-start">
           <div className="order-1 lg:order-2 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Card
-              link="/image/ImgBest1.svg"
+              link="/expo/image/ImgBest1.svg"
               className="w-full aspect-video object-cover rounded-xl shadow-xl"
               title="Best 1"
             />
             <Card
-              link="/image/ImgBest2.svg"
+              link="/expo/image/ImgBest2.svg"
               className="w-full aspect-video object-cover rounded-xl shadow-xl"
               title="Best 2"
             />

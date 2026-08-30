@@ -17,6 +17,7 @@ import { Button } from "../shared/ui/Button";
 import { Pameran } from "@/types/pameran";
 import { GetDetailPameran } from "./apiPameran";
 import url from "@/lib/axios";
+import { getStorageUrl } from "@/lib/utils";
 
 interface Status {
   isLogin?: boolean;
@@ -134,7 +135,7 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
         {/* BANNER */}
         <div className="hidden md:block relative w-full h-[60vh] overflow-hidden">
           <img
-            src={bannerImage}
+            src={getStorageUrl(bannerImage)}
             alt="Banner"
             className="w-full h-full object-cover object-center opacity-80"
           />
@@ -169,7 +170,7 @@ export default function PageDetailPameran({ isLogin = false }: Status) {
             {/* POSTER */}
             <div className="w-full md:w-[55%] lg:w-[100%]">
               <img
-                src={bannerImage}
+                src={getStorageUrl(bannerImage)}
                 alt={title}
                 className="w-full h-full max-h-[200px] md:max-h-[280px] lg:max-h-[340px] object-cover rounded-lg shadow-lg/40"
               />

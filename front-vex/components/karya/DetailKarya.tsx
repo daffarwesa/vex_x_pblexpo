@@ -23,6 +23,7 @@ import {
 import { KaryaItem, TerbaikRank, PredikatKarya } from "@/types/karya";
 import { showToast } from "@/components/shared/ui/ToastNotification";
 import { useAuth } from "@/context/AuthContext";
+import { getStorageUrl } from "@/lib/utils";
 import { is } from "@react-three/fiber/dist/declarations/src/core/utils";
 
 // =============================
@@ -140,9 +141,7 @@ export default function DetailKarya({ id }: Props) {
           const semester = bulan >= 8 || bulan <= 2 ? "Ganjil" : bulan >= 3 ? "Genap" : "";
 
           const posterUrl = item.gambar_poster
-            ? item.gambar_poster.startsWith("http")
-              ? item.gambar_poster
-              : `${storageBase}/${item.gambar_poster}`
+            ? getStorageUrl(item.gambar_poster)
             : "";
 
           const found: KaryaItem = {

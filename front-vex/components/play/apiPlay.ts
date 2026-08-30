@@ -50,9 +50,11 @@ export function getNumBaseUrl(gameAssets?: { num_base?: string }) {
     return `${base}/api/experience/num` // ← was `${base}/storage/num`, same CORS problem
 }
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "/expo";
+
 // ── page.tsx (ExhibitionPage) ──
 export async function getPlayerName() {
-    const res = await fetch("/api-internal/player-name")
+    const res = await fetch(`${BASE_PATH}/api-internal/player-name`)
     const data = await res.json()
     return data.name as string
 }
@@ -61,7 +63,7 @@ export async function deletePlayer(playerId: string) {
     try {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 2000)
-        await fetch(`/api-internal/player?id=${playerId}`, {
+        await fetch(`${BASE_PATH}/api-internal/player?id=${playerId}`, {
             method: "DELETE",
             signal: controller.signal,
         })

@@ -23,6 +23,7 @@ import {
   FaSearch,
 } from "react-icons/fa";
 import { Button, ButtonPutih } from "@/components/shared/ui/Button";
+import { getStorageUrl } from "@/lib/utils";
 import { showToast } from "@/components/shared/ui/ToastNotification";
 import {
   GetKaryaList,
@@ -166,10 +167,7 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
   // Helper poster url
   const getPosterSrc = (karya: PenilaianItem) => {
     if (!karya.gambar_poster) return "/images/placeholder-karya.jpg";
-    if (karya.gambar_poster.startsWith("http")) return karya.gambar_poster;
-    const base =
-      process.env.NEXT_PUBLIC_STORAGE_URL ?? "http://localhost:8000/storage";
-    return `${base}/${karya.gambar_poster}`;
+    return getStorageUrl(karya.gambar_poster);
   };
 
   // Group karya per kategori
