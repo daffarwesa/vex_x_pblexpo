@@ -24,7 +24,7 @@ class Karya extends Model
     ];
 
     protected $casts = [
-        'is_best' => 'boolean',
+        'is_best' => 'string',
     ];
 
     public function admin()

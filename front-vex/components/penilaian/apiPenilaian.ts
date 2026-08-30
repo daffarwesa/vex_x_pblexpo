@@ -1,6 +1,6 @@
 import url from "@/lib/axios";
 
-export type BestRank = "1" | "2" | "3" | null;
+export type BestRank = "1" | "2" | "3" | "4" | "5" | "6" | "7" | null;
 
 export interface PenilaianItem {
   id_karya: number;
@@ -61,7 +61,7 @@ export async function SetBestKarya(id_karya: number, is_best: BestRank) {
 // Batch simpan semua hasil penilaian
 export async function BatchSavePenilaian(payload: {
   kategoriWinners: Record<number, { juara1?: number | null; juara2?: number | null }>;
-  bestWinners: { best1?: number | null; best2?: number | null; best3?: number | null };
+  bestWinners: Record<string, number | null>;
   allKaryaIds: number[];
 }) {
   const promises: Promise<any>[] = [];
@@ -75,9 +75,12 @@ export async function BatchSavePenilaian(payload: {
     if (winner.juara2) predikatMap[winner.juara2] = "2";
   });
 
-  if (payload.bestWinners.best1) bestMap[payload.bestWinners.best1] = "1";
-  if (payload.bestWinners.best2) bestMap[payload.bestWinners.best2] = "2";
-  if (payload.bestWinners.best3) bestMap[payload.bestWinners.best3] = "3";
+  Object.entries(payload.bestWinners).forEach(([rankKey, karyaId]) => {
+    if (karyaId) {
+      const code = rankKey.replace("best", "") as BestRank;
+      bestMap[karyaId] = code;
+    }
+  });
 
   for (const id of payload.allKaryaIds) {
     const targetPredikat = predikatMap[id] ?? null;

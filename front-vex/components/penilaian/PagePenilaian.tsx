@@ -19,6 +19,8 @@ import {
   FaSave,
   FaExclamationCircle,
   FaLayerGroup,
+  FaPlus,
+  FaSearch,
 } from "react-icons/fa";
 import { Button, ButtonPutih } from "@/components/shared/ui/Button";
 import { showToast } from "@/components/shared/ui/ToastNotification";
@@ -31,6 +33,16 @@ import {
   KategoriItem,
 } from "./apiPenilaian";
 
+const BEST_CATEGORIES = [
+  { key: "best1", code: "1", name: "Best Innovation to Industry" },
+  { key: "best2", code: "2", name: "Best Partnership for Downstreaming" },
+  { key: "best3", code: "3", name: "Best Creativity" },
+  { key: "best4", code: "4", name: "Best Readiness for Market" },
+  { key: "best5", code: "5", name: "Best Business Potential" },
+  { key: "best6", code: "6", name: "Best Scalability" },
+  { key: "best7", code: "7", name: "Best Commercial Impact" },
+] as const;
+
 interface PagePenilaianProps {
   onOpenAddForm?: () => void;
 }
@@ -39,25 +51,37 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [karyaList, setKaryaList] = useState<PenilaianItem[]>([]);
   const [kategoriList, setKategoriList] = useState<KategoriItem[]>([]);
+
+  const [selectedBestCategoryCode, setSelectedBestCategoryCode] = useState<string>("1");
 
   // State Pemenang Kategori: { [id_kategori]: { juara1?: id_karya, juara2?: id_karya } }
   const [kategoriWinners, setKategoriWinners] = useState<
     Record<number, { juara1?: number | null; juara2?: number | null }>
   >({});
 
-  // State Best Global: { best1?: id_karya, best2?: id_karya, best3?: id_karya }
-  const [bestWinners, setBestWinners] = useState<{
-    best1?: number | null;
-    best2?: number | null;
-    best3?: number | null;
-  }>({});
+  // State Best Global: { [bestKey]: id_karya | null }
+  const [bestWinners, setBestWinners] = useState<Record<string, number | null>>({
+    best1: null,
+    best2: null,
+    best3: null,
+    best4: null,
+    best5: null,
+    best6: null,
+    best7: null,
+  });
 
   const [selectedKategoriTab, setSelectedKategoriTab] = useState<number | null>(
     null,
   );
+  const [selectedBestPblFilter, setSelectedBestPblFilter] = useState<number | null>(
+    null,
+  );
+  const [searchKategori, setSearchKategori] = useState("");
+  const [searchBest, setSearchBest] = useState("");
 
   // Pagination State (Grid 3x3 = 9 items per page)
   const ITEMS_PER_PAGE = 9;
@@ -96,11 +120,15 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
           number,
           { juara1?: number | null; juara2?: number | null }
         > = {};
-        const initialBestWinners: {
-          best1?: number | null;
-          best2?: number | null;
-          best3?: number | null;
-        } = {};
+        const initialBestWinners: Record<string, number | null> = {
+          best1: null,
+          best2: null,
+          best3: null,
+          best4: null,
+          best5: null,
+          best6: null,
+          best7: null,
+        };
 
         karyaRes.forEach((k) => {
           if (k.id_kategori) {
@@ -114,12 +142,11 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
             }
           }
 
-          if (k.is_best === "1") {
-            initialBestWinners.best1 = k.id_karya;
-          } else if (k.is_best === "2") {
-            initialBestWinners.best2 = k.id_karya;
-          } else if (k.is_best === "3") {
-            initialBestWinners.best3 = k.id_karya;
+          if (k.is_best) {
+            const matchCat = BEST_CATEGORIES.find((bc) => bc.code === String(k.is_best));
+            if (matchCat) {
+              initialBestWinners[matchCat.key] = k.id_karya;
+            }
           }
         });
 
@@ -209,44 +236,47 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
   };
 
   // Handler toggle Best Global (Auto Save)
-const handleSelectBest = async (
-  id_karya: number,
-  rank: "best1" | "best2" | "best3",
-) => {
-  const rankValue = rank === "best1" ? "1" : rank === "best2" ? "2" : "3";
-  const isUnselect = bestWinners[rank] === id_karya;
+  const handleSelectBest = async (
+    id_karya: number,
+    bestKey: string,
+    code: string,
+  ) => {
+    setIsSyncing(true);
+    const isUnselect = bestWinners[bestKey] === id_karya;
 
-  // Optimistic UI update
-  setBestWinners((prev) => {
-    if (isUnselect) {
-      return { ...prev, [rank]: null };
-    }
-    const cleaned: typeof prev = { ...prev };
-    if (cleaned.best1 === id_karya) cleaned.best1 = null;
-    if (cleaned.best2 === id_karya) cleaned.best2 = null;
-    if (cleaned.best3 === id_karya) cleaned.best3 = null;
-    return { ...cleaned, [rank]: id_karya };
-  });
-
-  try {
-    if (isUnselect) {
-      await SetBestKarya(id_karya, null);
-      showToast(`Status Best dibatalkan`, "info");
-    } else {
-      // Jika karya lama ada di rank ini, batalkan
-      if (bestWinners[rank] && bestWinners[rank] !== id_karya) {
-        await SetBestKarya(bestWinners[rank]!, null);
+    // Optimistic UI update
+    setBestWinners((prev) => {
+      if (isUnselect) {
+        return { ...prev, [bestKey]: null };
       }
-      await SetBestKarya(id_karya, rankValue);
-      const rankLabel =
-        rank === "best1" ? "Best 1" : rank === "best2" ? "Best 2" : "Best 3";
-      showToast(`Karya berhasil ditandai sebagai ${rankLabel}!`, "success");
+      const cleaned: typeof prev = { ...prev };
+      // Bersihkan karya ini dari kategori Best lain jika sebelumnya dipasang di sana
+      Object.keys(cleaned).forEach((k) => {
+        if (cleaned[k] === id_karya) cleaned[k] = null;
+      });
+      return { ...cleaned, [bestKey]: id_karya };
+    });
+
+    try {
+      if (isUnselect) {
+        await SetBestKarya(id_karya, null);
+        showToast(`Status Best dibatalkan`, "info");
+      } else {
+        // Jika karya lama ada di rank ini, batalkan
+        if (bestWinners[bestKey] && bestWinners[bestKey] !== id_karya) {
+          await SetBestKarya(bestWinners[bestKey]!, null);
+        }
+        await SetBestKarya(id_karya, code as any);
+        const catObj = BEST_CATEGORIES.find((bc) => bc.key === bestKey);
+        showToast(`Karya berhasil ditandai sebagai ${catObj?.name ?? 'Best'}!`, "success");
+      }
+    } catch (err) {
+      console.error("Gagal update Best:", err);
+      showToast("Gagal memperbarui status Best di server.", "error");
+    } finally {
+      setIsSyncing(false);
     }
-  } catch (err) {
-    console.error("Gagal update Best:", err);
-    showToast("Gagal memperbarui status Best di server.", "error");
-  }
-};
+  };
 
   // Hitung total kategori terisi
   const totalKategoriTerisi = useMemo(() => {
@@ -257,6 +287,15 @@ const handleSelectBest = async (
     });
     return count;
   }, [kategoriList, kategoriWinners]);
+
+  // Hitung total Best Global terisi
+  const totalBestTerisi = useMemo(() => {
+    let count = 0;
+    BEST_CATEGORIES.forEach((bc) => {
+      if (bestWinners[bc.key]) count++;
+    });
+    return count;
+  }, [bestWinners]);
 
   if (loading) {
     return (
@@ -276,38 +315,34 @@ const handleSelectBest = async (
         <div className="max-w-[1200px] mx-auto px-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl md:text-3xl font-bold">
-                  Penilaian Karya PBL
-                </h1>
-              </div>
-              <p className="text-white/80 text-xs md:text-sm mt-1">
-                Tentukan Juara 1 & 2 untuk setiap kategori serta 3 Karya Best
-                Global.
-              </p>
+              <h1 className="text-2xl md:text-3xl font-bold">
+                Penilaian Karya PBL
+              </h1>
             </div>
 
-            {/* STEP PROGRESS INDICATOR */}
+            {/* TAB NAVIGATION KANAN ATAS (Juara Kategori & Best Global) */}
             <div className="flex items-center bg-white/10 backdrop-blur-sm p-1.5 rounded-2xl border border-white/20">
               <button
+                type="button"
                 onClick={() => setStep(1)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                   step === 1
-                    ? "bg-white text-main-blue shadow"
+                    ? "bg-white text-main-blue shadow-md"
                     : "text-white/80 hover:text-white"
                 }`}
               >
-                <span>1.</span> Juara Kategori
+                <span>Juara Kategori</span>
               </button>
               <button
+                type="button"
                 onClick={() => setStep(2)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                   step === 2
-                    ? "bg-white text-main-blue shadow"
+                    ? "bg-white text-main-blue shadow-md"
                     : "text-white/80 hover:text-white"
                 }`}
               >
-                <span>2.</span> Best Global
+                <span>Best Global</span>
               </button>
             </div>
           </div>
@@ -321,128 +356,145 @@ const handleSelectBest = async (
         {/* ========================================================= */}
         {step === 1 && (
           <div className="space-y-6">
-            {/* Kategori Dropdown Selector */}
-            <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="w-full sm:max-w-md">
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                  Pilih Kategori PBL
-                </label>
-                <Listbox
-                  value={selectedKategoriTab}
-                  onChange={(val) => {
-                    if (val !== null) {
-                      setSelectedKategoriTab(val);
-                      setPageForKategori(val, 1);
-                    }
-                  }}
-                >
-                  <div className="relative">
-                    <ListboxButton className="relative w-full cursor-pointer rounded-xl bg-gray-50 hover:bg-gray-100/80 py-2.5 pl-3.5 pr-10 text-left text-sm font-medium text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-main-blue/30 focus:border-main-blue transition">
-                      <div className="flex items-center gap-2 truncate">
-                        <FaLayerGroup
-                          className="text-main-blue shrink-0"
-                          size={14}
-                        />
-                        {(() => {
-                          const current = kategoriList.find(
-                            (k) => k.id_kategori === selectedKategoriTab,
-                          );
-                          if (!current)
+            {/* Kategori Dropdown Selector & Search Input */}
+            <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full md:max-w-xl">
+                {/* Dropdown Kategori */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Pilih Kategori PBL
+                  </label>
+                  <Listbox
+                    value={selectedKategoriTab}
+                    onChange={(val) => {
+                      if (val !== null) {
+                        setSelectedKategoriTab(val);
+                        setPageForKategori(val, 1);
+                      }
+                    }}
+                  >
+                    <div className="relative">
+                      <ListboxButton className="relative w-full cursor-pointer rounded-xl bg-gray-50 hover:bg-gray-100/80 py-2.5 pl-3.5 pr-10 text-left text-xs font-medium text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-main-blue/30 focus:border-main-blue transition">
+                        <div className="flex items-center gap-2 truncate">
+                          <FaLayerGroup
+                            className="text-main-blue shrink-0"
+                            size={13}
+                          />
+                          {(() => {
+                            const current = kategoriList.find(
+                              (k) => k.id_kategori === selectedKategoriTab,
+                            );
+                            if (!current)
+                              return (
+                                <span className="text-gray-400">
+                                  Pilih Kategori
+                                </span>
+                              );
+                            const winner = kategoriWinners[current.id_kategori];
+                            const hasWinner = Boolean(
+                              winner?.juara1 || winner?.juara2,
+                            );
+
                             return (
-                              <span className="text-gray-400">
-                                Pilih Kategori
+                              <span className="truncate flex items-center gap-2">
+                                <span className="font-bold text-main-blue">
+                                  {current.kode_kategori}
+                                </span>
+                                <span className="text-gray-600">
+                                  — {current.nama_kategori}
+                                </span>
+                                {hasWinner && (
+                                  <span className="inline-flex items-center text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded">
+                                    ✓ Dinilai
+                                  </span>
+                                )}
                               </span>
                             );
-                          const winner = kategoriWinners[current.id_kategori];
+                          })()}
+                        </div>
+                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                          <ChevronDownIcon
+                            className="h-5 w-5 text-gray-400"
+                            aria-hidden="true"
+                          />
+                        </span>
+                      </ListboxButton>
+
+                      <ListboxOptions
+                        transition
+                        className="absolute z-20 mt-1.5 max-h-72 w-full overflow-auto rounded-xl bg-white p-1 text-xs shadow-xl ring-1 ring-black/5 focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-100"
+                      >
+                        {kategoriList.map((kat) => {
+                          const isSelected =
+                            selectedKategoriTab === kat.id_kategori;
+                          const winner = kategoriWinners[kat.id_kategori];
                           const hasWinner = Boolean(
                             winner?.juara1 || winner?.juara2,
                           );
 
                           return (
-                            <span className="truncate flex items-center gap-2">
-                              <span className="font-bold text-main-blue">
-                                {current.kode_kategori}
-                              </span>
-                              <span className="text-gray-600">
-                                — {current.nama_kategori}
-                              </span>
-                              {hasWinner && (
-                                <span className="inline-flex items-center text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded">
-                                  ✓ Dinilai
+                            <ListboxOption
+                              key={kat.id_kategori}
+                              value={kat.id_kategori}
+                              className={`relative cursor-pointer select-none rounded-lg py-2.5 pl-3 pr-8 transition flex items-center justify-between ${
+                                isSelected
+                                  ? "bg-main-blue/10 text-main-blue font-bold"
+                                  : "text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <span className="font-bold text-main-blue">
+                                  {kat.kode_kategori}
                                 </span>
-                              )}
-                            </span>
+                                <span className="truncate">
+                                  — {kat.nama_kategori}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                {hasWinner && (
+                                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2 rounded">
+                                    ✓ Dinilai
+                                  </span>
+                                )}
+                                {isSelected && (
+                                  <CheckIcon
+                                    className="h-4 w-4 text-main-blue"
+                                    aria-hidden="true"
+                                  />
+                                )}
+                              </div>
+                            </ListboxOption>
                           );
-                        })()}
-                      </div>
-                      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        <ChevronDownIcon
-                          className="h-5 w-5 text-gray-400"
-                          aria-hidden="true"
-                        />
-                      </span>
-                    </ListboxButton>
+                        })}
+                      </ListboxOptions>
+                    </div>
+                  </Listbox>
+                </div>
 
-                    <ListboxOptions
-                      transition
-                      className="absolute z-20 mt-1.5 max-h-72 w-full overflow-auto rounded-xl bg-white p-1 text-sm shadow-xl ring-1 ring-black/5 focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-100"
-                    >
-                      {kategoriList.map((kat) => {
-                        const isSelected =
-                          selectedKategoriTab === kat.id_kategori;
-                        const winner = kategoriWinners[kat.id_kategori];
-                        const hasWinner = Boolean(
-                          winner?.juara1 || winner?.juara2,
-                        );
-
-                        return (
-                          <ListboxOption
-                            key={kat.id_kategori}
-                            value={kat.id_kategori}
-                            className={`relative cursor-pointer select-none rounded-lg py-2 pl-3 pr-8 transition flex items-center justify-between ${
-                              isSelected
-                                ? "bg-main-blue/10 text-main-blue font-semibold"
-                                : "text-gray-700 hover:bg-gray-50"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 truncate">
-                              <span
-                                className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                                  isSelected
-                                    ? "bg-main-blue text-white"
-                                    : "bg-gray-100 text-gray-700"
-                                }`}
-                              >
-                                {kat.kode_kategori}
-                              </span>
-                              <span className="truncate">
-                                {kat.nama_kategori}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0">
-                              {hasWinner && (
-                                <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2 rounded">
-                                  ✓ Dinilai
-                                </span>
-                              )}
-                              {isSelected && (
-                                <CheckIcon
-                                  className="h-4 w-4 text-main-blue"
-                                  aria-hidden="true"
-                                />
-                              )}
-                            </div>
-                          </ListboxOption>
-                        );
-                      })}
-                    </ListboxOptions>
+                {/* Input Cari Karya */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Cari Karya
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchKategori}
+                      onChange={(e) => {
+                        setSearchKategori(e.target.value);
+                        if (selectedKategoriTab) setPageForKategori(selectedKategoriTab, 1);
+                      }}
+                      placeholder="Cari judul karya..."
+                      className="w-full p-2.5 px-3.5 pl-9 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-main-blue/30 focus:border-main-blue text-xs transition"
+                    />
+                    <FaSearch className="absolute left-3 top-3.5 text-gray-400" size={12} />
                   </div>
-                </Listbox>
+                </div>
               </div>
 
               {/* Progress Summary */}
-              <div className="flex items-center gap-3 bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200/80 self-start sm:self-auto">
+              <div className="flex items-center gap-3 bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200/80 self-start md:self-auto shrink-0">
                 <div className="w-9 h-9 rounded-lg bg-main-blue/10 text-main-blue flex items-center justify-center font-bold text-sm">
                   {totalKategoriTerisi}/{kategoriList.length}
                 </div>
@@ -466,9 +518,16 @@ const handleSelectBest = async (
                   const currentKat = kategoriList.find(
                     (k) => k.id_kategori === selectedKategoriTab,
                   );
-                  const allKaryasInKat =
+                  const rawKaryasInKat =
                     karyaByKategori[selectedKategoriTab] || [];
                   const winner = kategoriWinners[selectedKategoriTab] || {};
+
+                  // Filter berdasarkan kata kunci pencarian
+                  const allKaryasInKat = rawKaryasInKat.filter((k) =>
+                    !searchKategori.trim() ||
+                    k.judul.toLowerCase().includes(searchKategori.toLowerCase()) ||
+                    (k.deskripsi && k.deskripsi.toLowerCase().includes(searchKategori.toLowerCase()))
+                  );
 
                   // Paginasi 3x3 (9 items per page)
                   const currentPage = getCurrentPage(selectedKategoriTab);
@@ -745,76 +804,249 @@ const handleSelectBest = async (
         )}
 
         {/* ========================================================= */}
-        {/* STEP 2: PENILAIAN BEST GLOBAL (BEST 1, 2, 3)              */}
+        {/* STEP 2: PENILAIAN BEST GLOBAL (7 KATEGORI VIA DROPDOWN)   */}
         {/* ========================================================= */}
         {step === 2 && (
           <div className="space-y-6">
-            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md">
-                  Global Award
-                </span>
-                <h2 className="text-lg font-bold text-gray-800 mt-1">
-                  Pilih 3 Karya Terbaik (Best 1, Best 2, Best 3)
-                </h2>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Dipilih dari seluruh karya yang ada di semua kategori.
-                </p>
+            {/* Control Bar: Dropdown Best Global, Filter Kategori PBL, Search Karya, dan Progres Best */}
+            <div className="bg-white p-4 md:p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full xl:max-w-3xl">
+                {/* 1. Dropdown Selector Kategori Best Global */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Kategori Best Global
+                  </label>
+                  <Listbox
+                    value={selectedBestCategoryCode}
+                    onChange={(val) => {
+                      if (val) {
+                        setSelectedBestCategoryCode(val);
+                        setPageBest(1);
+                      }
+                    }}
+                  >
+                    <div className="relative">
+                      <ListboxButton className="relative w-full cursor-pointer rounded-xl bg-gray-50 hover:bg-gray-100/80 py-2.5 pl-3.5 pr-10 text-left text-xs font-medium text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition">
+                        <div className="flex items-center gap-2 truncate">
+                          <FaStar className="text-amber-500 shrink-0" size={13} />
+                          {(() => {
+                            const currentBestCat = BEST_CATEGORIES.find(
+                              (bc) => bc.code === selectedBestCategoryCode,
+                            );
+                            if (!currentBestCat) return <span className="text-gray-400">Pilih Best Global</span>;
+                            const karyaId = bestWinners[currentBestCat.key];
+                            const hasWinner = Boolean(karyaId);
+
+                            return (
+                              <span className="truncate flex items-center gap-1.5">
+                                <span className="font-bold text-amber-900 truncate">{currentBestCat.name}</span>
+                                {hasWinner && (
+                                  <span className="inline-flex items-center text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded shrink-0">
+                                    ✓
+                                  </span>
+                                )}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                          <ChevronDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        </span>
+                      </ListboxButton>
+
+                      <ListboxOptions
+                        transition
+                        className="absolute z-20 mt-1.5 max-h-72 w-full overflow-auto rounded-xl bg-white p-1 text-xs shadow-xl ring-1 ring-black/5 focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-100"
+                      >
+                        {BEST_CATEGORIES.map((cat) => {
+                          const isSelected = selectedBestCategoryCode === cat.code;
+                          const karyaId = bestWinners[cat.key];
+                          const hasWinner = Boolean(karyaId);
+
+                          return (
+                            <ListboxOption
+                              key={cat.key}
+                              value={cat.code}
+                              className={`relative cursor-pointer select-none rounded-lg py-2.5 pl-3 pr-8 transition flex items-center justify-between ${
+                                isSelected
+                                  ? "bg-amber-50 text-amber-950 font-bold"
+                                  : "text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <FaStar className={isSelected ? "text-amber-500" : "text-gray-400"} size={11} />
+                                <span className="truncate">{cat.name}</span>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                {hasWinner && (
+                                  <span className="text-[10px] font-bold bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded">
+                                    ✓ Terpilih
+                                  </span>
+                                )}
+                                {isSelected && (
+                                  <CheckIcon className="h-4 w-4 text-amber-600" aria-hidden="true" />
+                                )}
+                              </div>
+                            </ListboxOption>
+                          );
+                        })}
+                      </ListboxOptions>
+                    </div>
+                  </Listbox>
+                </div>
+
+                {/* 2. Filter Kategori PBL */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Filter Kategori PBL
+                  </label>
+                  <Listbox
+                    value={selectedBestPblFilter}
+                    onChange={(val) => {
+                      setSelectedBestPblFilter(val);
+                      setPageBest(1);
+                    }}
+                  >
+                    <div className="relative">
+                      <ListboxButton className="relative w-full cursor-pointer rounded-xl bg-gray-50 hover:bg-gray-100/80 py-2.5 pl-3.5 pr-10 text-left text-xs font-medium text-gray-800 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-main-blue/30 focus:border-main-blue transition">
+                        <div className="flex items-center gap-2 truncate">
+                          <FaLayerGroup className="text-main-blue shrink-0" size={13} />
+                          <span className="truncate">
+                            {selectedBestPblFilter === null
+                              ? "Semua Kategori PBL"
+                              : kategoriList.find((k) => k.id_kategori === selectedBestPblFilter)?.nama_kategori || "Semua Kategori"}
+                          </span>
+                        </div>
+                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                          <ChevronDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        </span>
+                      </ListboxButton>
+
+                      <ListboxOptions
+                        transition
+                        className="absolute z-20 mt-1.5 max-h-72 w-full overflow-auto rounded-xl bg-white p-1 text-xs shadow-xl ring-1 ring-black/5 focus:outline-none data-[closed]:opacity-0 data-[leave]:duration-100"
+                      >
+                        <ListboxOption
+                          value={null}
+                          className={`relative cursor-pointer select-none rounded-lg py-2.5 pl-3 pr-8 transition flex items-center justify-between ${
+                            selectedBestPblFilter === null
+                              ? "bg-main-blue/10 text-main-blue font-bold"
+                              : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          <span className="truncate">Semua Kategori PBL</span>
+                          {selectedBestPblFilter === null && (
+                            <CheckIcon className="h-4 w-4 text-main-blue" aria-hidden="true" />
+                          )}
+                        </ListboxOption>
+
+                        {kategoriList.map((kat) => {
+                          const isSelected = selectedBestPblFilter === kat.id_kategori;
+                          return (
+                            <ListboxOption
+                              key={kat.id_kategori}
+                              value={kat.id_kategori}
+                              className={`relative cursor-pointer select-none rounded-lg py-2.5 pl-3 pr-8 transition flex items-center justify-between ${
+                                isSelected
+                                  ? "bg-main-blue/10 text-main-blue font-bold"
+                                  : "text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <span className="font-bold text-main-blue">{kat.kode_kategori}</span>
+                                <span className="truncate">— {kat.nama_kategori}</span>
+                              </div>
+                              {isSelected && (
+                                <CheckIcon className="h-4 w-4 text-main-blue" aria-hidden="true" />
+                              )}
+                            </ListboxOption>
+                          );
+                        })}
+                      </ListboxOptions>
+                    </div>
+                  </Listbox>
+                </div>
+
+                {/* 3. Input Cari Karya di Best Global */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                    Cari Karya
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchBest}
+                      onChange={(e) => {
+                        setSearchBest(e.target.value);
+                        setPageBest(1);
+                      }}
+                      placeholder="Cari judul karya..."
+                      className="w-full p-2.5 px-3.5 pl-9 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-main-blue/30 focus:border-main-blue text-xs transition"
+                    />
+                    <FaSearch className="absolute left-3 top-3.5 text-gray-400" size={12} />
+                  </div>
+                </div>
               </div>
 
-              {/* Status Pilihan Best */}
-              <div className="flex flex-wrap gap-2 text-xs">
-                <div
-                  className={`px-3 py-1.5 rounded-xl border flex items-center gap-1.5 ${
-                    bestWinners.best1
-                      ? "bg-amber-100 text-amber-900 border-amber-300 font-bold"
-                      : "bg-gray-50 text-gray-400 border-gray-200"
-                  }`}
-                >
-                  <FaStar className="text-amber-500" /> Best 1:{" "}
-                  {bestWinners.best1 ? "✓" : "Belum"}
+              {/* 4. Progres Kategori Best Global Card */}
+              <div className="flex items-center gap-3 bg-amber-50/60 px-4 py-2.5 rounded-xl border border-amber-200/80 self-start xl:self-auto shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-amber-400 text-amber-950 flex items-center justify-center font-extrabold text-xs shadow-sm">
+                  {totalBestTerisi}/{BEST_CATEGORIES.length}
                 </div>
-                <div
-                  className={`px-3 py-1.5 rounded-xl border flex items-center gap-1.5 ${
-                    bestWinners.best2
-                      ? "bg-amber-100 text-amber-900 border-amber-300 font-bold"
-                      : "bg-gray-50 text-gray-400 border-gray-200"
-                  }`}
-                >
-                  <FaStar className="text-amber-500" /> Best 2:{" "}
-                  {bestWinners.best2 ? "✓" : "Belum"}
-                </div>
-                <div
-                  className={`px-3 py-1.5 rounded-xl border flex items-center gap-1.5 ${
-                    bestWinners.best3
-                      ? "bg-amber-100 text-amber-900 border-amber-300 font-bold"
-                      : "bg-gray-50 text-gray-400 border-gray-200"
-                  }`}
-                >
-                  <FaStar className="text-amber-500" /> Best 3:{" "}
-                  {bestWinners.best3 ? "✓" : "Belum"}
+                <div>
+                  <p className="text-xs font-bold text-gray-800">Progres Best Global</p>
+                  <p className="text-[11px] text-gray-500">
+                    {totalBestTerisi === BEST_CATEGORIES.length
+                      ? "Semua Best Global selesai dinilai"
+                      : `${BEST_CATEGORIES.length - totalBestTerisi} kategori belum dinilai`}
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Grid Semua Karya with Pagination 3x3 */}
             {(() => {
+              const activeCat = BEST_CATEGORIES.find(
+                (bc) => bc.code === selectedBestCategoryCode,
+              ) || BEST_CATEGORIES[0];
+
+              // Filter karya berdasarkan Kategori PBL dan kata kunci pencarian
+              const filteredKaryaList = karyaList.filter((k) => {
+                const matchCategory =
+                  selectedBestPblFilter === null || k.id_kategori === selectedBestPblFilter;
+                const matchSearch =
+                  !searchBest.trim() ||
+                  k.judul.toLowerCase().includes(searchBest.toLowerCase()) ||
+                  (k.deskripsi && k.deskripsi.toLowerCase().includes(searchBest.toLowerCase()));
+                return matchCategory && matchSearch;
+              });
+
               const totalPagesBest =
-                Math.ceil(karyaList.length / ITEMS_PER_PAGE) || 1;
+                Math.ceil(filteredKaryaList.length / ITEMS_PER_PAGE) || 1;
               const startIndexBest = (pageBest - 1) * ITEMS_PER_PAGE;
-              const currentBestKaryas = karyaList.slice(
+              const currentBestKaryas = filteredKaryaList.slice(
                 startIndexBest,
                 startIndexBest + ITEMS_PER_PAGE,
               );
+
+              if (filteredKaryaList.length === 0) {
+                return (
+                  <div className="bg-white rounded-2xl p-12 text-center border border-dashed border-gray-300 space-y-2">
+                    <FaExclamationCircle className="text-3xl text-gray-300 mx-auto" />
+                    <p className="text-sm text-gray-500 font-medium">
+                      Tidak ada karya yang ditemukan untuk filter/pencarian ini.
+                    </p>
+                  </div>
+                );
+              }
 
               return (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {currentBestKaryas.map((karya) => {
-                      const isBest1 = bestWinners.best1 === karya.id_karya;
-                      const isBest2 = bestWinners.best2 === karya.id_karya;
-                      const isBest3 = bestWinners.best3 === karya.id_karya;
-                      const isAnyBest = isBest1 || isBest2 || isBest3;
+                      const isSelectedAsActiveBest =
+                        bestWinners[activeCat.key] === karya.id_karya;
 
                       const kat = kategoriList.find(
                         (k) => k.id_kategori === karya.id_kategori,
@@ -824,7 +1056,7 @@ const handleSelectBest = async (
                         <div
                           key={karya.id_karya}
                           className={`bg-white rounded-2xl border transition-all overflow-hidden flex flex-col justify-between group ${
-                            isAnyBest
+                            isSelectedAsActiveBest
                               ? "border-amber-400 shadow-md ring-2 ring-amber-400/30"
                               : "border-gray-200 hover:border-main-blue hover:shadow-md"
                           }`}
@@ -850,19 +1082,9 @@ const handleSelectBest = async (
                                 </span>
                               </div>
                               <div className="absolute top-2 right-2 flex flex-col gap-1">
-                                {isBest1 && (
+                                {isSelectedAsActiveBest && (
                                   <span className="bg-amber-400 text-amber-950 text-xs font-bold px-2.5 py-1 rounded-full shadow flex items-center gap-1">
-                                    <FaStar size={11} /> Best 1
-                                  </span>
-                                )}
-                                {isBest2 && (
-                                  <span className="bg-amber-300 text-amber-950 text-xs font-bold px-2.5 py-1 rounded-full shadow flex items-center gap-1">
-                                    <FaStar size={11} /> Best 2
-                                  </span>
-                                )}
-                                {isBest3 && (
-                                  <span className="bg-amber-200 text-amber-950 text-xs font-bold px-2.5 py-1 rounded-full shadow flex items-center gap-1">
-                                    <FaStar size={11} /> Best 3
+                                    <FaStar size={11} /> {activeCat.name}
                                   </span>
                                 )}
                               </div>
@@ -879,66 +1101,36 @@ const handleSelectBest = async (
                             </div>
                           </div>
 
-                          {/* Best 1, 2, 3 Selector */}
-                          <div className="p-4 pt-0 grid grid-cols-3 gap-1.5">
+                          {/* 1 Single Action Button per Karya */}
+                          <div className="p-4 pt-0">
                             <button
                               type="button"
                               onClick={() =>
-                                handleSelectBest(karya.id_karya, "best1")
+                                handleSelectBest(
+                                  karya.id_karya,
+                                  activeCat.key,
+                                  activeCat.code,
+                                )
                               }
-                              className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 border transition ${
-                                isBest1
-                                  ? "bg-amber-400 text-amber-950 border-amber-500 font-bold shadow-sm"
-                                  : "bg-white text-gray-700 border-gray-300 hover:bg-amber-50"
+                              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition ${
+                                isSelectedAsActiveBest
+                                  ? "bg-amber-400 text-amber-950 border-amber-500 shadow-md ring-2 ring-amber-400/40"
+                                  : "bg-white text-gray-700 border-gray-300 hover:bg-amber-50 hover:border-amber-300"
                               }`}
                             >
                               <FaStar
-                                size={10}
+                                size={12}
                                 className={
-                                  isBest1 ? "text-amber-950" : "text-amber-500"
+                                  isSelectedAsActiveBest
+                                    ? "text-amber-950"
+                                    : "text-amber-500"
                                 }
                               />
-                              <span>Best 1</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleSelectBest(karya.id_karya, "best2")
-                              }
-                              className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 border transition ${
-                                isBest2
-                                  ? "bg-amber-300 text-amber-950 border-amber-400 font-bold shadow-sm"
-                                  : "bg-white text-gray-700 border-gray-300 hover:bg-amber-50"
-                              }`}
-                            >
-                              <FaStar
-                                size={10}
-                                className={
-                                  isBest2 ? "text-amber-950" : "text-amber-500"
-                                }
-                              />
-                              <span>Best 2</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleSelectBest(karya.id_karya, "best3")
-                              }
-                              className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 border transition ${
-                                isBest3
-                                  ? "bg-amber-200 text-amber-950 border-amber-300 font-bold shadow-sm"
-                                  : "bg-white text-gray-700 border-gray-300 hover:bg-amber-50"
-                              }`}
-                            >
-                              <FaStar
-                                size={10}
-                                className={
-                                  isBest3 ? "text-amber-950" : "text-amber-500"
-                                }
-                              />
-                              <span>Best 3</span>
+                              <span>
+                                {isSelectedAsActiveBest
+                                  ? `Pemenang ${activeCat.name} ✓`
+                                  : `Pilih sebagai ${activeCat.name}`}
+                              </span>
                             </button>
                           </div>
                         </div>
@@ -953,9 +1145,9 @@ const handleSelectBest = async (
                         Menampilkan {startIndexBest + 1} -{" "}
                         {Math.min(
                           startIndexBest + ITEMS_PER_PAGE,
-                          karyaList.length,
+                          filteredKaryaList.length,
                         )}{" "}
-                        dari {karyaList.length} karya
+                        dari {filteredKaryaList.length} karya
                       </p>
                       <div className="flex items-center gap-2">
                         <button
@@ -990,7 +1182,7 @@ const handleSelectBest = async (
               );
             })()}
 
-            {/* Nav Step */}
+            {/* Nav Step Back */}
             <div className="flex justify-start items-center pt-4">
               <ButtonPutih
                 onClick={() => setStep(1)}

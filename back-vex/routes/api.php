@@ -42,6 +42,7 @@ Route::post('/kunjungan', [StatistikController::class, 'store'])
 
 Route::get('/karya/{id_karya}', [KaryaPublicController::class, 'show']);
 Route::get('/karya/predikat/{predikat}', [KaryaPublicController::class, 'getByPredikat']);
+Route::get('/karya/best/{isBest}', [KaryaPublicController::class, 'getByBest']);
 
 // Login: 5 percobaan per menit per IP — cegah brute force
 Route::post('/login', [AdminController::class, 'login'])

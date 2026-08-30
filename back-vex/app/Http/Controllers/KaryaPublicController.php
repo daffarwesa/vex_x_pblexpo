@@ -54,4 +54,30 @@ class KaryaPublicController extends Controller
             'data' => $karya,
         ]);
     }
+
+    // ==========================================
+    // LIST KARYA BERDASARKAN BEST RANK (publik)
+    // is_best '1'..'7' = 7 Kategori Best Global
+    // ==========================================
+    public function getByBest(Request $request, string $isBest)
+    {
+        if (!in_array($isBest, ['1', '2', '3', '4', '5', '6', '7'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Kategori Best tidak valid',
+            ], 422);
+        }
+
+        $karya = Karya::with(['kategori', 'pameran'])
+            ->where('is_best', $isBest)
+            ->when($request->filled('id_pameran'), function ($query) use ($request) {
+                $query->where('id_pameran', $request->id_pameran);
+            })
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $karya,
+        ]);
+    }
 }
