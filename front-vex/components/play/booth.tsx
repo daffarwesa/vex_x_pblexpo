@@ -78,15 +78,15 @@ function loadCachedTexture(
 // bisa dipakai langsung sebagai texture WebGL (beda dari <img>/<Image>
 // biasa yang tidak butuh CORS). Di-proxy lewat backend sendiri supaya
 // dapat header Access-Control-Allow-Origin yang benar.
-function toProxiedUrl(url: string): string {
+export function toProxiedUrl(url: string): string {
   if (!url) return url;
+  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   // Beberapa link Google Drive muncul dalam format domain yang beda-beda
   // (drive.google.com/... ATAU lh3.googleusercontent.com/d/...), keduanya
   // sama-sama tidak kirim header CORS jadi harus di-proxy.
   const isGoogleHosted =
     url.includes("drive.google.com") || url.includes("googleusercontent.com");
   if (isGoogleHosted) {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
     return `${base}/api/experience/proxy-image?url=${encodeURIComponent(url)}`;
   }
   if (url.startsWith("/storage/")) {
@@ -293,7 +293,7 @@ export default function Booth({
       return;
     }
 
-    const sampulSrc = sampul ? toProxiedUrl(sampul) : toProxiedUrl(poster);
+    const sampulSrc = sampul ? toProxiedUrl(sampul) : (poster ? toProxiedUrl(poster) : "");
     loadCachedTexture(sampulSrc, (tex) => {
       if (cancelled || !sampulMesh.current) return;
       (sampulMesh.current.material as THREE.Material)?.dispose?.();
@@ -347,4 +347,3 @@ export default function Booth({
       <primitive object={scene} position={[0, 0, -1.2]} onClick={handleClick} visible={isInRange} />
     </group>
   );
-}
