@@ -347,3 +347,4 @@ export default function Booth({
       <primitive object={scene} position={[0, 0, -1.2]} onClick={handleClick} visible={isInRange} />
     </group>
   );
+}
