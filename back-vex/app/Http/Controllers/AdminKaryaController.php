@@ -81,8 +81,8 @@ class AdminKaryaController extends Controller
             'id_kategori'   => 'required|exists:kategori,id_kategori',
             'judul'         => 'required|string|max:255',
             'deskripsi'     => 'required|string',
-            'tautan'        => 'required|string|max:255',
-            'gambar_poster' => 'required',
+            'tautan'        => 'nullable|string|max:255',
+            'gambar_poster' => 'nullable',
         ]);
 
         $finalAdminId = $adminId ?? \App\Models\Admin::first()?->id_admin;
