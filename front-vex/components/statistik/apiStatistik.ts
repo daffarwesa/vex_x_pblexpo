@@ -1,7 +1,7 @@
 import axios from "axios";
 import { StatData } from "./mockData";
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "/expo";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/expo";
 // Gunakan axios langsung ke Next.js internal API (proxy ke Laravel)
 const api = axios.create({ baseURL: BASE_PATH });
 

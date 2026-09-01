@@ -33,6 +33,8 @@ type ReleaseMediaItem =
   | { type: "video"; videoId: string; thumbnail: string; title: string }
   | { type: "image"; src: string; title: string };
 
+const PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/expo";
+
 const releaseMedia: ReleaseMediaItem[] = [
   {
     type: "video",
@@ -40,20 +42,20 @@ const releaseMedia: ReleaseMediaItem[] = [
     thumbnail: `https://img.youtube.com/vi/${RELEASE_VIDEO_ID}/hqdefault.jpg`,
     title: "Release Trailer",
   },
-  { type: "image", src: "/expo/image/BGPreview1.png", title: "Screenshot 1" },
-  { type: "image", src: "/expo/image/BGPreview2.png", title: "Screenshot 2" },
-  { type: "image", src: "/expo/image/BGPreview3.png", title: "Screenshot 3" },
-  { type: "image", src: "/expo/image/BGPreview4.png", title: "Screenshot 4" },
-  { type: "image", src: "/expo/image/BGPreview5.png", title: "Screenshot 5" },
+  { type: "image", src: `${PATH}/image/BGPreview1.png`, title: "Screenshot 1" },
+  { type: "image", src: `${PATH}/image/BGPreview2.png`, title: "Screenshot 2" },
+  { type: "image", src: `${PATH}/image/BGPreview3.png`, title: "Screenshot 3" },
+  { type: "image", src: `${PATH}/image/BGPreview4.png`, title: "Screenshot 4" },
+  { type: "image", src: `${PATH}/image/BGPreview5.png`, title: "Screenshot 5" },
 ];
 
 // Logos shown in the "In Collaboration With" strip. Replace src with your real
 // partner/collaborator logo paths.
 const collaborators = [
-  { src: "/expo/image/logo-collab-1.png", alt: "Collaborator 1" },
-  { src: "/expo/image/logo-collab-2.png", alt: "Collaborator 2" },
-  { src: "/expo/image/logo-collab-3.png", alt: "Collaborator 3" },
-  { src: "/expo/image/logo-collab-4.png", alt: "Collaborator 4" },
+  { src: `${PATH}/image/logo-collab-1.png`, alt: "Collaborator 1" },
+  { src: `${PATH}/image/logo-collab-2.png`, alt: "Collaborator 2" },
+  { src: `${PATH}/image/logo-collab-3.png`, alt: "Collaborator 3" },
+  { src: `${PATH}/image/logo-collab-4.png`, alt: "Collaborator 4" },
 ];
 
 const BEST_OF_IDS = [1, 2, 3, 4, 5, 6, 7] as const;
@@ -73,11 +75,23 @@ const BEST_OF_LABELS: Record<BestOfId, string> = {
 
 const BEST_OF_PLACEHOLDER_LABELS = Object.values(BEST_OF_LABELS);
 
+// Path gambar-gambar statis yang sebelumnya hardcode "/expo/..." di JSX,
+// sekarang disatukan di sini biar konsisten pakai PATH.
+const STATIC_IMAGES = {
+  section3Background: `${PATH}/image/BGSection3.png`,
+  section3Fallback: `${PATH}/image/BGSection3.png`,
+  lobby: `${PATH}/image/BG1.svg`,
+  bestBadge: `${PATH}/image/BestBadge.svg`,
+  secondBestBadge: `${PATH}/image/SecondBestBadge.svg`,
+  imgBest1: `${PATH}/image/ImgBest1.svg`,
+  imgBest2: `${PATH}/image/ImgBest2.svg`,
+};
+
 // Ubah data karya dari API (KaryaPredikatItem) menjadi bentuk yang dipakai Carousel
 function mapKaryaToCarouselItem(karya: KaryaPredikatItem): CarouselKaryaItem {
   const poster = karya.gambar_poster
     ? getStorageUrl(karya.gambar_poster)
-    : "/expo/image/BGSection3.png";
+    : STATIC_IMAGES.section3Fallback;
 
   return {
     id: karya.id_karya,
@@ -94,7 +108,7 @@ function mapKaryaToBestOf(
 ): BestOfCategoryItem {
   const image = karya.gambar_poster
     ? getStorageUrl(karya.gambar_poster)
-    : "/expo/image/BGSection3.png";
+    : STATIC_IMAGES.section3Fallback;
 
   return {
     label,
@@ -247,16 +261,20 @@ export default function HomePage() {
       {/* Separate mobile artwork below sm: — the wide diagonal desktop crop doesn't survive a phone viewport.
           Swap /image/BGSection1-mobile.png for your real mobile crop, then re-check the button's left/bottom % against it. */}
       <section className="relative w-full overflow-hidden">
-        <div className="relative w-full aspect-[4/5] sm:aspect-video bg-[url(/expo/image/BGSection1-mobile.png)] sm:bg-[url(/expo/image/BGSection1.png)] bg-cover bg-center">
-          {/* Explore button: hidden on phone, visible from sm: up */}
-          <div className="hidden sm:block absolute sm:left-[3%] sm:bottom-[33%]">
-            <Button
-              link="/pameran"
-              className="font-bold px-4 sm:px-8 lg:px-10 py-1.5 sm:py-2.5 lg:py-3 text-xs sm:text-base rounded-md transition-all duration-300 hover:scale-105"
-            >
-              Explore
-            </Button>
-          </div>
+        <div className="relative w-full aspect-[4/5] sm:aspect-video overflow-hidden">
+          <picture>
+            <source
+              media="(min-width: 640px)"
+              srcSet={`${PATH}/image/BGSection1.png`}
+            />
+            <img
+              src={`${PATH}/image/BGSection1-mobile.png`}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover object-center"
+            />
+          </picture>
+
+          {/* Content */}
         </div>
       </section>
 
@@ -433,9 +451,17 @@ export default function HomePage() {
       {/* Separate mobile artwork below sm: — same pattern as Section 1.
           Swap /image/BGSection3-mobile.png for your real mobile crop. */}
       {/* Mobile order: title (centered) -> image -> description/button. Desktop: unchanged 2-column layout. */}
+      {/* Background image is set via a CSS custom property so it can come from
+          the dynamic PATH constant while keeping the sm: breakpoint behavior
+          (Tailwind arbitrary-value classes can't contain a runtime JS variable). */}
       <section
         id="karya"
-        className="relative bg-main-blue sm:bg-[url(/expo/image/BGSection3.png)] bg-cover bg-center w-full scroll-mt-24"
+        className="relative bg-main-blue sm:bg-[image:var(--bg-section3)] bg-cover bg-center w-full scroll-mt-24"
+        style={
+          {
+            "--bg-section3": `url(${STATIC_IMAGES.section3Background})`,
+          } as React.CSSProperties
+        }
       >
         <div className="autoMid py-[48px] px-4 sm:px-6 lg:px-0 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center min-h-[460px]">
           {/* Title - mobile only, centered, first */}
@@ -451,7 +477,7 @@ export default function HomePage() {
           {/* Image */}
           <div className="order-2 lg:order-2 relative w-full">
             <Card
-              link="/expo/image/BG1.svg"
+              link={STATIC_IMAGES.lobby}
               title="lobby"
               className="w-full h-full object-cover rounded-xl"
             />
@@ -536,12 +562,12 @@ export default function HomePage() {
           {/* Badges: always side-by-side, even on phone */}
           <div className="order-2 lg:order-1 grid grid-cols-2 gap-4 sm:gap-6 items-stretch">
             <Card
-              link="/expo/image/BestBadge.svg"
+              link={STATIC_IMAGES.bestBadge}
               title="best badge"
               className="w-full aspect-[4/3] object-cover rounded-xl h-full"
             />
             <Card
-              link="/expo/image/SecondBestBadge.svg"
+              link={STATIC_IMAGES.secondBestBadge}
               title="favorite badge"
               className="w-full aspect-[4/3] object-cover rounded-xl h-full"
             />
@@ -720,12 +746,12 @@ export default function HomePage() {
         <div className="autoMid min-h-[460px] py-[48px] px-4 sm:px-6 lg:px-0 grid grid-cols-1 lg:grid-cols-10 gap-10 lg:gap-20 items-start">
           <div className="order-1 lg:order-2 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Card
-              link="/expo/image/ImgBest1.svg"
+              link={STATIC_IMAGES.imgBest1}
               className="w-full aspect-video object-cover rounded-xl shadow-xl"
               title="Best 1"
             />
             <Card
-              link="/expo/image/ImgBest2.svg"
+              link={STATIC_IMAGES.imgBest2}
               className="w-full aspect-video object-cover rounded-xl shadow-xl"
               title="Best 2"
             />

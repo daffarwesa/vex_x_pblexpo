@@ -1,5 +1,5 @@
 import "@/app/globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Tilt_Warp, Poppins } from "next/font/google";
 import ToastContainer from "@/components/shared/ui/ToastNotification";
 
@@ -15,6 +15,14 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "V-EX+",
   description: "Virtual Exhibition",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 const tiltWarp = Tilt_Warp({

@@ -30,17 +30,84 @@
   }
 }
 
+/* ========================================= */
+/* SCROLLBAR — hide on all browsers          */
+/* ========================================= */
+
+/* Chrome, Safari, Edge, Opera */
 ::-webkit-scrollbar {
   display: none;
 }
 
-html {
-  scroll-behavior: smooth;
+/* Firefox */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none; /* IE / Edge legacy */
 }
 
 body::-webkit-scrollbar {
   display: none;
 }
+
+/* ========================================= */
+/* SMOOTH SCROLL                             */
+/* ========================================= */
+
+html {
+  scroll-behavior: smooth;
+  /* iOS Safari: prevent bounce scroll on the root */
+  overscroll-behavior: none;
+  /* Ensure full viewport fill on iOS (accounts for safe area) */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  /* iOS Safari momentum scrolling for elements that scroll */
+  -webkit-overflow-scrolling: touch;
+  /* Prevent body bounce on iOS */
+  overscroll-behavior: none;
+  /* Remove iOS tap highlight */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ========================================= */
+/* DVH FALLBACK — iOS Safari viewport fix    */
+/* iOS Safari 100vh includes browser chrome  */
+/* Use 100dvh (dynamic viewport height) with */
+/* a 100vh fallback for older Safari         */
+/* ========================================= */
+
+.h-dvh {
+  height: 100vh; /* fallback for older browsers */
+  height: 100dvh;
+}
+
+.min-h-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ========================================= */
+/* GAME CONTAINER — full viewport, no scroll */
+/* ========================================= */
+
+.game-viewport {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+  /* iOS: prevent ALL touch gestures from leaking to browser */
+  touch-action: none;
+  overscroll-behavior: none;
+  /* Prevent iOS bounce */
+  -webkit-overflow-scrolling: auto;
+}
+
+/* ========================================= */
+/* ANIMATIONS                                */
+/* ========================================= */
 
 @keyframes fadeIn {
   from {

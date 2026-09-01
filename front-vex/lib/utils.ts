@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "/expo";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/expo";
 
 export function getPublicAssetUrl(path?: string | null): string {
   if (!path) return '';

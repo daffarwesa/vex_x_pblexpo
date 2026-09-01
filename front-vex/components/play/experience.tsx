@@ -304,7 +304,7 @@ function ExperienceInner({
       if (failCount > 3) return;
 
       try {
-        const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/expo";
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "/expo";
         const res = await fetch(`${basePath}/api-internal/player`);
         if (!res.ok) {
           failCount++;
@@ -362,7 +362,7 @@ function ExperienceInner({
       if (!obj.isMesh) return;
       const name = obj.name?.toLowerCase() || "";
 
-      const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/expo";
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "/expo";
 
       if (name.startsWith("paneldisplay")) {
         const num = parseInt(name.replace("paneldisplay", "")[1]);

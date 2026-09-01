@@ -243,7 +243,13 @@ export default function ExhibitionPage() {
 
   useEffect(() => {
     const check = () => {
-      setIsMobile(window.innerWidth < 1024);
+      // Deteksi mobile yang lebih akurat:
+      // - Cek lebar layar (< 1024px)
+      // - ATAU cek maxTouchPoints > 0 (menangkap iPad yang lebar layarnya >= 1024
+      //   tapi tidak punya mouse/keyboard — iOS tidak mendukung Pointer Lock)
+      const isTouchDevice = navigator.maxTouchPoints > 0;
+      const isNarrow = window.innerWidth < 1024;
+      setIsMobile(isNarrow || isTouchDevice);
       setIsPortrait(window.matchMedia("(orientation: portrait)").matches);
     };
     check();
@@ -325,7 +331,7 @@ export default function ExhibitionPage() {
     assetsLoaded && !posterOpen && !menuOpen && !embedOpen && introStep === null;
 
   return (
-    <div className="w-screen h-screen bg-black overflow-hidden relative touch-none select-none">
+    <div className="game-viewport bg-black select-none">
 
       {/* PORTRAIT WARNING */}
       {isMobile && isPortrait && (
@@ -347,6 +353,9 @@ export default function ExhibitionPage() {
                 preserveDrawingBuffer: false,
                 powerPreference: "high-performance",
                 antialias: !isMobile,
+                // Mencegah crash di GPU lemah (iOS Safari, Firefox di low-end device)
+                // Tanpa ini, WebGL context creation bisa gagal total
+                failIfMajorPerformanceCaveat: false,
               }}
             >
               <LoaderWatcher dataReady={dataReady} onProgress={setAssetProgress} onLoaded={handleAssetsLoaded} />
@@ -985,7 +994,12 @@ function SprintOverlay({ active }: { active: boolean }) {
         active ? "opacity-100" : "opacity-0"
       }`}
     >
+      {/* Vignette — supported di semua browser */}
       <div className="sprint-fx-vignette absolute inset-0" />
+
+      {/* Speed lines — menggunakan radial-gradient biasa sebagai pengganti
+          repeating-conic-gradient yang tidak didukung Firefox < 83 & Safari lama.
+          Efek zoom-pulse tetap memberikan kesan kecepatan. */}
       <div className="sprint-fx-lines-wrap absolute inset-0 overflow-hidden">
         <div className="sprint-fx-lines absolute inset-0" />
       </div>
@@ -994,8 +1008,8 @@ function SprintOverlay({ active }: { active: boolean }) {
         .sprint-fx-vignette {
           background: radial-gradient(
             ellipse at center,
-            transparent 45%,
-            rgba(0, 0, 0, 0.55) 100%
+            transparent 40%,
+            rgba(0, 0, 0, 0.6) 100%
           );
           animation: sprintFxPulse 0.7s ease-in-out infinite alternate;
         }
@@ -1004,15 +1018,29 @@ function SprintOverlay({ active }: { active: boolean }) {
           mix-blend-mode: screen;
         }
 
+        /* Ganti repeating-conic-gradient (tidak didukung Firefox < 83 & Safari lama)
+           dengan kombinasi radial-gradient yang menghasilkan efek speed-lines
+           serupa dan kompatibel dengan semua browser modern. */
         .sprint-fx-lines {
-          background-image: repeating-conic-gradient(
-            from 0deg,
-            rgba(255, 255, 255, 0.08) 0deg 1deg,
-            transparent 1deg 6deg
-          );
-          transform: scale(2.2);
+          background-image:
+            radial-gradient(
+              ellipse 2px 60px at 50% 50%,
+              rgba(255,255,255,0.12) 0%,
+              transparent 100%
+            ),
+            radial-gradient(
+              ellipse 60px 2px at 50% 50%,
+              rgba(255,255,255,0.10) 0%,
+              transparent 100%
+            ),
+            radial-gradient(
+              ellipse at center,
+              transparent 30%,
+              rgba(255,255,255,0.04) 100%
+            );
+          transform: scale(2.1);
           animation: sprintFxZoom 0.5s linear infinite;
-          opacity: 0.5;
+          opacity: 0.7;
         }
 
         @keyframes sprintFxPulse {
@@ -1021,8 +1049,8 @@ function SprintOverlay({ active }: { active: boolean }) {
         }
 
         @keyframes sprintFxZoom {
-          from { transform: scale(2.1); }
-          to { transform: scale(2.35); }
+          from { transform: scale(2.0); }
+          to { transform: scale(2.4); }
         }
       `}</style>
     </div>
