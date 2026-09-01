@@ -210,6 +210,7 @@ class GameAssetController extends Controller
         $karyas = DB::table('karya')
             ->leftJoin('stan', 'karya.id_stan', '=', 'stan.id_stan')
             ->leftJoin('admin', 'karya.id_admin', '=', 'admin.id_admin')
+            ->leftJoin('pameran', 'karya.id_pameran', '=', 'pameran.id_pameran')
             ->where('karya.id_pameran', $idPameran)
             ->select(
                 'karya.id_karya',
@@ -222,7 +223,8 @@ class GameAssetController extends Controller
                 'karya.gambar_poster',
                 'karya.predikat',
                 'karya.is_best',
-                'admin.nama as nama_admin'
+                'admin.nama as nama_admin',
+                'pameran.banner as banner_pameran'
             )
             ->orderBy('karya.id_karya')
             ->get();
@@ -238,7 +240,7 @@ class GameAssetController extends Controller
                 'deskripsi' => $karya->deskripsi,
                 'tautan' => $karya->tautan,
                 'poster' => $this->getPosterUrl($karya->gambar_poster),
-                'sampul' => $this->getSampulThumbnail($karya->tautan),
+                'sampul' => $this->getSampulThumbnail($karya->tautan, $karya->banner_pameran),
                 // Booth model sekarang selalu diambil dari file statis booth.glb
                 // di storage, tidak lagi bergantung pada relasi ke tabel model.
                 'model_path' => url("/api/experience/booth-model/booth.glb"),
@@ -285,10 +287,11 @@ class GameAssetController extends Controller
     // ========================================
     // AMBIL THUMBNAIL DARI YOUTUBE / GOOGLE DRIVE
     // ========================================
-    private function getSampulThumbnail($url)
+    private function getSampulThumbnail($url, $bannerPameran = null)
     {
         if (!$url) {
-            return null;
+            // Tidak ada video → fallback ke banner pameran
+            return $this->getPosterUrl($bannerPameran);
         }
 
         // Deteksi Google Drive lebih dulu
