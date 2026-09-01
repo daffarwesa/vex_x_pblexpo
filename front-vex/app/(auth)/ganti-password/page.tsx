@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GantiPassword } from './apiGantiPassword';
-import { notFound, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { PasswordField } from '@/components/shared/ui/InputFields';
+import { useAuth } from '@/context/AuthContext';
+import { ButtonPutih } from '@/components/shared/ui/Button';
 
 type StrengthBarProps = {
   password: string;
@@ -38,7 +40,9 @@ function StrengthBar({ password }: StrengthBarProps) {
 }
 
 export default function GantiPasswordPage() {
-  // notFound();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('');
@@ -47,7 +51,7 @@ export default function GantiPasswordPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showNewPasswordConfirm, setShowNewPasswordConfirm] = useState(false);
 
-  // Per-field errors (seperti login)
+  // Per-field errors
   const [oldPasswordError, setOldPasswordError] = useState('');
   const [newPasswordError, setNewPasswordError] = useState('');
   const [newPasswordConfirmError, setNewPasswordConfirmError] = useState('');
@@ -56,7 +60,11 @@ export default function GantiPasswordPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const router = useRouter();
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login');
+    }
+  }, [user, loading, router]);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,13 +87,16 @@ export default function GantiPasswordPage() {
     if (!newPassword.trim()) {
       setNewPasswordError('Kata sandi baru wajib diisi');
       hasError = true;
+    } else if (newPassword.length < 8) {
+      setNewPasswordError('Kata sandi baru minimal 8 karakter');
+      hasError = true;
     }
 
     if (!newPasswordConfirmation.trim()) {
       setNewPasswordConfirmError('Konfirmasi kata sandi wajib diisi');
       hasError = true;
     } else if (newPassword !== newPasswordConfirmation) {
-      setNewPasswordConfirmError('Kata sandi tidak cocok');
+      setNewPasswordConfirmError('Konfirmasi kata sandi tidak cocok');
       hasError = true;
     }
 
@@ -99,10 +110,26 @@ export default function GantiPasswordPage() {
         new_password_confirmation: newPasswordConfirmation,
       });
       setSuccess(res.message || 'Kata sandi berhasil diperbarui.');
-      setTimeout(() => router.back(), 1500);
+      setTimeout(() => {
+        router.back();
+      }, 1500);
     } catch (err: any) {
-      
-      const message = err?.response?.data?.message || 'Gagal mengganti kata sandi';
+      const errorData = err?.response?.data;
+      const message = errorData?.message || 'Gagal mengganti kata sandi';
+      const errors = errorData?.errors;
+
+      if (errors && typeof errors === 'object') {
+        if (errors.old_password) {
+          setOldPasswordError(Array.isArray(errors.old_password) ? errors.old_password[0] : errors.old_password);
+        }
+        if (errors.new_password) {
+          setNewPasswordError(Array.isArray(errors.new_password) ? errors.new_password[0] : errors.new_password);
+        }
+        if (errors.new_password_confirmation) {
+          setNewPasswordConfirmError(Array.isArray(errors.new_password_confirmation) ? errors.new_password_confirmation[0] : errors.new_password_confirmation);
+        }
+      }
+
       const msgLower = message.toLowerCase();
 
       if (
@@ -113,12 +140,17 @@ export default function GantiPasswordPage() {
       ) {
         setOldPasswordError(message);
       } else if (
+        msgLower.includes('sama') ||
+        msgLower.includes('same')
+      ) {
+        setNewPasswordError(message);
+      } else if (
         msgLower.includes('konfirmasi') ||
         msgLower.includes('confirmation') ||
         msgLower.includes('cocok') ||
         msgLower.includes('match')
       ) {
-        setError(message);
+        setNewPasswordConfirmError(message);
       } else {
         setError(message);
       }
@@ -191,10 +223,19 @@ export default function GantiPasswordPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 rounded-lg bg-main-blue text-white font-medium hover:opacity-90 transition disabled:opacity-50"
+            className="w-full py-3 rounded-lg bg-main-blue text-white font-medium hover:opacity-90 transition disabled:opacity-50 cursor-pointer"
           >
             {isLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
+
+          <ButtonPutih
+            type="button"
+            onClick={() => router.back()}
+            disabled={isLoading}
+            className="w-full py-3 rounded-lg"
+          >
+            Kembali
+          </ButtonPutih>
         </form>
       </div>
     </div>

@@ -50,7 +50,7 @@ export function getNumBaseUrl(gameAssets?: { num_base?: string }) {
     return `${base}/api/experience/num` // ← was `${base}/storage/num`, same CORS problem
 }
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/expo";
+const BASE_PATH = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/+$/, "");
 
 // ── page.tsx (ExhibitionPage) ──
 export async function getPlayerName() {

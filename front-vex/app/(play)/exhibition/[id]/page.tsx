@@ -21,6 +21,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Experience from "@/components/play/Experience";
 import Crosshair from "@/components/play/Crosshair";
 import Image from "next/image";
+import { getPublicAssetUrl } from "@/lib/utils";
 
 import {
   getKaryaList, getPlayerName, deletePlayer,
@@ -440,7 +441,10 @@ export default function ExhibitionPage() {
           Background pakai gambar frontend (bukan hitam polos), dengan
           progress bar putih full-width dipin di tepi bawah layar. */}
       {!assetsLoaded && (!isMobile || !isPortrait) && (
-        <div className="fixed inset-0 z-[999999] bg-[url(/expo/image/BGLoading.png)] bg-cover bg-center flex flex-col items-center justify-center px-6">
+        <div
+          className="fixed inset-0 z-[999999] bg-cover bg-center flex flex-col items-center justify-center px-6"
+          style={{ backgroundImage: `url(${getPublicAssetUrl('/image/BGLoading.png')})` }}
+        >
           {/* Teks "Loading exhibition..." — nempel tepat di atas progress
               bar, rata kiri (bukan center kayak konten lain di layar ini).
               Titik-titiknya cycling muncul-hilang satu-satu (typing-dots

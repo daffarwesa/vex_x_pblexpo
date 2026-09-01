@@ -53,9 +53,21 @@ Route::post('/login', [AdminController::class, 'login'])
 // Hanya admin yang sudah login yang bisa menambahkan, mengubah, atau menghapus data
 // =============================================================================
 Route::middleware('auth:sanctum')->group(function () {
-    // Current user & Logout
+    // Current user & Logout (support both /api/user and /api/auth/user, /api/logout and /api/auth/logout)
     Route::get('/user', [AdminController::class, 'me']);
+    Route::get('/auth/user', [AdminController::class, 'me']);
     Route::post('/logout', [AdminController::class, 'logout']);
+    Route::post('/auth/logout', [AdminController::class, 'logout']);
+
+    // Ganti email & kata sandi (Direct prefix)
+    Route::prefix('change-email')->group(function () {
+        Route::post('/send', [ChangeEmailController::class, 'sendVerification'])
+            ->middleware('throttle:3,15');
+        Route::post('/verify', [ChangeEmailController::class, 'verify'])
+            ->middleware('throttle:10,1');
+    });
+    Route::post('/change-password', [ChangePasswordController::class, 'changePassword'])
+        ->middleware('throttle:5,1');
 
     Route::prefix('auth')->group(function () {
         // Ganti email — OTP: 3 kirim/15 menit per IP

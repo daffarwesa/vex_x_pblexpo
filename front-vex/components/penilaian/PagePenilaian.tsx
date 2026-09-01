@@ -23,7 +23,7 @@ import {
   FaSearch,
 } from "react-icons/fa";
 import { Button, ButtonPutih } from "@/components/shared/ui/Button";
-import { getStorageUrl } from "@/lib/utils";
+import { getStorageUrl, getPublicAssetUrl } from "@/lib/utils";
 import { showToast } from "@/components/shared/ui/ToastNotification";
 import {
   GetKaryaList,
@@ -166,7 +166,7 @@ export default function PagePenilaian({ onOpenAddForm }: PagePenilaianProps) {
 
   // Helper poster url (dukung file lokal storage & direct Google Drive image)
   const getPosterSrc = (karya: PenilaianItem) => {
-    if (!karya.gambar_poster) return "/expo/image/defaultposter.png";
+    if (!karya.gambar_poster) return getPublicAssetUrl("/image/defaultposter.png");
     const raw = karya.gambar_poster.trim();
 
     // Jika link Google Drive, ekstrak file ID menjadi direct image URL

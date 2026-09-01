@@ -22,7 +22,7 @@ class OtpMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Kode Verifikasi OTP Registrasi',
+            subject: 'Kode Verifikasi OTP - VEX Expo',
         );
     }
 

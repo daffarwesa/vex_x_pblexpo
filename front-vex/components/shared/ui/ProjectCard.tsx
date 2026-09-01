@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { FaHeart, FaCalendar, FaLock, FaUnlock } from "react-icons/fa";
 import { BsStars } from "react-icons/bs";
-import { getStorageUrl } from "@/lib/utils";
+import { getStorageUrl, getPublicAssetUrl } from "@/lib/utils";
 
 export interface ProjectCard {
   id: number;
@@ -64,7 +64,7 @@ export default function ProjectCard({ project, className }: ProjectData) {
     >
       <div className="relative aspect-video w-full overflow-hidden rounded-sm">
         <Image
-          src={getStorageUrl(project.bannerSmall || project.bannerImage) || "/expo/image/BGSection3.png"}
+          src={getStorageUrl(project.bannerSmall || project.bannerImage) || getPublicAssetUrl("/image/BGSection3.png")}
           alt={project.title}
           fill
           unoptimized

@@ -9,15 +9,15 @@ interface VerifyPayload {
     otp: string;
 }
 
-// STEP 1 — POST mengirim email verivikasi
+// STEP 1 — POST mengirim email verifikasi OTP
 export async function sendVerification(payload: SendVerificationPayload) {
-    const res = await url.post('/api/change-email/send', payload);
+    const res = await url.post('/api/auth/change-email/send', payload);
     return res.data;
 }
 
-// STEP 2 — POST veriviakasi token
+// STEP 2 — POST verifikasi OTP
 export async function verifyToken(payload: VerifyPayload) {
-    const res = await url.post('/api/change-email/verify', payload);
+    const res = await url.post('/api/auth/change-email/verify', payload);
     return res.data;
 }
 

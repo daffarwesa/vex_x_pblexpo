@@ -234,13 +234,6 @@ export default function Booth({
       }
     });
 
-    // TEMP DEBUG — remove once this is confirmed working
-    console.log("[num debug]", {
-      boothName,
-      foundNumMesh: !!numMesh,
-      idKarya,
-      numBaseUrl,
-    });
 
     if (!numMesh || idKarya == null || !numBaseUrl || !isNearForTexture) return;
 

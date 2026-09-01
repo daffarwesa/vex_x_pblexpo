@@ -24,17 +24,30 @@ class ChangePasswordController extends Controller
             'old_password'              => 'required|string',
             'new_password'              => 'required|string|min:8|confirmed',
             'new_password_confirmation' => 'required|string|min:8',
+        ], [
+            'old_password.required' => 'Kata sandi lama wajib diisi',
+            'new_password.required' => 'Kata sandi baru wajib diisi',
+            'new_password.min' => 'Kata sandi baru minimal 8 karakter',
+            'new_password.confirmed' => 'Konfirmasi kata sandi tidak cocok',
+            'new_password_confirmation.required' => 'Konfirmasi kata sandi wajib diisi',
+            'new_password_confirmation.min' => 'Konfirmasi kata sandi minimal 8 karakter',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Validasi gagal',
+                'message' => $validator->errors()->first(),
                 'errors'  => $validator->errors(),
             ], 422);
         }
 
         $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Unauthenticated',
+            ], 401);
+        }
 
         // Skenario: Password lama salah
         if (!Hash::check($request->old_password, $user->password)) {

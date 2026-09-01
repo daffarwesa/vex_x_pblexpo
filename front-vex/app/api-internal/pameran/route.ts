@@ -172,7 +172,8 @@ export async function PUT(req: Request) {
 
       fs.writeFileSync(path.join(imageDir, fileName), buffer);
 
-      bannerImage = `/expo/image/${fileName}`;
+      const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/+$/, "");
+      bannerImage = `${basePath}/image/${fileName}`;
     }
 
     data[index] = {

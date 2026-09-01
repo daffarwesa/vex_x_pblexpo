@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { KaryaItem, PameranItem } from "../../types/karya";
 import { KATEGORI_OPTIONS } from "@/types/pameran";
+import { getPublicAssetUrl } from "@/lib/utils";
 
 interface PosterCardProps {
   karya: KaryaItem;
@@ -35,7 +36,7 @@ export default function PosterCard({ karya, pameranList }: PosterCardProps) {
         {(karya as any).isTerbaik && (
           <div className="z-90 absolute top-2 right-2">
             <Image
-              src="/expo/icon/Medalion.svg"
+              src={getPublicAssetUrl("/icon/Medalion.svg")}
               alt="Medali Terbaik"
               width={56}
               height={56}

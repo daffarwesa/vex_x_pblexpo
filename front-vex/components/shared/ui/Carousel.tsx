@@ -8,7 +8,7 @@ import {
   BiSolidRightArrow,
   BiSolidLeftArrow,
 } from "react-icons/bi";
-import { getStorageUrl } from "@/lib/utils";
+import { getStorageUrl, getPublicAssetUrl } from "@/lib/utils";
 
 /* ===================== */
 /* TYPE */
@@ -181,7 +181,7 @@ export default function Carousel({
         }`}
       >
         <Image
-          src="/expo/image/BGlogopblexpo.webp"
+          src={getPublicAssetUrl("/image/BGlogopblexpo.webp")}
           alt="No Projects Yet"
           fill
           className="object-cover"
@@ -218,7 +218,7 @@ export default function Carousel({
               item.posterMedium ||
               item.banner ||
               item.bannerLarge;
-            const imageSrc = rawSrc ? getStorageUrl(rawSrc) : "/expo/image/BGSection3.png";
+            const imageSrc = rawSrc ? getStorageUrl(rawSrc) : getPublicAssetUrl("/image/BGSection3.png");
 
             return (
               <div

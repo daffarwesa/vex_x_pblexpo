@@ -33,7 +33,7 @@ type ReleaseMediaItem =
   | { type: "video"; videoId: string; thumbnail: string; title: string }
   | { type: "image"; src: string; title: string };
 
-const PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/expo";
+const PATH = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/\/+$/, "");
 
 const releaseMedia: ReleaseMediaItem[] = [
   {
@@ -75,8 +75,7 @@ const BEST_OF_LABELS: Record<BestOfId, string> = {
 
 const BEST_OF_PLACEHOLDER_LABELS = Object.values(BEST_OF_LABELS);
 
-// Path gambar-gambar statis yang sebelumnya hardcode "/expo/..." di JSX,
-// sekarang disatukan di sini biar konsisten pakai PATH.
+// Path gambar-gambar statis disatukan di sini biar konsisten pakai PATH.
 const STATIC_IMAGES = {
   section3Background: `${PATH}/image/BGSection3.png`,
   section3Fallback: `${PATH}/image/BGSection3.png`,

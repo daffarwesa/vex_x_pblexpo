@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { GetModelStan, GetStanTersedia } from "@/components/karya/apiKarya";
+import { getPublicAssetUrl } from "@/lib/utils";
 
 interface StanOption {
   id_model: number;
@@ -30,63 +31,47 @@ function Label({ text, required }: { text: string; required?: boolean }) {
 }
 
 export default function DetailPreview({
+  pameranId,
   booth,
   modelStan,
-  pameranId,
   onChange,
   error,
-  readOnly,
+  readOnly = false,
 }: Props) {
   const [modelList, setModelList] = useState<StanOption[]>([]);
+  const [stanTersedia, setStanTersedia] = useState<any[]>([]);
   const [loadingModel, setLoadingModel] = useState(false);
-
-  const [stanNomor, setStanNomor] = useState<number | null>(null);
   const [loadingNomor, setLoadingNomor] = useState(false);
 
+  // Ambil list model stan (A, B, C, ...)
   useEffect(() => {
-    if (readOnly) return;
+    setLoadingModel(true);
+    GetModelStan()
+      .then((data) => setModelList(data ?? []))
+      .catch((err) => console.error("Error get model stan:", err))
+      .finally(() => setLoadingModel(false));
+  }, []);
 
-    const fetchModel = async () => {
-      setLoadingModel(true);
-      try {
-        const res = await GetModelStan();
-        setModelList(res.data ?? []);
-      } catch (err) {
-        console.error("Gagal memuat model stan:", err);
-      } finally {
-        setLoadingModel(false);
-      }
-    };
-
-    fetchModel();
-  }, [readOnly]);
-
-  // Khusus readOnly: cari nomor urut stan berdasarkan pameranId + booth (id_stan)
+  // Ambil data stan pameran untuk lookup nomor urut saat readOnly
   useEffect(() => {
-    if (!readOnly || !pameranId || !booth) {
-      setStanNomor(null);
-      return;
-    }
+    if (!pameranId || !readOnly) return;
+    setLoadingNomor(true);
+    GetStanTersedia(pameranId)
+      .then((data) => setStanTersedia(data ?? []))
+      .catch((err) => console.error("Error get stan tersedia:", err))
+      .finally(() => setLoadingNomor(false));
+  }, [pameranId, readOnly]);
 
-    const fetchStanNomor = async () => {
-      setLoadingNomor(true);
-      try {
-        const res = await GetStanTersedia(pameranId);
-        const list: { id: number; nomor: number }[] = res.stan ?? [];
-        const found = list.find((s) => String(s.id) === String(booth));
-        setStanNomor(found ? found.nomor : null);
-      } catch (err) {
-        console.error("Gagal memuat nomor stan:", err);
-        setStanNomor(null);
-      } finally {
-        setLoadingNomor(false);
-      }
-    };
+  // Lookup nomor urut stan dari id_stan
+  const stanNomor = (() => {
+    if (!booth || stanTersedia.length === 0) return null;
+    const item = stanTersedia.find(
+      (s) =>
+        String(s.id ?? s.id_stan ?? s.id_model_stan) === String(booth)
+    );
+    return item?.nomor ?? item?.nomor_stan ?? null;
+  })();
 
-    fetchStanNomor();
-  }, [readOnly, pameranId, booth]);
-
-  // Select edit dicocokkan berdasarkan modelStan (id_model), BUKAN booth
   const selectedModel = modelList.find(
     (m) => String(m.id_model) === String(modelStan),
   );
@@ -101,10 +86,12 @@ export default function DetailPreview({
         <Image
           src={
             selectedModel
-              ? `/expo/image/img-${selectedModel.nama_model
-                  .toLowerCase()
-                  .replace(/\s+/g, "-")}.svg`
-              : "/expo/image/img-stan-a.svg"
+              ? getPublicAssetUrl(
+                  `/image/img-${selectedModel.nama_model
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")}.svg`
+                )
+              : getPublicAssetUrl("/image/img-stan-a.svg")
           }
           alt="booth"
           fill

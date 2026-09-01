@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getStorageUrl } from "@/lib/utils";
+import { getStorageUrl, getPublicAssetUrl } from "@/lib/utils";
 
 /* ===================== */
 /* TYPE */
@@ -57,7 +57,7 @@ const DEFAULT_PLACEHOLDER_LABELS = ["Innovation to Industry", "Partnership for D
  * component, the fallback has exactly the same poster dimensions
  * and overlay treatment as a real work.
  */
-const FALLBACK_IMAGE = "/expo/image/BGlogopblexpo.webp";
+const FALLBACK_IMAGE = getPublicAssetUrl("/image/BGlogopblexpo.webp");
 
 /**
  * How long after a manual tab/poster click before autoplay

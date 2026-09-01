@@ -5,11 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "/expo";
+const rawBasePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const BASE_PATH = rawBasePath.trim().replace(/\/+$/, "");
 
 export function getPublicAssetUrl(path?: string | null): string {
   if (!path) return '';
-  const trimmed = path.trim();
+  let trimmed = path.trim();
   if (!trimmed) return '';
 
   if (
@@ -21,7 +22,7 @@ export function getPublicAssetUrl(path?: string | null): string {
     return trimmed;
   }
 
-  if (trimmed.startsWith(BASE_PATH + '/') || trimmed === BASE_PATH) {
+  if (BASE_PATH && (trimmed.startsWith(BASE_PATH + '/') || trimmed === BASE_PATH)) {
     return trimmed;
   }
 
@@ -57,7 +58,7 @@ export function getStorageUrl(path?: string | null): string {
     return getPublicAssetUrl(trimmed);
   }
 
-  if (trimmed.startsWith('/expo/')) {
+  if (BASE_PATH && (trimmed.startsWith(`${BASE_PATH}/`) || trimmed === BASE_PATH)) {
     return trimmed;
   }
 

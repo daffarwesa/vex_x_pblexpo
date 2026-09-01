@@ -66,8 +66,14 @@ const defaultRemotePatterns: Array<{
   })),
 ];
 
+const basePathEnv = (process.env.NEXT_PUBLIC_BASE_PATH || '').trim();
+const normalizedBasePath =
+  basePathEnv && basePathEnv !== '/'
+    ? (basePathEnv.startsWith('/') ? basePathEnv : `/${basePathEnv}`).replace(/\/+$/, '')
+    : undefined;
+
 const nextConfig: NextConfig = {
-  basePath: '/expo',
+  ...(normalizedBasePath ? { basePath: normalizedBasePath } : {}),
   images: {
     remotePatterns: defaultRemotePatterns,
     dangerouslyAllowLocalIP: process.env.NODE_ENV !== 'production',

@@ -47,7 +47,7 @@ export function useChangeEmail() {
     }
 
     if (!password.trim()) {
-      setPasswordError('Password wajib diisi');
+      setPasswordError('Kata sandi saat ini wajib diisi');
       hasError = true;
     }
 
@@ -57,27 +57,49 @@ export function useChangeEmail() {
       setIsLoading(true);
 
       const res = await sendVerification({
-        new_email: newEmail,
+        new_email: newEmail.trim(),
         password,
       });
 
-      setSuccess(res.message || 'Kode verifikasi telah dikirim');
+      setSuccess(res.message || 'Kode OTP telah dikirim ke email baru');
       setStep(2);
     } catch (err: any) {
-      // console.log(err?.response?.data?.errors?.new_email);
-      setGlobalError(err?.response?.data?.errors || 'Gagal mengirim kode verifikasi');
+      const errorData = err?.response?.data;
+      const message = errorData?.message || 'Gagal mengirim kode verifikasi';
+      const errors = errorData?.errors;
+
+      if (errors && typeof errors === 'object') {
+        if (errors.new_email) {
+          setEmailError(Array.isArray(errors.new_email) ? errors.new_email[0] : errors.new_email);
+        }
+        if (errors.password) {
+          setPasswordError(Array.isArray(errors.password) ? errors.password[0] : errors.password);
+        }
+      }
+
+      const msgLower = message.toLowerCase();
+
+      if (err?.response?.status === 401 || msgLower.includes('password') || msgLower.includes('sandi')) {
+        setPasswordError(message);
+      } else if (msgLower.includes('email')) {
+        setEmailError(message);
+      } else {
+        setGlobalError(message);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerify = async () => {
+  const handleVerify = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
     setSuccess('');
     setGlobalError('');
     setTokenError('');
 
     if (!token.trim()) {
-      setTokenError('Kode verifikasi wajib diisi');
+      setTokenError('Kode verifikasi OTP wajib diisi');
       return;
     }
 
@@ -85,18 +107,25 @@ export function useChangeEmail() {
       setIsLoading(true);
 
       const res = await verifyToken({
-        otp: token,
+        otp: token.trim(),
       });
 
       setSuccess(res.message || 'Email berhasil diubah');
       setStep(3);
     } catch (err: any) {
-      if (err.res?.status === 401) {
-        setPasswordError(err.res.message);
-        return;
+      const errorData = err?.response?.data;
+      const message = errorData?.message || 'Kode OTP salah atau sudah kedaluwarsa';
+      const errors = errorData?.errors;
+
+      if (errors?.otp) {
+        setTokenError(Array.isArray(errors.otp) ? errors.otp[0] : errors.otp);
+      } else if (errorData?.remaining !== undefined) {
+        setTokenError(message);
+      } else {
+        setTokenError(message);
       }
 
-      // setGlobalError(err.response?.data?.message || 'Terjadi kesalahan');
+      setGlobalError(message);
     } finally {
       setIsLoading(false);
     }
@@ -114,13 +143,25 @@ export function useChangeEmail() {
     tokenError,
 
     newEmail,
-    setNewEmail,
+    setNewEmail: (val: string) => {
+      setNewEmail(val);
+      setEmailError('');
+      setGlobalError('');
+    },
 
     password,
-    setPassword,
+    setPassword: (val: string) => {
+      setPassword(val);
+      setPasswordError('');
+      setGlobalError('');
+    },
 
     token,
-    setToken,
+    setToken: (val: string) => {
+      setToken(val);
+      setTokenError('');
+      setGlobalError('');
+    },
 
     handleSendVerification,
     handleVerify,
