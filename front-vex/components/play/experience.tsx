@@ -5,11 +5,11 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 
-import Booth, { toProxiedUrl } from "./booth";
-import Player from "./player";
-import CameraSwitcher from "./cameraSwitcher";
+import Booth, { toProxiedUrl } from "./Booth";
+import Player from "./Player";
+import CameraSwitcher from "./CameraSwitcher";
 import { sharedTextureLoader } from "@/components/shared/ui/LoadingManager";
-import { getHallMaterial } from "@/components/play/boothMaterials";
+import { getHallMaterial } from "@/components/play/BoothMaterials";
 
 import { getHallModel, getKaryaList, getPameranFolder, getGameAssets, getPlayerModelUrl, getNumBaseUrl } from "@/components/play/apiPlay";
 

@@ -106,8 +106,8 @@ Route::middleware('auth:sanctum')->group(function () {
 // !! JANGAN DISENTUH !!
 //-----------------------
 
-// Experience routes: 60 req/menit per IP — cegah abuse asset endpoint
-Route::prefix('experience')->middleware('throttle:60,1')->group(function () {
+// Experience routes: 300 req/menit per IP — cukup untuk 161 karya dimuat sekaligus
+Route::prefix('experience')->middleware('throttle:300,1')->group(function () {
     Route::get('/player-model', [GameAssetController::class, 'servePlayerModel']);
     Route::get('/game-assets', [GameAssetController::class, 'index']);
     Route::get('/3d-models/{id}', [GameAssetController::class, 'get3DModel']);
@@ -116,7 +116,7 @@ Route::prefix('experience')->middleware('throttle:60,1')->group(function () {
     Route::get('/num/{filename}', [GameAssetController::class, 'serveNumImage']);
     Route::get('/poster/{path}', [GameAssetController::class, 'servePoster'])->where('path', '.*');
     Route::get('/karya/pameran/{id_pameran}', [GameAssetController::class, 'karyaByPameran']);
-    // Proxy image: lebih ketat — 30 req/menit per IP
+    // Proxy image: 300 req/menit per IP — cukup untuk load 161 poster sekaligus
     Route::get('/proxy-image', [GameAssetController::class, 'proxyImage'])
-        ->middleware('throttle:30,1');
+        ->middleware('throttle:300,1');
 });

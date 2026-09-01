@@ -5,7 +5,7 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { sharedTextureLoader } from "@/components/shared/ui/LoadingManager";
-import { PrimaryMaterial, createSecondaryMaterial } from "@/components/play/boothMaterials";
+import { PrimaryMaterial, createSecondaryMaterial } from "@/components/play/BoothMaterials";
 
 const textureCache = new Map<string, THREE.Texture>();
 

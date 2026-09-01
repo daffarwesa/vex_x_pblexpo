@@ -18,8 +18,8 @@ import { Canvas } from "@react-three/fiber";
 import { useProgress } from "@react-three/drei";
 import { v4 as uuidv4 } from 'uuid';
 
-import Experience from "@/components/play/experience";
-import Crosshair from "@/components/play/crosshair";
+import Experience from "@/components/play/Experience";
+import Crosshair from "@/components/play/Crosshair";
 import Image from "next/image";
 
 import {
