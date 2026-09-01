@@ -42,7 +42,7 @@ class KaryaSeeder extends Seeder
                 'id_kategori' => 6,
                 'judul' => 'Security Patrol Robot (mipam)',
                 'deskripsi' => '-',
-                'tautan' => '',
+                'tautan' => null,
                 'gambar_poster' => 'https://drive.google.com/file/d/1_nhbZdzSi22kxcW0NZgVWcIvSayhJsfJ/view',
                 'predikat' => null,
                 'is_best' => null,
